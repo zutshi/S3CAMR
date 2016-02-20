@@ -3,7 +3,7 @@
 % % Stop after 5 abstract paths have been found
 % thresh = 4;
 % tol is inequality tolerence
-function falsify(N, thresh, tol)
+function falsify(N, thresh, tol, opts)
 
 % x0 = [-0.4 0.4; -0.4 0.4];
 x0 = [0.3 0.4; -0.4 -0.3];
@@ -34,19 +34,19 @@ RA = RelAbs(model, GA, Range, model_delta_t);
 fprintf('verifying paths...\n')
 figure(2)
 hold on
-plot_cell(prop, 'r')
+plot_cell(prop, 'r', opts)
 dyn_cons_type = 'inequality';
 if thresh == inf
-    get_paths_gen(RA, N, x0, prop, dyn_cons_type, model_delta_t, tol);
+    get_paths_gen(RA, N, x0, prop, dyn_cons_type, model_delta_t, tol, opts);
 else
-    get_paths(RA, N, x0, prop, dyn_cons_type, model_delta_t, tol, thresh);
+    get_paths(RA, N, x0, prop, dyn_cons_type, model_delta_t, tol, thresh, opts);
 end
 
 end
 
-function get_paths_gen(RA, N, x0, prop, dyn_cons_type, model_delta_t, tol)
+function get_paths_gen(RA, N, x0, prop, dyn_cons_type, model_delta_t, tol, opts)
 fprintf('enumerating abstract paths of length...\n')
-path_gn = find_all_paths_gen(RA, N, x0, prop);
+path_gn = find_all_paths_gen(RA, N, x0, prop, opts);
 
 fprintf('Entering an infinite loop...press ctrl+c to cancel anytime. Press any key to acknowlege.')
 pause();
@@ -68,8 +68,8 @@ while 1
 end
 end
 
-function get_paths(RA, N, x0, prop, dyn_cons_type, model_delta_t, tol, thresh)
-paths = find_all_paths_thresh(RA, N, x0, prop, thresh);
+function get_paths(RA, N, x0, prop, dyn_cons_type, model_delta_t, tol, thresh, opts)
+paths = find_all_paths_thresh(RA, N, x0, prop, thresh, opts);
 for i = 1:length(paths)
     hold on
     p = paths{i};

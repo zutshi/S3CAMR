@@ -1,28 +1,28 @@
 class PWA(object):
     def __init__(self):
         self.nlocs = 0
-        self.sys = {}
+        self.sub_models = {}
         self.idx = 0
         return
 
-    def add_pi(self, guard, reset):
+    def add_sub_model(self, guard, reset):
         part_id = self.idx
-        self.sys[part_id] = SubModel(guard, reset)
+        self.sub_models[part_id] = SubModel(guard, reset)
         self.idx += 1
         return
 
-    def get_pi(self, part_id):
-        return self.sys[part_id]
+    def get_sub_model(self, part_id):
+        return self.sub_models[part_id]
 
     # Make the class iterable
     def __iter__(self):
-        return self.sys.itervalues()
+        return self.sub_models.itervalues()
 
     #def next(self):
-    #    return self.sys.itervalues().next()
+    #    return self.sub_models.itervalues().next()
 
     def __repr__(self):
-        return repr(self.sys)
+        return repr(self.sub_models)
 
     def __str__(self):
         s = [str(i) for i in self]

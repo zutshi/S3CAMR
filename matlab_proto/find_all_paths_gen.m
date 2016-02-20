@@ -4,9 +4,9 @@
 % Pointless to mantain two versions if the generator version is not much
 % slower. Verify and take care.
 
-function cn = find_all_paths_gen(RA, N, x0, prop)
-global VERBOSE;
-global PLT;
+function cn = find_all_paths_gen(RA, N, x0, prop, opts)
+VERBOSE = opts.v;
+PLT = opts.p;
 
 % states reached in n steps
 final_states = {};

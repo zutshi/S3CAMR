@@ -23,16 +23,16 @@ classdef GridAbstraction
         % [..]
         % [cn]
         function gridCells = generateCellsFromRange(obj, range)
-            grid_eps = obj.grid_eps;
-            cellRange = snapToGrid(range',grid_eps)';
-            dummyGridEps = grid_eps;
-            zeroGridEpsIdx = (grid_eps == 0);
+            eps = obj.grid_eps;
+            cellRange = snapToGrid(range',eps)';
+            dummyGridEps = eps;
+            zeroGridEpsIdx = (eps == 0);
             dummyGridEps(zeroGridEpsIdx) = 1;
             % sanity check
             if range(zeroGridEpsIdx,1) ~= range(zeroGridEpsIdx,2)
                 error('unhandled condition, grid_eps is 0 but range is non-zero measure')
             end
-
+            
             numDim = size(cellRange,1);
             H = cell(1,numDim);
             rangeMat = cell(1,numDim);
@@ -50,8 +50,14 @@ classdef GridAbstraction
         
         %%
         function cellRange = getCellRange(obj, X)
-            grid_eps = obj.grid_eps;
-            cellRange = [(X - grid_eps/2)' (X + grid_eps/2)'];
+            % Remove the warnign after checking all getCellRange() calls in
+            % the code.
+            warning('Just returns a +- eps. Please make sure that is the intended usage!.')
+            cellRange = [(X - obj.grid_eps/2)' (X + obj.grid_eps/2)'];
+        end
+        
+        function c = get_cell_from_idx(obj, idx)
+            c = idx .* obj.grid_eps - obj.grid_eps/2;
         end
         
         function c = concrete2cell(obj, x)

@@ -95,5 +95,29 @@ classdef RelAbs
             end
         end
         
+        % dumos the model to a file
+        % returns a flattened model
+        % flattened_model = {{P0, M0},...,{Pi,Mi},...{Pn,Mn}}
+        function model_flattened = get_flattened_model(obj)
+            m = obj.model;
+            [mr, mc] = size(m);
+            model_flattened = cell(mr*mc,1);
+            k = 1;
+            for i = 1:mr
+                for j = 1:mc
+                    dyn = m{i,j};
+                    % ignore any othe rinfo in dyn but A and b
+                    model = struct('A', dyn.A, 'b', dyn.b);
+                    c = obj.GA.get_cell_from_idx([i,j]);
+                    crange = obj.GA.getCellRange(c);
+                    p = cube2poly(crange);
+                    model_flattened{k}.P = p;
+                    model_flattened{k}.M = model;
+%                     = {p, dyn_};
+                    k = k+1;
+                end
+            end
+        end
+        
     end
 end
