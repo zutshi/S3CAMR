@@ -51,16 +51,12 @@ classdef Model
 
                 idx = find(all(X >= repmat(LB,ns,1) & X <= repmat(UB,ns,1), 2));
 
-                %y1 = Y(idx,1);
-                %y2 = Y(idx,2);
-
                 xi = X(idx, :);
                 yi = Y(idx, :);
                 nidx = length(idx);
                 % append a column of ones to make the regress function compute
                 % b in Ax + b
                 x1i = [xi ones(nidx,1)];
-                %coeffi = zeros(ndo,1);
                 A = zeros(ndo,ndi);
                 b = zeros(ndo,1);
                 for j = 1:ndo
@@ -68,14 +64,6 @@ classdef Model
                     A(j,:) = coeffi(1:end-1)';
                     b(j) = coeffi(end);
                 end
-                %b1 = regress(y1, x_ones);
-                %b2 = regress(y2, x_ones);
-                %A = [b1(1:end-1) b2(1:end-1)]';
-                %b = [b1(end); b2(end)];
-
-
-                %A = [b1(1:end-1) b2(1:end-1)]';
-                %b = [b1(end); b2(end)];
                 dyn = struct('A', A, 'b', b, 'idx', idx);
                 midx = obj.get_flat_idx(sbcl+obj.offset);
                 model{midx} = dyn;
@@ -102,14 +90,6 @@ classdef Model
         function fidx = get_flat_idx(obj, k)
         c = mat2cell(k,1,ones(1,length(k)));
         fidx = sub2ind(obj.la, c{:});
-        %fidx = 0;
-        %for i = 1:length(k)
-        %    disp k(i)
-        %    k(i)
-        %    disp clar(i)
-        %    clar(i)
-        %    fidx = fidx + (k(i) - 1)*clar(i);
-        %end
         end
 
         %function ndix = get_mult_dim_idx(obj, k, clar)
