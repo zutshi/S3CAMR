@@ -28,7 +28,7 @@ workq = S();
 workq.push(S0);
 
 if PLT
-    figure(1)
+    my_figure(1)
     axis([-2,2, -8, 8])
     hold on
     colors = ['r','b','k','g','y','m'];

@@ -32,7 +32,7 @@ RA = RelAbs(model, GA, Range, model_delta_t);
 % simulate_and_test_model(RA);
 
 fprintf('verifying paths...\n')
-figure(2)
+my_figure(2)
 hold on
 plot_cell(prop, 'r')
 dyn_cons_type = 'inequality';
@@ -88,7 +88,7 @@ end
 end
 
 function simulate_and_test_model(RA)
-figure(1)
+my_figure(1)
 hold on
 X = genRandVectors(100, [-0.4 0.4; -0.4 0.4]);
 for i = 1:size(X, 1)
