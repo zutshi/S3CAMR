@@ -1,21 +1,21 @@
 classdef GridAbstraction
-    
+
     properties
         grid_eps;
     end
-    
+
     %% abstraction functions
     methods
         %% Constructor
         function obj = GridAbstraction(e)
             obj.grid_eps = e;
         end
-        
+
         % Concrete state: p(x,y) -> Abstract state a[x1 x2; y1 y2]
         function a = concrete2abs(obj, p)
             a = snapToGrid(p, obj.grid_eps);
         end
-        
+
         %%
         % returns cells as
         % [c0]
@@ -32,7 +32,7 @@ classdef GridAbstraction
             if range(zeroGridEpsIdx,1) ~= range(zeroGridEpsIdx,2)
                 error('unhandled condition, grid_eps is 0 but range is non-zero measure')
             end
-            
+
             numDim = size(cellRange,1);
             H = cell(1,numDim);
             rangeMat = cell(1,numDim);
@@ -44,10 +44,10 @@ classdef GridAbstraction
             for i = 1:numDim
                 gridCells = [gridCells H{i}(:)];
             end
-            
+
             gridCells = round(gridCells.*1e10)./1e10;
         end
-        
+
         %%
         function cellRange = getCellRange(obj, X)
             % Remove the warnign after checking all getCellRange() calls in
@@ -55,11 +55,11 @@ classdef GridAbstraction
             warning('Just returns a +- eps. Please make sure that is the intended usage!.')
             cellRange = [(X - obj.grid_eps/2)' (X + obj.grid_eps/2)'];
         end
-        
+
         function c = get_cell_from_idx(obj, idx)
             c = idx .* obj.grid_eps - obj.grid_eps/2;
         end
-        
+
         function c = concrete2cell(obj, x)
             c = snapToGrid(x,obj.grid_eps);
         end
