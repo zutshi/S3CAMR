@@ -14,11 +14,14 @@ classdef Model
         ndi = size(range,1);
         len_array = zeros(1, ndi);
         for i = 1:ndi
-            len_array(i) = (range(i,2) - range(i,1))/eps(i) + 1;
+            len_array(i) = (range(i,2) - range(i,1))/eps(i);
         end
-        obj.la = len_array;
-        old_model = Model_old(range, eps, Y(:,1), Y(:,2), X);
-        new_model = obj.Model_new(range, eps, Y, X);
+        obj.la = len_array
+
+        tic; old_model = Model_old(range, eps, Y(:,1), Y(:,2), X); toc
+        pause()
+        tic; new_model = obj.Model_new(range, eps, Y, X); toc
+        pause()
 
         obj.model = new_model;
         compare_models(old_model, obj);
@@ -41,7 +44,6 @@ classdef Model
 
             sub_cells = generateCellsFromRange(range, eps);
 
-            sbcl_all = {};
             for i = 1:size(sub_cells,1)
                 sbcl = sub_cells(i,:);
                 LB = sbcl - eps/2;
@@ -76,7 +78,6 @@ classdef Model
                 %b = [b1(end); b2(end)];
                 dyn = struct('A', A, 'b', b, 'idx', idx);
                 midx = obj.get_flat_idx(sbcl+obj.offset);
-                sbcl_all = [sbcl_all sbcl];
                 model{midx} = dyn;
             end
         end
@@ -208,12 +209,8 @@ function model = Model_old(Range, eps, Y1, Y2, X)
 end
 
 function compare_models(old_model, new_model)
-[r,c] = size(old_model)
-length(new_model.model)
-if r*c ~= length(new_model.model)
-warning('model lengths differ!')
-end
-%assert(r*c == length(new_model.model));
+[r,c] = size(old_model);
+assert(r*c == length(new_model.model));
 for i = 1:r
     for j = 1:c
         smo = old_model{r,c};
