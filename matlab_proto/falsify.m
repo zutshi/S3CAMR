@@ -21,7 +21,7 @@ eps = [1,1];
 %Range = [min(X)', max(X)'];
 Range = [-2, 2; -8 8];
 fprintf('getting model...\n')
-model = get_vdp_model(Range, eps, Y1, Y2, X);
+model = Model(Range, eps, [Y1, Y2], X);
 
 GA = GridAbstraction(eps);
 RA = RelAbs(model, GA, Range, model_delta_t);

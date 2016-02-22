@@ -3,7 +3,7 @@ classdef RelAbs
     properties
         model;
         GA;
-        offset;
+        %offset;
         delta_t;
     end
 
@@ -13,7 +13,7 @@ classdef RelAbs
         function obj = RelAbs(m, ga, Range, delta_t)
             obj.model = m;
             obj.GA = ga;
-            obj.offset = -(min(Range,[],2)' + obj.GA.grid_eps/2) + 1;
+            %obj.offset = -(min(Range,[],2)' + obj.GA.grid_eps/2) + 1
             obj.delta_t = delta_t;
         end
 
@@ -21,13 +21,13 @@ classdef RelAbs
         function dyn = get_cell_dyn(obj, c)
             nd = length(c);
             cell_idx = obj.get_cell_idx(c);
-            ci = mat2cell(cell_idx, 1, ones(1, nd));
-            dyn = obj.model.get(ci);
+            %ci = mat2cell(cell_idx, 1, ones(1, nd));
+            dyn = obj.model.get(cell_idx);
         end
 
         %%
         function cell_idx = get_cell_idx(obj, c)
-            cell_idx = fix((c + obj.offset)./obj.GA.grid_eps);
+            cell_idx = fix((c + obj.model.offset)./obj.GA.grid_eps);
         end
 
         %% Simulator for the learned discrete dynamical system
