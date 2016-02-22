@@ -1,21 +1,21 @@
 classdef GridAbstraction
-    
+
     properties
         grid_eps;
     end
-    
+
     %% abstraction functions
     methods
         %% Constructor
         function obj = GridAbstraction(e)
             obj.grid_eps = e;
         end
-        
+
         % Concrete state: p(x,y) -> Abstract state a[x1 x2; y1 y2]
         function a = concrete2abs(obj, p)
             a = snapToGrid(p, obj.grid_eps);
         end
-        
+
         %%
         % returns cells as
         % [c0]
@@ -23,10 +23,10 @@ classdef GridAbstraction
         % [..]
         % [cn]
         function gridCells = generateCellsFromRange(obj, range)
-            grid_eps = obj.grid_eps;
-            cellRange = snapToGrid(range',grid_eps)';
-            dummyGridEps = grid_eps;
-            zeroGridEpsIdx = (grid_eps == 0);
+            eps = obj.grid_eps;
+            cellRange = snapToGrid(range',eps)';
+            dummyGridEps = eps;
+            zeroGridEpsIdx = (eps == 0);
             dummyGridEps(zeroGridEpsIdx) = 1;
             % sanity check
             if range(zeroGridEpsIdx,1) ~= range(zeroGridEpsIdx,2)
@@ -44,16 +44,22 @@ classdef GridAbstraction
             for i = 1:numDim
                 gridCells = [gridCells H{i}(:)];
             end
-            
+
             gridCells = round(gridCells.*1e10)./1e10;
         end
-        
+
         %%
         function cellRange = getCellRange(obj, X)
-            grid_eps = obj.grid_eps;
-            cellRange = [(X - grid_eps/2)' (X + grid_eps/2)'];
+            % Remove the warnign after checking all getCellRange() calls in
+            % the code.
+            warning('Just returns a +- eps. Please make sure that is the intended usage!.')
+            cellRange = [(X - obj.grid_eps/2)' (X + obj.grid_eps/2)'];
         end
-        
+
+        function c = get_cell_from_idx(obj, idx)
+            c = idx .* obj.grid_eps - obj.grid_eps/2;
+        end
+
         function c = concrete2cell(obj, x)
             c = snapToGrid(x,obj.grid_eps);
         end

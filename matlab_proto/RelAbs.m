@@ -1,12 +1,12 @@
 classdef RelAbs
-    
+
     properties
         model;
         GA;
         offset;
         delta_t;
     end
-    
+
     %% abstraction functions
     methods
         %% Constructor
@@ -16,20 +16,20 @@ classdef RelAbs
             obj.offset = -(min(Range,[],2)' + obj.GA.grid_eps/2) + 1;
             obj.delta_t = delta_t;
         end
-        
+
         %%
         function dyn = get_cell_dyn(obj, c)
             nd = length(c);
             cell_idx = obj.get_cell_idx(c);
             ci = mat2cell(cell_idx, 1, ones(1, nd));
-            dyn = obj.model{ci{:}};
+            dyn = obj.model.get(ci);
         end
-        
+
         %%
         function cell_idx = get_cell_idx(obj, c)
             cell_idx = fix((c + obj.offset)./obj.GA.grid_eps);
         end
-        
+
         %% Simulator for the learned discrete dynamical system
         % Simulates from x for n steps through the system
         function [n,y] = simulate(obj, x, N)
@@ -37,7 +37,7 @@ classdef RelAbs
             nd = length(x);
             n = 0:1:N * dt;
             y = zeros(N+1,nd);
-            
+
             % init y1
             y(1,:) = x;
             % compute yi
@@ -47,14 +47,14 @@ classdef RelAbs
                 y(i+1,:) = dyn.A * y(i,:)' + dyn.b;
             end
         end
-        
+
         % Takes in the system model (PWA) and a state: rect hypercube
         % Returns a list of reachable rect hypercubes
         function S_ = compute_next_states(obj, s)
             S_ = {};
             % get all cells which intersect with the given hypercube
             C = obj.GA.generateCellsFromRange(s.x);
-            
+
             % for each region of the cube which intersects a different cell
             % (assumes that every cell has different dynamics for convinience)
             for i = 1:size(C,1)
@@ -70,8 +70,8 @@ classdef RelAbs
                 S_ = [S_ struct('x', y_, 'n', s.n+1, 'path', [s.path; c])];
             end
         end
-        
-        
+
+
         %% Computes mean/max error between the given data and the
         % relationalized model
         function verify_model(obj, X, Y1, Y2)
@@ -94,6 +94,30 @@ classdef RelAbs
                 end
             end
         end
-        
+
+        % dumos the model to a file
+        % returns a flattened model
+        % flattened_model = {{P0, M0},...,{Pi,Mi},...{Pn,Mn}}
+        function model_flattened = get_flattened_model(obj)
+            m = obj.model;
+            [mr, mc] = size(m);
+            model_flattened = cell(mr*mc,1);
+            k = 1;
+            for i = 1:mr
+                for j = 1:mc
+                    dyn = m{i,j};
+                    % ignore any othe rinfo in dyn but A and b
+                    model = struct('A', dyn.A, 'b', dyn.b);
+                    c = obj.GA.get_cell_from_idx([i,j]);
+                    crange = obj.GA.getCellRange(c);
+                    p = cube2poly(crange);
+                    model_flattened{k}.P = p;
+                    model_flattened{k}.M = model;
+%                     = {p, dyn_};
+                    k = k+1;
+                end
+            end
+        end
+
     end
 end

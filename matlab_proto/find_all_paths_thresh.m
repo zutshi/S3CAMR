@@ -15,9 +15,9 @@
 % They are not [C0,..,Cn] or [x0,C1,..,prop] for reasons born out of
 % convinience and not rationality.
 
-function violating_paths = find_all_paths_thresh(RA, N, x0, prop, MAX_VIO)
-global VERBOSE;
-global PLT;
+function violating_paths = find_all_paths_thresh(RA, N, x0, prop, MAX_VIO, opts)
+% VERBOSE = opts.v;
+PLT = opts.p;
 
 % states reached in n steps
 final_states = {};
@@ -59,7 +59,7 @@ while ~workq.empty()
     
     if PLT
         cidx = 1+mod(cidx, length(colors));
-        plot_cell(s.x,colors(cidx));
+        plot_cell(s.x,colors(cidx), opts);
     end
     
     S_ = RA.compute_next_states(s);
@@ -67,7 +67,7 @@ while ~workq.empty()
         s_ = S_{i};
         
         if PLT
-            plot_cell(s_.x,colors(cidx));
+            plot_cell(s_.x,colors(cidx), opts);
         end
         
         
