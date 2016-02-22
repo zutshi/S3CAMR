@@ -1,0 +1,390 @@
+% RRT
+\newcommand{\RRT}{\mathcal{RRT}}
+\newcommand{\RRTgoal}{\x_{goal}}
+\newcommand{\RRTinit}{\x_{init}}
+\newcommand{\RRTv}[1]{v_{#1}}
+\newcommand{\RRTe}{e}
+\newcommand{\RRTV}{V}
+\newcommand{\RRTE}{E}
+\newcommand{\RRTsample}{x_{sample}}
+\newcommand{\RRTnear}{x_{near}}
+\newcommand{\RRTtoEx}{x_e}
+\newcommand{\RRTxNew}{x_{new}}
+\newcommand{\RRTuNew}{u_{new}}
+\newcommand{\RRTdedge}[3]{(#1 \xrightarrow{#3} #2)}
+
+% Graph
+\newcommand{\Graph}{\mathbf{G}}
+\newcommand{\graph}{\mathbf{G}}
+\newcommand{\vertex}[1]{v_{#1}}
+%\newcommand{\vertex}[1]{#1}
+\newcommand{\dedge}[2]{e_{(\vertex{#1}\rightarrow\vertex{#2})}}
+\newcommand{\edge}{e}
+\newcommand{\vertexSet}{V}
+\newcommand{\edgeSet}{E}
+%\newcommand{\vertexSetD}{V^\delta}
+%\newcommand{\edgeSetD}{E^\delta}
+%\newcommand{\graphVE}[1]{\mathbf{G_{#1}(\vertexSet,\edgeSet)}}
+%\newcommand{\graphD}[1]{\mathbf{G^\delta_{#1}(\vertexSet^\delta,\edgeSet^\delta)}}
+\newcommand{\kPaths}{k\_paths}
+\newcommand{\trajToNode}{\Gamma}
+\newcommand{\Path}{\mathbf{P}}
+\newcommand{\weight}{\mathbf{W}}
+
+% Hybrid Automata
+\newcommand{\HA}{\ensuremath{\mathcal{A}}}
+
+\newcommand{\System}{\ensuremath{\mathcal{S}}}
+\newcommand{\Inputs}{\ensuremath{\mathcal{U}}}
+\newcommand{\Flow}{\ensuremath{\mathcal{F}}}
+\newcommand{\Modes}{\ensuremath{\mathcal{Q}}}
+\newcommand{\ContStates}{\ensuremath{X}}
+\newcommand{\Inv}{\ensuremath{\mathcal{I}}}
+%\newcommand{\Transitions}{\ensuremath{\Delta}}
+\newcommand{\Transitions}{\scr{T}}
+\newcommand{\HybridStates}{\ensuremath{\mathcal{X}}}
+\newcommand{\HybridStateSet}{\ensuremath{X}}
+\newcommand{\ResetMap}{\mathcal{R}}
+\newcommand{\Guards}{\mathcal{G}}
+\newcommand{\Init}{\mathcal{X}_{0}}
+\newcommand{\Err}{\ContStates_{f}}
+\newcommand{\initmode}{m_{init}}
+\newcommand{\cInit}{\ensuremath{X}_0}
+\newcommand{\Unsafe}{\mathcal{X}_f}
+%\newcommand{\reachSet}[2]{R^{#1}_{\HA}({#2})}
+%\newcommand{\Hflow}{\mathcal{H}_{\HA}}
+\newcommand{\Hflow}{\mathcal{H}}
+\newcommand{\reachSet}{R}
+
+% Trajectories
+\newcommand{\discTraj}{q_h}
+\newcommand{\hybridTraj}{\tau_h}
+\newcommand{\traj}{\pi}
+\newcommand{\trajSeg}[2]{\pi^{\mode_{#1}}_{\tau_{#2}}}
+\newcommand{\SegTraj}{\mathbf{S}_\pi}
+\newcommand{\dwell}{\tau}
+\newcommand{\tran}{\delta}
+\newcommand{\tbegin}{b}
+\newcommand{\tend}{e}
+%\newcommand{\graph}{G}
+\newcommand{\trajStore}{TS}
+\newcommand{\trajSet}{TS}
+\newcommand{\candTraj}{CT}
+\newcommand{\candTrajSet}{CTS}
+\newcommand\Cost{\mathsc{Cost}}
+
+
+% State variables
+\newcommand{\x}{\mathbf{x}}
+\newcommand{\y}{\mathbf{y}}
+\newcommand{\z}{\mathbf{z}}
+\newcommand{\w}{\mathbf{w}}
+%\newcommand{\vec}[1]{\mathbf{#1}}
+\newcommand{\dvx}{\mathbf{\dot{x}}}
+\newcommand{\inp}{\mathbf{u}}
+\newcommand{\mode}{\ensuremath{q}}
+\newcommand{\dx}{\ensuremath{\dot{x}}}
+
+% Metrics
+\newcommand{\lmetric}[2]{{\Vert #2 \Vert}_#1}
+
+% ODE
+\newcommand{\odesolution}{\Phi}
+\newcommand{\matA}{\mathbf{A}}
+\newcommand{\matB}{\mathbf{B}}
+\newcommand{\mata}{\mathbf{a}}
+
+
+\newcommand \maximize{\mathbf{max.}\ }
+\newcommand \minimize{\mathbf{min.}\ }
+
+\newcommand \numsolve{\mathtt{NumericSolver}}
+\newcommand\Flowmap{\mathsc{Flow}}
+%%\newcommand\myipara[1]{\par\noindent\textit{#1:}}
+
+% Arrows
+%\newcommand{\contArrow}[2]{\underset{#2}{\overset{#1}{\leadsto}}}
+\newcommand{\contArrow}[1]{\leadsto_{#1}}
+\newcommand{\jumpArrow}[1]{\xrightarrow{#1}}
+
+
+\newcommand\dist{\mathsf{d}}
+\newcommand\src{\mathsf{src}}
+\newcommand\dest{\mathsf{dest}}
+\newcommand\timeElapse{\mathcal{T}}
+\newcommand\simulate{\mathsc{sim}}
+%%\newcommand\sim{\mathsc{sim}}
+\newcommand\cost{\mathsc{cost}}
+\newcommand\reach[1]{\xrightarrow{#1}}
+\newcommand\areach[1]{\overset{#1}{\rightsquigarrow}}
+
+\newcommand\intr{\mathsf{interior}}
+\newcommand\assign{:= }
+\newcommand\worklist{\mathsf{workList}}
+\newcommand\exploredCells{\mathsf{V}}
+\newcommand\exploredEdges{\mathsf{E}}
+\newcommand\unsafeCells{\mathsf{V}_u}
+\newcommand\initialCells{\mathsf{V}_0}
+\newcommand\prb{\mathbb{P}}
+\newcommand{\abstracteps}{\epsilon}
+\newcommand{\refinedeps}{\delta}
+\newcommand{\absgraph}{\scr{H}_{\epsilon}(\Delta)}
+\newcommand{\refgraph}{\scr{H}_{\delta}(\Delta)}
+\newcommand{\abscells}{{\scr{C}}}
+\newcommand{\refcells}{{\scr{D}}}
+
+
+
+
+
+
+%%%%%%%% from sriram sty, rearrange!
+
+\def\mathsc#1{\mbox{\sc #1}}
+
+\newcommand\trp[1] {#1^{\scriptscriptstyle T}}
+\newcommand\scrS{\mathcal{S}}
+\newcommand\scrT{\mathcal{T}}
+\newcommand\scrF{\mathcal{F}}
+\newcommand\scrG{\mathcal{G}}
+\newcommand\scrH{\mathcal{H}}
+\newcommand \ints {\ensuremath \mathbb{Z}}
+%%\newcommand \extreals {\ensuremath \mathcal{R}^{+}}
+\newcommand \lin[1]{\mathit{Lin}(#1)}
+\newcommand \conic[1]{\mathit{Cone}(#1)}
+\newcommand \conv[1]{\mathit{Convex}(#1)}
+\newcommand \false {\mathit{false}}
+\newcommand \true  {\mathit{true}}
+%\newcommand\pre{\preceq}
+\newcommand \pres{\mathbf{pres}}
+\newcommand \F {\mathfrak{F}}
+
+\newcommand \abstractF {\F_A}
+\newcommand \abstractDomain {\Sigma_A}
+\newcommand \templateDomain {\Sigma_T}
+\newcommand \dropped {\mathsc{x}}
+\newcommand \ctop {\vec{c}_\top}
+\newcommand \cbot {\vec{c}_\bot}
+\newcommand \concT {\gamma_T}
+\newcommand \abstractorder {\leq_A}
+\newcommand \abstractLeq{\sqsubseteq}
+\newcommand \abstractor {\sqcup}
+\newcommand \abstractand {\sqcap}
+\newcommand \bigabstractor {\bigsqcup}
+\newcommand \setdef[2] { \left\{ #1 \mid #2 \right\}}
+
+\newcommand \CH {\mathcal{CH}}
+
+
+%%\newcommand \mathsc[1]{\mbox{\textsc{#1}}}
+%%transpose
+
+
+
+\newcommand \T {\mathcal{T}}
+\newcommand \post {\ensuremath\mathit{post}}
+\newcommand \dpost {\widehat{\mathit{post}}}
+\newcommand \homg[1] {\mathsc{hom}(#1)}
+\newcommand \cons{\mathsc{cons}}
+\newcommand \widen {\nabla}
+\newcommand \dual[1]{\widehat{#1}}
+\newcommand \narrow {\/ \bigtriangleup \/ }
+\newcommand \refine {\partial}
+\newcommand \deta{\pi}
+
+\newcommand \latcap {\sqcap}
+\newcommand \latcup {\sqcup}
+\newcommand \guard {\xi}
+\newcommand \templ{\gamma}
+\newcommand \sizeof[1] { |#1| }
+\newcommand \uset[2]{\underset{#1}{\underbrace{#2}}}
+\newcommand \ith[2]{ {#1}^{(#2)}}
+\newcommand \C {\ensuremath \mathcal{C}}
+\newcommand \complex {\ensuremath \mathcal{C}}
+\newcommand \grb {Gr\"obner\xspace}
+\newcommand \hi[1]{}
+\newcommand \hihenny[1]{}
+\newcommand \newhenny[1]{#1}
+\newcommand\markmargin[2]
+{[\marginpar[\hfill \mbox{#1}$\rightarrow$]{$\leftarrow$\mbox{#1}} 
+{\sf #2]}}
+
+\newcommand\highl[1]{\psframebox[fillstyle=solid,fillcolor=lightgray,linewidth=0pt]{\textbf{#1}}}
+
+
+\newcommand \locs{\mathbf{L}}
+\newcommand\en{\mathbf{en}}
+
+
+
+
+\newcommand{\chapterheading}[1]
+{\vfill  
+\hfill \fbox{\begin{minipage}{5.5in}
+\textsl{#1} \end{minipage} } \newpage}
+
+\newcommand \Z{ \mathbf{Z}}
+
+\newcommand \mand {\ \mathit{and}\ }
+\newcommand \matb{\vec{b}}
+\newcommand \matl{\vec{\lambda}}
+\newcommand \vg {\vec{g}}
+\newcommand \va{\vec{a}}
+\newcommand\ve{\vec{e}}
+\newcommand \vc {\vec{c}}
+\newcommand \vf {\vec{f}}
+\newcommand \vh {\vec{h}}
+\newcommand \vv{\vec{v}}
+\newcommand \vzero {\vec{0}}
+\newcommand \vq {\vec{q}}
+\newcommand \rank {\mathit{rn}}
+\newcommand\vbeta{\vec{\rho}}
+\newcommand \Petri {\ensuremath \mathcal{P}}
+\newcommand \maxrank {\mathit{maxrank}}
+\newcommand \lists{\mathit{list}}
+\newcommand \nullsp{\mathit{null}} 
+\newcommand \vl[1] {\vec{\lambda_{#1}}}
+\newcommand\vlam{\vec{\lambda}}
+\newcommand \st{\mathbf{s.t.}\ }
+
+
+\newcommand \D {\mathit{D}}
+\newcommand \I {\mathit{I}}
+\newcommand \Loc{\mathit{Loc}}
+\newcommand \lie{\mathcal{L}}
+\newcommand \grad{\nabla}
+\newcommand \cn {\mathsf{Cn}}
+
+\newcommand \diff[2] {\ensuremath \frac{d #1}{d #2}}
+
+
+
+
+\renewcommand\paragraph[1] {\smallskip\par\noindent\textbf{#1}\ \ }
+\newcommand \cplus {\uplus}
+
+\newcommand\relop{\mathop{\bowtie}}
+\newcommand \vt{\vec{t}}
+\newcommand \vd{\vec{d}}
+\newcommand\e{\mathsf{e}}
+\newcommand\yl{\mathsf{l}}
+\newcommand\yu{\mathsf{u}}
+\newcommand\yb{\mathsf{b}}
+
+
+\newcommand\init{\mathsf{init}}
+
+\newcommand\ol[1]{\overline{#1}}
+\newcommand\state[1]{\vec{{\texttt{#1}}}}
+
+\newcommand\scrP{\mathcal{P}}
+\newcommand\scrX{\mathcal{X}}
+\newcommand\scrC{\mathcal{C}}
+\newcommand\interVal[1]{[\underline{#1}, \overline{#1}]}
+\newcommand\HIDE[1]{}
+
+
+\newcommand{\HErr}{\mathcal{X}_{f}}
+\newcommand\Eq{\mathsf{Eq}}
+\newcommand\Ineq{\mathsf{Ineq}}
+%\newcommand \setof[1] { \left\{ #1 \right \}}
+%\newcommand \vx {\vec{x}}
+%\newcommand \vy {\vec{y}}
+%\newcommand \vz {\vec{z}}
+%\newcommand \vu {\vec{u}}
+\newcommand \vb{\vec{b}}
+%\newcommand \pdiff[2] { \ensuremath \frac{\partial #1}{\partial #2}}
+%\newcommand \reach[1]{\mathsf{Reach}(#1)}
+
+
+\newcommand{\vertexSetD}{V^\delta}
+\newcommand{\edgeSetD}{E^\delta}
+\newcommand{\graphVE}[1]{\mathbf{G_{#1}(\vertexSet,\edgeSet)}}
+\newcommand{\graphD}[1]{\mathbf{G^\delta_{#1}(\vertexSet^\delta,\edgeSet^\delta)}}
+
+
+
+% plant and controller
+
+\newcommand\pgm{\rho}
+%\newcommand\outputs{Y}
+%\newcommand\locs{L}
+%\newcommand\sloc{l_i}
+%\newcommand\eloc{l_o}
+%\newcommand\op{op}
+%\newcommand\expr{E}
+
+
+\newcommand\symMem{\mu}
+\newcommand\CFG{\Pi}
+\newcommand\pLocs{L}
+\newcommand\pEdges{E}
+\newcommand\pLabels{\Phi}
+\newcommand\pEdge[1]{edge(#1)}
+\newcommand\pVars{\mathcal{V}}
+\newcommand\pVar{v}
+\newcommand\pTransRel{\rho}
+\newcommand\pLoc{l}
+\newcommand\pLocI{l_0}
+\newcommand\pLocF{l_f}
+\newcommand\pVarI{V_0}
+\newcommand\pPaths{\mathcal{P}}
+\newcommand\pPath{p}
+\newcommand\pPathCons{\kappa}
+\newcommand\pCons{\xi}
+\newcommand\pSymMem{\sigma}
+\newcommand{\domain}{\mathcal{D}}
+\newcommand{\pre}{\mathit{pre}}
+\newcommand{\update}{\mathit{update}}
+%TODO: redef?? fixit!
+%\newcommand{\C}{\mathtt{C}}
+
+\newcommand{\sampletime}{{\tau_{s}}}
+
+\newcommand\pgmF{\rho}
+\newcommand\pgmA{\hat{\rho}}
+\newcommand\plantStates{x}
+\newcommand\abstractPlantStates{X}
+\newcommand\controllerOutputs{u}
+\newcommand\controllerStates{s}
+\newcommand\PathCons{\kappa}
+\newcommand\constraints{\psi}
+%TODO: redinfe path...conflicting with prev def
+%\newcommand\Path{\mathcal{P}}
+\newcommand\absState{\mathcal{A}}
+
+\newcommand\ts{\tau_s}
+
+\newcommand\Cix{C_i^x}
+\newcommand\Ciy{C_i^y}
+\newcommand\Ciix{C_{i+1}^x}
+\newcommand\Ciiy{C_{i+1}^y}
+% \newcommand\si{s_i}    %conflicts with package siuntix
+\newcommand\sii{s_{i+1}}
+\newcommand\ui{u_i}
+\newcommand\uii{u_{i+1}}
+\newcommand\sip[1]{s_{i}^{p_{#1}}}
+\newcommand\uip[1]{u_{i}^{p_{#1}}}
+\newcommand\siip[1]{s_{i+1}^{p_{#1}}}
+\newcommand\uiip[1]{u_{i+1}^{p_{#1}}}
+\newcommand\kpi{\kappa^{p_i}}
+
+
+\renewcommand{\Si}{S_i}
+%\newcommand\Si{S_i}
+\newcommand\Sii{S_{i+1}}
+\newcommand\Ui{U_i}
+\newcommand\Uii{U_{i+1}}
+\newcommand\Sip[1]{S_{i}^{p_{#1}}}
+\newcommand\Uip[1]{U_{i}^{p_{#1}}}
+\newcommand\Siip[1]{S_{i+1}^{p_{#1}}}
+\newcommand\Uiip[1]{U_{i+1}^{p_{#1}}}
+
+\newcommand \ctrl{\mathsc{ctrl}}
+\newcommand\quant{\mathsc{Quant}}
+\newcommand\sample{\mathsc{Sample}}
+
+\newcommand\TrajOpt{TrajOpt\;}
+
+\newcommand{\cellequivalence}{\equiv_{\scr{C}}}
+\newcommand{\vk}{\mathbf{k}}

@@ -1,0 +1,90 @@
+Given a model, white box or black box, obtain its $\simulate$
+function.
+
+What and Why?
+\begin{itemize}
+    \item Verification/falsification approaches use model
+        based on symbolic dynamics. SCAM finds falsifications using
+        only simulations. Can we find an approach which is of
+        intermediate complexity by recovering some model of the system
+        from observed simulations? We can use local PWA modeling:
+        linear regression/relationalization/PWA models/Z3.
+    \item Can we also further combine the above ideas in ways more
+          than one? SCAMR.
+\end{itemize}
+
+How?
+\begin{itemize}
+    \item SCAM.\\
+          Searches for an abstract path: sequence of cells.
+          Repeatedly refnines the abstraction till a concretization is
+          found.
+    \item PWA modeling.\\
+          Build local PWA models of the system by discretizing space
+          and time. Use an SMT solver to check time bounded
+          properties (Bounded model checking).
+          Can use flow* or learning (regression) to find a
+          local PWA models.
+    \item SCAMR (SCAM + Relationalization).\\
+          Use SCAM to prune away regions in state space and `zoom in'
+          to the abstract paths. Can use multiple iterations.
+          Collect the abstract paths/subgraph and find local PWA
+          models describing the evolution of the system along these
+          paths. Thus, we use SCAM as a coarse pruning approach and
+          then build PWA models for a restricted part of the state
+          space. This provides a balance between a purely simulation
+          based search and a model based seach.
+\end{itemize}
+
+% What deficiencies are we addressing here of the current appraoches?
+% (SCAM, S-Taliro, etc)
+
+\subsection{Building a Model} We would like to build a model of the
+system that is amenable to falsification (or verification in the case
+of white-box systems). A naive solution would be to describe all the
+behaviors of the system using a PWA model, where each region on the
+state space is associated with a set of affine dynamics. Such a
+discretization of the cintinuous hybrid dynamical system is amenable
+to model checking and has been explored in the past in several
+works~\cite{}. The problem lies in the scalability. Depending upon the
+dynamics of the system, an intractable number of paritions might be
+necessary to get accurate enough PWA model. Moreover, identifying such
+paritions automatically is a hard problem~\cite{} (check nimit's paper
+for citations).
+
+To address these concerns, we want to model only the relevant system
+behaviors with respect to the given property. We can use a fast and
+approximate technique like SCAM to identify abstract counterexamples
+from a grid based abstraction of chosen coarseness. These are a
+sequence of cells in the state space. For every abstract path, we
+model the associated system behaviors using PWA models. In other
+words, we find affine relations $\Map{i,j}$ which relate the concrete
+states in in one region to the states in another region $\delta_t$
+time units apart.
+
+Once we have paths in the state space, we need to find relations
+describing the edges (transitions) between abstract states. These
+relate the concrete states of one region to another consecutive
+region. The relations can be found using different techniques. If a
+white-box model is provided, a symbolic reachability tool like flow*
+can be used to To find sound relations. If not, then statistical
+methods like regression can be used to train an affine model using
+simulations (training data) and its error can be approximated by
+testing it against a larger set of data (test set).
+
+
+\subsection{Finding a counterexample} Once we have modeled an abstract
+coutnerexample, finding a concrete path is equivalent to solving a
+liner program. Either we can loop through each path, formulate a
+linear program and check the feasibility. Or, we can represent the
+relevant cells as a finite state discrete transition system on which
+we can perform bounded model checking.
+
+Once a counterexample is found, it still needs to be verified w.r.t.
+the given system. This is essential due to the unaviodable
+discrepencies between the PWA model and given system. Simulations can
+be used for this task. A violation at this stage successfully
+terminates the search for the falsification. Otherwise, being a
+randomized we can repeat our search again, either with the same
+parameters, or with a finer grid based abstraction and an increased
+budget for regression.
