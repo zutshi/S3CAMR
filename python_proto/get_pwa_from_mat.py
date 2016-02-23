@@ -7,8 +7,8 @@ import fileOps as fops
 
 sp.set_printoptions(suppress=True, precision=2)
 
-MODEL_MAT = '../matlab_proto/vdp_model_data_x_1e6.mat'
-PICKLE_FNAME = 'pickled_model'
+MODEL_MAT = '../examples/vdp/vdp_model_data_x_1e6.mat'
+PICKLE_FNAME = '../examples/vdp/pickled_model'
 
 
 def populate():
