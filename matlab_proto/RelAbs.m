@@ -99,7 +99,8 @@ classdef RelAbs
         % returns a flattened model
         % flattened_model = {{P0, M0},...,{Pi,Mi},...{Pn,Mn}}
         function model_flattened = get_flattened_model(obj)
-            m = obj.model;
+            chk = [];
+            m = obj.model.old_model;
             [mr, mc] = size(m);
             model_flattened = cell(mr*mc,1);
             k = 1;
@@ -108,15 +109,17 @@ classdef RelAbs
                     dyn = m{i,j};
                     % ignore any othe rinfo in dyn but A and b
                     model = struct('A', dyn.A, 'b', dyn.b);
-                    c = obj.GA.get_cell_from_idx([i,j]);
+                    c = obj.GA.get_cell_from_idx([i,j], obj.model.offset);
                     crange = obj.GA.getCellRange(c);
+                    chk = [chk; crange'];
                     p = cube2poly(crange);
                     model_flattened{k}.P = p;
                     model_flattened{k}.M = model;
-%                     = {p, dyn_};
                     k = k+1;
                 end
             end
+            max(chk)
+            min(chk)
         end
 
     end

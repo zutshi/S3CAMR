@@ -56,8 +56,9 @@ classdef GridAbstraction
             cellRange = [(X - obj.grid_eps/2)' (X + obj.grid_eps/2)'];
         end
 
-        function c = get_cell_from_idx(obj, idx)
-            c = idx .* obj.grid_eps - obj.grid_eps/2;
+        function c = get_cell_from_idx(obj, idx, offset)
+            c = idx .* obj.grid_eps; % - obj.grid_eps/2;
+            c = c - offset;
         end
 
         function c = concrete2cell(obj, x)

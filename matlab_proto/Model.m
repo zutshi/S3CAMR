@@ -2,6 +2,7 @@ classdef Model
 
     properties
         model;
+        old_model;
         offset;
         % len_array
         la;
@@ -21,6 +22,7 @@ classdef Model
         old_model = Model_old(range, eps, Y(:,1), Y(:,2), X);
         % New function is 3 times slower!
         new_model = obj.Model_new(range, eps, Y, X);
+        obj.old_model = old_model;
 
         obj.model = new_model;
         compare_models(old_model, obj);
