@@ -1,8 +1,11 @@
 import scipy.io as sio
+import scipy as sp
 import pickle
 
 import pwa
 import fileOps as fops
+
+sp.set_printoptions(suppress=True, precision=2)
 
 MODEL_MAT = '../matlab_proto/vdp_model_data_x_1e6.mat'
 PICKLE_FNAME = 'pickled_model'
