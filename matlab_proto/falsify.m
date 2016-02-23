@@ -3,6 +3,8 @@
 % % Stop after 5 abstract paths have been found
 % thresh = 4;
 % tol is inequality tolerence
+% opts.v = verbosity
+% opts.p = plot
 function falsify(N, thresh, tol, opts)
 
 % x0 = [-0.4 0.4; -0.4 0.4];
@@ -29,12 +31,16 @@ RA = RelAbs(model, GA, Range, model_delta_t);
 % RA.verify_model(X, Y1, Y2);
 % return
 
-% simulate_and_test_model(RA);
 
 fprintf('verifying paths...\n')
 my_figure(2)
 hold on
 plot_cell(prop, 'r', opts)
+
+
+%simulate_and_test_model(RA);
+%return
+
 dyn_cons_type = 'inequality';
 if thresh == inf
     get_paths_gen(RA, N, x0, prop, dyn_cons_type, model_delta_t, tol, opts);
@@ -90,10 +96,15 @@ end
 function simulate_and_test_model(RA)
 my_figure(1)
 hold on
-X = genRandVectors(100, [-0.4 0.4; -0.4 0.4]);
+T = 1;
+N = T/RA.delta_t;
+%X = genRandVectors(100, [-0.4 0.4; -0.4 0.4]);
+X = genRandVectors(1, [0.4 0.4; -0.4 -0.4]);
 for i = 1:size(X, 1)
     x = X(i,:);
-    [~,y] = RA.simulate(x, 100);
-    plot(y(:,1), y(:,2));
+    [~,y] = RA.simulate(x, N);
+    plot(y(:,1), y(:,2),'r*');
 end
+[~, y_] = vdp_sim(X, [0 T]);
+plot(y_(:,1), y_(:,2));
 end

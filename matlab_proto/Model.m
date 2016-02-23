@@ -18,10 +18,9 @@ classdef Model
         end
         obj.la = len_array
 
-        tic; old_model = Model_old(range, eps, Y(:,1), Y(:,2), X); toc
-        pause()
-        tic; new_model = obj.Model_new(range, eps, Y, X); toc
-        pause()
+        old_model = Model_old(range, eps, Y(:,1), Y(:,2), X);
+        % New function is 3 times slower!
+        new_model = obj.Model_new(range, eps, Y, X);
 
         obj.model = new_model;
         compare_models(old_model, obj);
@@ -200,5 +199,5 @@ for i = 1:r
         assert(isequal(smo.b, smn.b))
     end
 end
-fprintf('Old and New models are the same!');
+fprintf('Old and New models are the same!\n');
 end
