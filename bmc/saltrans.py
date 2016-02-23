@@ -25,7 +25,7 @@ def sal_dsc(transitions, prop):
     %OUTPUT y1:REAL, y2:REAL
 
     INITIALIZATION
-            x0 IN {{ r : REAL | r >= -0.4 AND r <= 30.4 }} ;
+            x0 IN {{ r : REAL | r >= -0.4 AND r <= 0.4 }} ;
             x1 IN {{ r : REAL | r >= -0.4 AND r <= 0.4 }} ;
 
     TRANSITION
