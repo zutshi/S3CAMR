@@ -66,7 +66,8 @@ classdef Model
                     b(j) = coeffi(end);
                 end
                 dyn = struct('A', A, 'b', b, 'idx', idx);
-                midx = obj.get_flat_idx(sbcl+obj.offset);
+                cidx = (sbcl+obj.offset)./eps
+                midx = obj.get_flat_idx(cidx);
                 model{midx} = dyn;
             end
         end
@@ -120,6 +121,9 @@ end
 
 function s = mySign(X)
 s = abs(X)./X;
+nanIdx = isnan(s);
+% replace sign(0) with 1
+s(nanIdx) = 1; 
 end
 
 function X_snapped = snapToGrid(X,grid_eps)
@@ -129,7 +133,7 @@ X_snapped = round(X_snapped.*1e10)./1e10;
 end
 
 function gridCells = generateCellsFromRange(range, eps)
-    cellRange = snapToGrid(range',eps)'
+    cellRange = snapToGrid(range',eps)';
     dummyGridEps = eps;
     zeroGridEpsIdx = (eps == 0);
     dummyGridEps(zeroGridEpsIdx) = 1;
