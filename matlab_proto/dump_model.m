@@ -20,7 +20,7 @@ eps = [1,1];
 %Range = [min(X)', max(X)'];
 Range = [-2, 2; -8 8];
 fprintf('getting model...\n')
-model = Model(Range, eps, [Y1, Y2], X);
+model = Model(Range, eps, [Y1, Y2], X, 'x');
 
 GA = GridAbstraction(eps);
 RA = RelAbs(model, GA, Range, model_delta_t);
@@ -31,21 +31,23 @@ end
 
 
 function dump_xt()
+SYS_NAME = 'vdp_xt_1e6' ;
+IP_FILE = ['./' SYS_NAME '_data.mat'];
+OP_FILE = ['./' SYS_NAME '_flat_model'];
 
-FILE = './vdp_xt_1e6_data.mat';
-DATA = load(FILE);
+DATA = load(IP_FILE);
 
 X = DATA.Y_summary(:, 1:3);
 Y = DATA.Y_summary(:, 3:4);
 % Create abstraction
-eps = [1,1,0.5];
+eps = [1,1,1];
 %Range = [min(X)', max(X)'];
-Range = [-2, 2; -8 8; 0 1];
+Range = [-1.9999, 1.9999; -7.9999 7.9999; 0 0.9999];
 fprintf('getting model...\n')
-model = Model(Range, eps, Y, X);
+model = Model(Range, eps, Y, X, 'xt');
 
 GA = GridAbstraction(eps);
 RA = RelAbs(model, GA, Range, 0);
-fm = RA.get_flattened_model();
-save([FILE 'flat_model_'], 'fm')
+fm = model.flat();
+save(OP_FILE, 'fm');
 end

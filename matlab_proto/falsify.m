@@ -38,9 +38,6 @@ hold on
 plot_cell(prop, 'r', opts)
 
 
-%simulate_and_test_model(RA);
-%return
-
 dyn_cons_type = 'inequality';
 if thresh == inf
     get_paths_gen(RA, N, x0, prop, dyn_cons_type, model_delta_t, tol, opts);
@@ -91,20 +88,4 @@ for i = 1:length(paths)
     plot(Y_(:,1),Y_(:,2), '*');
     drawnow
 end
-end
-
-function simulate_and_test_model(RA)
-my_figure(1)
-hold on
-T = 1;
-N = T/RA.delta_t;
-%X = genRandVectors(100, [-0.4 0.4; -0.4 0.4]);
-X = genRandVectors(1, [0.4 0.4; -0.4 -0.4]);
-for i = 1:size(X, 1)
-    x = X(i,:);
-    [~,y] = RA.simulate(x, N);
-    plot(y(:,1), y(:,2),'r*');
-end
-[~, y_] = vdp_sim(X, [0 T]);
-plot(y_(:,1), y_(:,2));
 end

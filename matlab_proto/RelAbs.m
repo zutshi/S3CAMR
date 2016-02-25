@@ -30,23 +30,23 @@ classdef RelAbs
             cell_idx = fix((c + obj.model.offset)./obj.GA.grid_eps);
         end
 
-        %% Simulator for the learned discrete dynamical system
-        % Simulates from x for n steps through the system
-        function [n,y] = simulate(obj, x, N)
-            dt = obj.delta_t;
-            nd = length(x);
-            n = 0:1:N * dt;
-            y = zeros(N+1,nd);
-
-            % init y1
-            y(1,:) = x;
-            % compute yi
-            for i = 1:1:N
-                c = obj.GA.concrete2cell(y(i,:));
-                dyn = obj.get_cell_dyn(c);
-                y(i+1,:) = dyn.A * y(i,:)' + dyn.b;
-            end
-        end
+% %         %% Simulator for the learned discrete dynamical system
+% %         % Simulates from x for n steps through the system
+% %         function [n,y] = simulate(obj, x, N)
+% %             dt = obj.delta_t;
+% %             nd = length(x);
+% %             n = 0:1:N * dt;
+% %             y = zeros(N+1,nd);
+% % 
+% %             % init y1
+% %             y(1,:) = x;
+% %             % compute yi
+% %             for i = 1:1:N
+% %                 c = obj.GA.concrete2cell(y(i,:));
+% %                 dyn = obj.get_cell_dyn(c);
+% %                 y(i+1,:) = fix(dyn.A*1000)/1000 * y(i,:)' + fix(dyn.b*1000)/1000;
+% %             end
+% %         end
 
         % Takes in the system model (PWA) and a state: rect hypercube
         % Returns a list of reachable rect hypercubes
@@ -95,32 +95,32 @@ classdef RelAbs
             end
         end
 
-        % dumos the model to a file
-        % returns a flattened model
-        % flattened_model = {{P0, M0},...,{Pi,Mi},...{Pn,Mn}}
-        function model_flattened = get_flattened_model(obj)
-            chk = [];
-            m = obj.model.old_model;
-            [mr, mc] = size(m);
-            model_flattened = cell(mr*mc,1);
-            k = 1;
-            for i = 1:mr
-                for j = 1:mc
-                    dyn = m{i,j};
-                    % ignore any othe rinfo in dyn but A and b
-                    model = struct('A', dyn.A, 'b', dyn.b);
-                    c = obj.GA.get_cell_from_idx([i,j], obj.model.offset);
-                    crange = obj.GA.getCellRange(c);
-                    chk = [chk; crange'];
-                    p = cube2poly(crange);
-                    model_flattened{k}.P = p;
-                    model_flattened{k}.M = model;
-                    k = k+1;
-                end
-            end
-            max(chk)
-            min(chk)
-        end
+% %         % dumos the model to a file
+% %         % returns a flattened model
+% %         % flattened_model = {{P0, M0},...,{Pi,Mi},...{Pn,Mn}}
+% %         function model_flattened = get_flattened_model(obj)
+% %             chk = [];
+% %             m = obj.model.old_model;
+% %             [mr, mc] = size(m);
+% %             model_flattened = cell(mr*mc,1);
+% %             k = 1;
+% %             for i = 1:mr
+% %                 for j = 1:mc
+% %                     dyn = m{i,j};
+% %                     % ignore any othe rinfo in dyn but A and b
+% %                     model = struct('A', dyn.A, 'b', dyn.b);
+% %                     c = obj.GA.get_cell_from_idx([i,j], obj.model.offset);
+% %                     crange = obj.GA.getCellRange(c);
+% %                     chk = [chk; crange'];
+% %                     p = cube2poly(crange);
+% %                     model_flattened{k}.P = p;
+% %                     model_flattened{k}.M = model;
+% %                     k = k+1;
+% %                 end
+% %             end
+% %             max(chk)
+% %             min(chk)
+% %         end
 
     end
 end
