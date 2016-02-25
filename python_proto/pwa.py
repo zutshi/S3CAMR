@@ -54,7 +54,7 @@ class SubModel(object):
 class Partition(object):
     def __init__(self, C, d):
         '''
-        Ax + b <= 0
+        Cx <= d
         '''
         self.C = C
         self.d = d
