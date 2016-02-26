@@ -1,65 +1,87 @@
 classdef RelAbs
-
+    
     properties
         model;
-        GA;
+%         GA;
         %offset;
         delta_t;
+        eps;
     end
-
+    
     %% abstraction functions
     methods
         %% Constructor
-        function obj = RelAbs(m, ga, Range, delta_t)
+        function obj = RelAbs(m, delta_t, eps)
+            obj.eps = eps;
             obj.model = m;
-            obj.GA = ga;
-            %obj.offset = -(min(Range,[],2)' + obj.GA.grid_eps/2) + 1
+            %obj.offset = -(min(Range,[],2)' + Grid.grid_eps/2) + 1
             obj.delta_t = delta_t;
         end
-
+        
         %%
-        function dyn = get_cell_dyn(obj, c)
-            nd = length(c);
-            cell_idx = obj.get_cell_idx(c);
-            %ci = mat2cell(cell_idx, 1, ones(1, nd));
-            dyn = obj.model.get(cell_idx);
+        function sub_model = get_cell_model(obj, c)
+            cell_idx = obj.model.cell2idx(c);
+            sub_model = obj.model.get(cell_idx);
         end
 
-        %%
-        function cell_idx = get_cell_idx(obj, c)
-            cell_idx = fix((c + obj.model.offset)./obj.GA.grid_eps);
+        %% Simulator for the learned discrete dynamical system
+        % Simulates from x for n steps through the system
+        function [n,y] = simulate(obj, x, TN, model_type)
+            if strcmp(model_type, 'xt')
+                N = TN;
+                
+                dt = 0.01; %obj.delta_t;
+                
+                
+                nd = size(x,2);
+                n = (0:1:N) * dt;
+                y = zeros(N+1,nd);
+                % init y1
+                y(1,:) = x;
+                % compute yi
+                for i = 1:1:N
+                    %y(i,:)
+                    yt = [y(i,:) dt];
+                    c = Grid.concrete2cell(yt, obj.eps);
+                    sub_model = obj.get_cell_model(c);
+                    %                     assert(all(sub_model.sbcl == c));
+                    assert(sub_model.empty == false);
+                    assert(all(yt' >= sub_model.P(:,1) & yt' <= sub_model.P(:,2)));
+                    dyn = sub_model.M;
+                    y(i+1,:) = (dyn.A * yt' + dyn.b);
+                end
+            else% strcmp(obj.model_type, 'x')
+                N = TN;
+                dt = obj.delta_t;
+                nd = length(x);
+                n = (0:1:N) * dt;
+                y = zeros(N+1,nd);
+                
+                % init y1
+                y(1,:) = x;
+                % compute yi
+                for i = 1:1:N
+                    c = Grid.concrete2cell(y(i,:), obj.eps);
+                    sub_model = obj.get_cell_model(c);
+                    dyn = sub_model.M;
+                    y(i+1,:) = fix(dyn.A*1000)/1000 * y(i,:)' + fix(dyn.b*1000)/1000;
+                end
+            end
         end
-
-% %         %% Simulator for the learned discrete dynamical system
-% %         % Simulates from x for n steps through the system
-% %         function [n,y] = simulate(obj, x, N)
-% %             dt = obj.delta_t;
-% %             nd = length(x);
-% %             n = 0:1:N * dt;
-% %             y = zeros(N+1,nd);
-% % 
-% %             % init y1
-% %             y(1,:) = x;
-% %             % compute yi
-% %             for i = 1:1:N
-% %                 c = obj.GA.concrete2cell(y(i,:));
-% %                 dyn = obj.get_cell_dyn(c);
-% %                 y(i+1,:) = fix(dyn.A*1000)/1000 * y(i,:)' + fix(dyn.b*1000)/1000;
-% %             end
-% %         end
-
+        
+        
         % Takes in the system model (PWA) and a state: rect hypercube
         % Returns a list of reachable rect hypercubes
         function S_ = compute_next_states(obj, s)
             S_ = {};
             % get all cells which intersect with the given hypercube
-            C = obj.GA.generateCellsFromRange(s.x);
-
+            [~,C] = Grid.generateCellsFromRange(s.x, obj.eps);
+            
             % for each region of the cube which intersects a different cell
             % (assumes that every cell has different dynamics for convinience)
             for i = 1:size(C,1)
                 c = C(i,:);
-                crange = obj.GA.getCellRange(c);
+                crange = Grid.getCellRange(c, obj.eps);
                 % Find the intersection with s
                 intersection_cube = Cube.getIntersection(crange, s.x);
                 assert(~isempty(intersection_cube));
@@ -70,8 +92,8 @@ classdef RelAbs
                 S_ = [S_ struct('x', y_, 'n', s.n+1, 'path', [s.path; c])];
             end
         end
-
-
+        
+        
         %% Computes mean/max error between the given data and the
         % relationalized model
         function verify_model(obj, X, Y1, Y2)
@@ -94,33 +116,5 @@ classdef RelAbs
                 end
             end
         end
-
-% %         % dumos the model to a file
-% %         % returns a flattened model
-% %         % flattened_model = {{P0, M0},...,{Pi,Mi},...{Pn,Mn}}
-% %         function model_flattened = get_flattened_model(obj)
-% %             chk = [];
-% %             m = obj.model.old_model;
-% %             [mr, mc] = size(m);
-% %             model_flattened = cell(mr*mc,1);
-% %             k = 1;
-% %             for i = 1:mr
-% %                 for j = 1:mc
-% %                     dyn = m{i,j};
-% %                     % ignore any othe rinfo in dyn but A and b
-% %                     model = struct('A', dyn.A, 'b', dyn.b);
-% %                     c = obj.GA.get_cell_from_idx([i,j], obj.model.offset);
-% %                     crange = obj.GA.getCellRange(c);
-% %                     chk = [chk; crange'];
-% %                     p = cube2poly(crange);
-% %                     model_flattened{k}.P = p;
-% %                     model_flattened{k}.M = model;
-% %                     k = k+1;
-% %                 end
-% %             end
-% %             max(chk)
-% %             min(chk)
-% %         end
-
     end
 end

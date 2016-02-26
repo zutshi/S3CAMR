@@ -6,19 +6,19 @@ classdef Model
         offset;
         % len_array
         la;
+        model_type;
+        eps;
     end
     methods
         function obj = Model(range, eps, Y, X, model_type)
-            sub_cells = generateCellsFromRange(range, eps);
-            %             max(sub_cells)
-            %             min(sub_cells)
+            obj.eps = eps;
+            [rangeMat, sub_cells] = Grid.generateCellsFromRange(range, eps);
+            r_ = [];
+            for i = 1:length(rangeMat)
+                r_ = [r_ length(rangeMat{i})];
+            end
             
-            % num of elements in each dim
-            cmin = snapToGrid(range(:,1)', eps);
-            cmax = snapToGrid(range(:,2)', eps);
-            % num_paritions
-            r_ = (cmax-cmin)./eps + 1;
-            obj.offset = -min(sub_cells) + 1;
+            obj.offset = -min(sub_cells);
             obj.la = r_;
             new_model = obj.Model_new(sub_cells, eps, Y, X);
             obj.model = new_model;
@@ -38,11 +38,18 @@ classdef Model
             
             for i = 1:size(sub_cells,1)
                 sbcl = sub_cells(i,:);
-                LB = sbcl - eps/2;
-                UB = sbcl + eps/2;
-                
+                crange = Grid.getCellRange(sbcl, eps);
+                LB = crange(:, 1)';
+                UB = crange(:, 2)';
                 idx = find(all(X >= repmat(LB,ns,1) & X <= repmat(UB,ns,1), 2));
-                
+                midx = obj.cell2idx(sbcl);
+                model{midx}.P = crange;
+                model{midx}.sbcl = sbcl;
+                if isempty(idx)
+                    warning('empty idx')
+                    model{midx}.empty = true;
+                    continue
+                end
                 xi = X(idx, :);
                 yi = Y(idx, :);
                 nidx = length(idx);
@@ -57,13 +64,18 @@ classdef Model
                     b(j) = coeffi(end);
                 end
                 dyn = struct('A', A, 'b', b);
-                cidx = (sbcl+obj.offset)./eps;
-                midx = obj.get_flat_idx(cidx);
-                crange = getCellRange(sbcl, eps);
-                model{midx} = struct('P', crange, 'M', dyn, 'idx', idx);
+                model{midx}.M = dyn;
+                model{midx}.empty = false;
+                %                 model{midx}.idx = idx;
+                
+                %                 model{midx} = struct('P', crange, 'M', dyn, 'idx', idx);
             end
         end
         
+        function midx = cell2idx(obj, c)
+            cidx = (c+obj.offset)./obj.eps  + 1;
+            midx = obj.get_flat_idx(cidx);
+        end
         function dyn = get_old(obj, ci)
             dyn = obj.model{ci{:}};
         end
@@ -83,8 +95,8 @@ classdef Model
         
         function fidx = get_flat_idx(obj, k)
             %         c = mat2cell(k,1,ones(1,length(k)));
-            c = num2cell(k);            
-            fidx = sub2ind(obj.la, c{:});
+            c = num2cell(k);
+            fidx = round(sub2ind(obj.la, c{:}));
         end
         
         %function ndix = get_mult_dim_idx(obj, k, clar)
@@ -97,100 +109,30 @@ classdef Model
         % get a flattened model to dump a file
         % flattened_model = {{P0, M0},...,{Pi,Mi},...{Pn,Mn}}
         function flattened = flat(obj)
-%             chk = [];
+            chk = [];
             M = obj.model;
             num_sub_models = length(M);
             flattened = cell(1,num_sub_models);
             for k = 1:num_sub_models
                 m_k = M{k};
+                if m_k.empty
+                    continue
+                end
                 % translate the cube partition to a polyhedral partition
                 pp = cube2poly(m_k.P);
-%                 chk = [chk; m_k.P'];
+                chk = [chk; m_k.P'];
                 flattened{k}.P = pp;
                 flattened{k}.M = m_k.M;
             end
-%             max(chk);
-%             min(chk);
+            max(chk)
+            min(chk)
         end
-        %% Simulator for the learned discrete dynamical system
-        % Simulates from x for n steps through the system
-        function [n,y] = simulate(obj, x, N)
-            dt = obj.delta_t;
-            nd = length(x);
-            n = 0:1:N * dt;
-            y = zeros(N+1,nd);
-            
-            % init y1
-            y(1,:) = x;
-            % compute yi
-            for i = 1:1:N
-                c = obj.GA.concrete2cell(y(i,:));
-                dyn = obj.get_cell_dyn(c);
-                y(i+1,:) = fix(dyn.A*1000)/1000 * y(i,:)' + fix(dyn.b*1000)/1000;
-            end
-        end
+        
+        
     end
 end
 
-function cellRange = getCellRange(X, eps)
-cellRange = [(X - eps/2)' (X + eps/2)'];
-end
 
-function gridCells = flat_iter(cellRange, eps)
-nd = size(cellRange, 1);
-assert(size(cellRange, 2) == 2);
-H = cell(1,nd);
-rangeMat = cell(1,nd);
-for i = 1:nd
-    rangeMat{i} = cellRange(i,1):eps(i):cellRange(i,2);
-end
-[H{:}] = ndgrid(rangeMat{:});
-gridCells = [];
-for i = 1:nd
-    gridCells = [gridCells H{i}(:)];
-end
-end
-
-function s = mySign(X)
-s = abs(X)./X;
-nanIdx = isnan(s);
-% replace sign(0) with 1
-s(nanIdx) = 1;
-end
-
-function X_snapped = snapToGrid(X,grid_eps)
-grid_eps_mat = repmat(grid_eps,size(X,1),1);
-X_snapped = mySign(X).*(fix(abs(X)./grid_eps_mat).*grid_eps_mat + grid_eps_mat/2);
-X_snapped = round(X_snapped.*1e10)./1e10;
-end
-
-function gridCells = generateCellsFromRange(range, eps)
-% cellRange = expand_interval(snapToGrid(range',eps), eps);
-warning('underapproximating!')
-cellRange = snapToGrid(range',eps)';
-dummyGridEps = eps;
-zeroGridEpsIdx = (eps == 0);
-dummyGridEps(zeroGridEpsIdx) = 1;
-% sanity check
-if range(zeroGridEpsIdx,1) ~= range(zeroGridEpsIdx,2)
-    error('unhandled condition, grid_eps is 0 but range is non-zero measure')
-end
-
-numDim = size(cellRange,1);
-H = cell(1,numDim);
-rangeMat = cell(1,numDim);
-for i = 1:numDim
-    rangeMat{i} = cellRange(i,1):dummyGridEps(i):cellRange(i,2);
-end
-
-[H{:}] = ndgrid(rangeMat{:});
-gridCells = [];
-for i = 1:numDim
-    gridCells = [gridCells H{i}(:)];
-end
-
-gridCells = round(gridCells.*1e10)./1e10;
-end
 
 function model = Model_old(Range, eps, Y1, Y2, X)
 

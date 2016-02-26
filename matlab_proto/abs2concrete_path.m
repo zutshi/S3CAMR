@@ -55,7 +55,7 @@ b = [];
 LB = x0(:,1);
 UB = x0(:,2);
 
-c0 = RA.GA.generateCellsFromRange(x0);
+[~,c0] = RA.GA.generateCellsFromRange(x0);
 assert(size(c0,1)==1);
 dyn0 = RA.get_cell_dyn(c0);
 cA = {dyn0.A};
