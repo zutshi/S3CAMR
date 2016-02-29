@@ -1,5 +1,5 @@
 % Expects cell sequences and ranges for x0 and prop
-function Y = abs2concrete_path(RA, abs_path, x0, prop, dyn_cons_type, eps)
+function [Y,e] = abs2concrete_path(RA, abs_path, x0, prop, dyn_cons_type, tol)
 
 % dynamics should be encoded as 'inequality' or 'equality'?
 EQ = 'equality';
@@ -10,7 +10,7 @@ Y = [];
 nd = size(x0, 1);
 l = size(abs_path, 1) + 2;
 
-[AA,bb,LB,UB] = get_constraints(RA, abs_path, x0, prop, l, nd);
+[AA,bb,LB,UB,cA,B] = get_constraints(RA, abs_path, x0, prop, l, nd);
 f = zeros(l*nd, 1);
 
 % relax the constraints a bit
@@ -19,20 +19,22 @@ f = zeros(l*nd, 1);
 if strcmp(dyn_cons_type, EQ)
     A = []; b = [];
     Aeq = AA; beq = bb;
+    e = 0;
 elseif strcmp(dyn_cons_type, INEQ)
     Aeq = []; beq = [];
     % Modify Equality constraints to inequality as follows
     % Ax = b => Ax <= b /\ -Ax <= -b
-    [A,b] = eq2ineq(AA, bb, nd, eps);
+    [A,b] = eq2ineq(AA, bb, nd, tol);
 else
     error('unknown option %s\n', dyn_cons_type);
 end
 
-options = optimoptions('linprog','Algorithm','dual-simplex');
+options = optimoptions('linprog','Algorithm','dual-simplex', 'TolCon', 1e-8);
 [X,fval,exitflag] = linprog(f,A,b,Aeq,beq,LB,UB,[],options);
 if exitflag == 1
     fprintf('path found in RA\n');
     Y = reshape(X,nd,length(X)/nd)';
+    e = compute_used_tol(Y,cA,B);
 elseif exitflag == -2
     fprintf('path infeasible in RA\n');
 else
@@ -40,7 +42,25 @@ else
 end
 end
 
-function [Aeq,beq,LB,UB] = get_constraints(RA, abs_path, x0, prop, l, nd)
+function e = compute_used_tol(Y,cA,B)
+% num dim
+nd = size(Y,2);
+
+% trace length
+n = size(Y,1)-1;
+
+% reshape B to make computations easy
+B = reshape(B,nd,size(B,1)/nd)';
+
+e = zeros(n,nd);
+for i = 1:n
+    x_ = cA{i}*Y(i,:)' + B(i,:)';
+    e(i,:) = Y(i+1,:) - x_';
+end
+end
+
+% returns cA and B for debug info
+function [Aeq,beq,LB,UB,cA,B] = get_constraints(RA, abs_path, x0, prop, l, nd)
 %% Problem setup
 % [A0nxn  -Inxn  0nxn   0nxn] [X0]    [b0]
 % [ 0nxn  A1nxn  -Inxn  0nxn] [X1] = -[b1]
@@ -55,19 +75,21 @@ b = [];
 LB = x0(:,1);
 UB = x0(:,2);
 
-[~,c0] = RA.GA.generateCellsFromRange(x0);
+[~,c0] = Grid.generateCellsFromRange(x0, RA.eps);
 assert(size(c0,1)==1);
-dyn0 = RA.get_cell_dyn(c0);
+sm0 = RA.get_cell_model(c0);
+dyn0 = sm0.M;
 cA = {dyn0.A};
 B = [dyn0.b];
 
 %% Add the rest of the cells
 for i = 1:l-2
     c = abs_path(i,:);
-    dyn = RA.get_cell_dyn(c);
+    sub_model = RA.get_cell_model(c);
+    dyn = sub_model.M;
     cA = [cA dyn.A];
     B = [B; dyn.b];
-    crange = RA.GA.getCellRange(c);
+    crange = Grid.getCellRange(c, RA.eps);
     LB = [LB; crange(:,1)];
     UB = [UB; crange(:,2)];
 end

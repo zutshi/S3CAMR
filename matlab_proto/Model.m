@@ -20,12 +20,12 @@ classdef Model
             
             obj.offset = -min(sub_cells);
             obj.la = r_;
-            new_model = obj.Model_new(sub_cells, eps, Y, X);
+            new_model = obj.get_model(sub_cells, eps, Y, X);
             obj.model = new_model;
             obj.model_type = model_type;
         end
         
-        function model = Model_new(obj, sub_cells, eps, Y, X)
+        function model = get_model(obj, sub_cells, eps, Y, X)
             % num_samples, input dim
             [ns, ndi] = size(X);
             % num_samples_Y, output dim
@@ -76,10 +76,7 @@ classdef Model
             cidx = (c+obj.offset)./obj.eps  + 1;
             midx = obj.get_flat_idx(cidx);
         end
-        function dyn = get_old(obj, ci)
-            dyn = obj.model{ci{:}};
-        end
-        
+
         function dyn = get(obj, k)
             %cell_idx = obj.get_cell_idx(c);
             %k = cell2mat(ci);
@@ -134,53 +131,58 @@ end
 
 
 
-function model = Model_old(Range, eps, Y1, Y2, X)
+% function model = Model_old(Range, eps, Y1, Y2, X)
+% 
+% [num_points, num_dims] = size(X);
+% 
+% nr = (Range(1,2) - Range(1,1))/eps(1);
+% nc = (Range(2,2) - Range(2,1))/eps(2);
+% num_paritions = nr*nc;
+% model = cell(nr, nc);
+% 
+% % TODO: Replace by NDGRID
+% i_ = 1;
+% j_ = 1;
+% for i = Range(1,1):eps(1):Range(1,2)-eps(1)
+%     for j = Range(2,1):eps(2):Range(2,2)-eps(2)
+%         idx = find(X(:,1) >= i & X(:,1) <= i+eps(1) & X(:,2) >= j & X(:,2) <= j+eps(2));
+%         y1 = Y1(idx);
+%         y2 = Y2(idx);
+%         x = X(idx, :);
+%         % append a column of ones to make the regress function compute
+%         % b in Ax + b
+%         x_ones = [x ones(size(x,1),1)];
+%         b1 = regress(y1, x_ones);
+%         b2 = regress(y2, x_ones);
+%         %         A = [b1(1:end-1,1) b2(1:end-1,1)];
+%         %         b = [b1(end); b2(end)];
+%         A = [b1(1:end-1) b2(1:end-1)]';
+%         b = [b1(end); b2(end)];
+%         dyn = struct('A', A, 'b', b, 'idx', idx);
+%         model{i_, j_} = dyn;
+%         j_ = j_ + 1;
+%     end
+%     i_ = i_ + 1;
+%     j_ = 1;
+% end
+% end
+% 
+% function compare_models(old_model, new_model)
+% [r,c] = size(old_model);
+% assert(r*c == length(new_model.model));
+% for i = 1:r
+%     for j = 1:c
+%         smo = old_model{r,c};
+%         smn = new_model.get([r,c]);
+%         assert(isequal(smo.idx,smn.idx))
+%         assert(isequal(smo.A, smn.A))
+%         assert(isequal(smo.b, smn.b))
+%     end
+% end
+% fprintf('Old and New models are the same!\n');
+% end
 
-[num_points, num_dims] = size(X);
 
-nr = (Range(1,2) - Range(1,1))/eps(1);
-nc = (Range(2,2) - Range(2,1))/eps(2);
-num_paritions = nr*nc;
-model = cell(nr, nc);
-
-% TODO: Replace by NDGRID
-i_ = 1;
-j_ = 1;
-for i = Range(1,1):eps(1):Range(1,2)-eps(1)
-    for j = Range(2,1):eps(2):Range(2,2)-eps(2)
-        idx = find(X(:,1) >= i & X(:,1) <= i+eps(1) & X(:,2) >= j & X(:,2) <= j+eps(2));
-        y1 = Y1(idx);
-        y2 = Y2(idx);
-        x = X(idx, :);
-        % append a column of ones to make the regress function compute
-        % b in Ax + b
-        x_ones = [x ones(size(x,1),1)];
-        b1 = regress(y1, x_ones);
-        b2 = regress(y2, x_ones);
-        %         A = [b1(1:end-1,1) b2(1:end-1,1)];
-        %         b = [b1(end); b2(end)];
-        A = [b1(1:end-1) b2(1:end-1)]';
-        b = [b1(end); b2(end)];
-        dyn = struct('A', A, 'b', b, 'idx', idx);
-        model{i_, j_} = dyn;
-        j_ = j_ + 1;
-    end
-    i_ = i_ + 1;
-    j_ = 1;
-end
-end
-
-function compare_models(old_model, new_model)
-[r,c] = size(old_model);
-assert(r*c == length(new_model.model));
-for i = 1:r
-    for j = 1:c
-        smo = old_model{r,c};
-        smn = new_model.get([r,c]);
-        assert(isequal(smo.idx,smn.idx))
-        assert(isequal(smo.A, smn.A))
-        assert(isequal(smo.b, smn.b))
-    end
-end
-fprintf('Old and New models are the same!\n');
-end
+%         function dyn = get_old(obj, ci)
+%             dyn = obj.model{ci{:}};
+%         end

@@ -12,5 +12,5 @@ end
 end
 
 function y = disable_fig()
-y = 1;
+y = 0;
 end

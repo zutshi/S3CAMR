@@ -45,25 +45,25 @@ end
         while ~workq.empty()
             s = workq.pop();
             
-            if VERBOSE
+            if VERBOSE > 3
                 fprintf('parent state: pausing...\n');
                 pause();
             end
             if PLT
                 cidx = 1+mod(cidx, length(colors));
-                plot_cell(s.x,colors(cidx));
+                plot_cell(s.x,colors(cidx),opts);
             end
             
     S_ = RA.compute_next_states(s);
             for i = 1:length(S_);
                 s_ = S_{i};
                 
-                if VERBOSE
+                if VERBOSE > 3
                     fprintf('child state: pausing...\n');
                     pause();
                 end
                 if PLT
-                    plot_cell(s_.x,colors(cidx));
+                    plot_cell(s_.x,colors(cidx),opts);
                 end
                 
                 

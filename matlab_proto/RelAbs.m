@@ -2,7 +2,7 @@ classdef RelAbs
     
     properties
         model;
-%         GA;
+        %         GA;
         %offset;
         delta_t;
         eps;
@@ -23,17 +23,22 @@ classdef RelAbs
             cell_idx = obj.model.cell2idx(c);
             sub_model = obj.model.get(cell_idx);
         end
-
+        
         %% Simulator for the learned discrete dynamical system
         % Simulates from x for n steps through the system
-        function [n,y] = simulate(obj, x, TN, model_type)
-            if strcmp(model_type, 'xt')
-                N = TN;
+        function [n,y] = simulate(obj, x, N, model_type, tol)
+            nd = size(x,2);
+            if length(tol)>1
+                assert(size(tol,1) == N);
+                assert(size(tol,2) == nd);
+                e = tol;
+            else
+                e = tol*(2*rand(N,nd)-1);
+            end
+            
+            if strcmp(model_type, 'xt')                
+                dt = 0.0099; %obj.delta_t;
                 
-                dt = 0.01; %obj.delta_t;
-                
-                
-                nd = size(x,2);
                 n = (0:1:N) * dt;
                 y = zeros(N+1,nd);
                 % init y1
@@ -44,16 +49,16 @@ classdef RelAbs
                     yt = [y(i,:) dt];
                     c = Grid.concrete2cell(yt, obj.eps);
                     sub_model = obj.get_cell_model(c);
-                    %                     assert(all(sub_model.sbcl == c));
+                    %assert(all(sub_model.sbcl == c));
                     assert(sub_model.empty == false);
                     assert(all(yt' >= sub_model.P(:,1) & yt' <= sub_model.P(:,2)));
                     dyn = sub_model.M;
-                    y(i+1,:) = (dyn.A * yt' + dyn.b);
+                    % y = A*x + b +- e
+                    y(i+1,:) = (dyn.A * yt' + dyn.b + e(i,:)');
                 end
-            else% strcmp(obj.model_type, 'x')
-                N = TN;
+                % strcmp(obj.model_type, 'x')
+            else
                 dt = obj.delta_t;
-                nd = length(x);
                 n = (0:1:N) * dt;
                 y = zeros(N+1,nd);
                 
@@ -64,7 +69,8 @@ classdef RelAbs
                     c = Grid.concrete2cell(y(i,:), obj.eps);
                     sub_model = obj.get_cell_model(c);
                     dyn = sub_model.M;
-                    y(i+1,:) = fix(dyn.A*1000)/1000 * y(i,:)' + fix(dyn.b*1000)/1000;
+                    y(i+1,:) = dyn.A * y(i,:)' + dyn.b + e(i,:)';
+                    %y(i+1,:) = fix(dyn.A*1000)/1000 * y(i,:)' + fix(dyn.b*1000)/1000;
                 end
             end
         end
@@ -86,7 +92,8 @@ classdef RelAbs
                 intersection_cube = Cube.getIntersection(crange, s.x);
                 assert(~isempty(intersection_cube));
                 Cube.sanity_check_cube(intersection_cube);
-                dyn = obj.get_cell_dyn(c);
+                sub_model = obj.get_cell_model(c);
+                dyn = sub_model.M;
                 x_ = Cube.lin_transform_cube(intersection_cube, dyn);
                 y_ = Cube.vertices2aligned_constraints(x_);
                 S_ = [S_ struct('x', y_, 'n', s.n+1, 'path', [s.path; c])];
