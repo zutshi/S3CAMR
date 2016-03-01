@@ -1,20 +1,12 @@
-function dump_model()
+function dump_model(SYS_NAME)
 % SYS_NAME = 'vdp_x_1e6';
-SYS_NAME = 'vdp_xt_1e6' ;
+% SYS_NAME = 'vdp_xt_1e7' ;
+% SYS_NAME = 'vdp_xt_1e6' ;
 
-% model_delta_t = 0.01;
-% X = DATA.Y_summary(:, 1:2);
-% Y = DATA.Y_summary(:, 3:4);
-%
-% X = DATA.Y_summary(:, 1:3);
-% Y = DATA.Y_summary(:, 4:5);
-% % model_type
-% model_delta_t
-% Range
+ALL_FILE = FileNames.all_file_name(SYS_NAME);
+MODEL_FILE = FileNames.model_file_name(SYS_NAME);
+IP_FILE = FileNames.ip_file_name(SYS_NAME);
 
-IP_FILE = ['./' SYS_NAME '_data.mat'];
-MODEL_FILE = ['./' SYS_NAME '_flat_model'];
-ALL_FILE = ['./' SYS_NAME '_all'];
 Data = load(IP_FILE);
 
 
@@ -22,8 +14,14 @@ Data = load(IP_FILE);
 % if model is xt
 if isnan(Data.model_delta_t)
     model_type = 'xt';
-    eps = [1,1,0.01];
-    Range = [-1.9999, 1.9999; -7.9999 7.9999; 0 0.00999];
+%     eps = [1,1,0.01];
+%     eps = [0.2,0.2,0.01];
+%     Range = [-1.9999, 1.9999; -7.9999 7.9999; 0 0.00999];
+
+
+    Range = [-1.9999, 1.9999; -7.9999 7.9999; 0 0.4999];
+    eps = [0.5,0.2,0.05];
+    
 else
     model_type = 'x';
     eps = [1,1];

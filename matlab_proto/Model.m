@@ -8,9 +8,11 @@ classdef Model
         la;
         model_type;
         eps;
+        range;
     end
     methods
         function obj = Model(range, eps, Y, X, model_type)
+            obj.range = range;
             obj.eps = eps;
             [rangeMat, sub_cells] = Grid.generateCellsFromRange(range, eps);
             r_ = [];
@@ -26,6 +28,8 @@ classdef Model
         end
         
         function model = get_model(obj, sub_cells, eps, Y, X)
+            MIN_NUM_DATA_PTS = 10;
+            
             % num_samples, input dim
             [ns, ndi] = size(X);
             % num_samples_Y, output dim
@@ -36,7 +40,12 @@ classdef Model
             % create a flat array
             model = cell(1,np);
             
-            for i = 1:size(sub_cells,1)
+            textprogressbar('computing models: ');
+            num_sub_cells = size(sub_cells,1);
+            for i = 1:num_sub_cells
+                % update progress
+                textprogressbar(i*100/num_sub_cells);
+                
                 sbcl = sub_cells(i,:);
                 crange = Grid.getCellRange(sbcl, eps);
                 LB = crange(:, 1)';
@@ -50,6 +59,7 @@ classdef Model
                     model{midx}.empty = true;
                     continue
                 end
+                assert(length(idx)>MIN_NUM_DATA_PTS)
                 xi = X(idx, :);
                 yi = Y(idx, :);
                 nidx = length(idx);
@@ -70,6 +80,7 @@ classdef Model
                 
                 %                 model{midx} = struct('P', crange, 'M', dyn, 'idx', idx);
             end
+            textprogressbar('done');
         end
         
         function midx = cell2idx(obj, c)

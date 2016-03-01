@@ -26,7 +26,7 @@ classdef RelAbs
         
         %% Simulator for the learned discrete dynamical system
         % Simulates from x for n steps through the system
-        function [n,y] = simulate(obj, x, N, model_type, tol)
+        function [n,y] = simulate(obj, x, N, model_type, tol, dt)
             nd = size(x,2);
             if length(tol)>1
                 assert(size(tol,1) == N);
@@ -36,8 +36,8 @@ classdef RelAbs
                 e = tol*(2*rand(N,nd)-1);
             end
             
-            if strcmp(model_type, 'xt')                
-                dt = 0.0099; %obj.delta_t;
+            if strcmp(model_type, 'xt')
+                %                 dt = 0.0099;
                 
                 n = (0:1:N) * dt;
                 y = zeros(N+1,nd);
@@ -45,22 +45,32 @@ classdef RelAbs
                 y(1,:) = x;
                 % compute yi
                 for i = 1:1:N
-                    %y(i,:)
                     yt = [y(i,:) dt];
-                    c = Grid.concrete2cell(yt, obj.eps);
-                    sub_model = obj.get_cell_model(c);
-                    %assert(all(sub_model.sbcl == c));
-                    assert(sub_model.empty == false);
-                    assert(all(yt' >= sub_model.P(:,1) & yt' <= sub_model.P(:,2)));
-                    dyn = sub_model.M;
-                    % y = A*x + b +- e
-                    y(i+1,:) = (dyn.A * yt' + dyn.b + e(i,:)');
+                    
+                    % map the point to itself in case the simulation trace
+                    % reaches uncharted territory (unmodeled regions)
+                    if Cube.check_sat(yt, obj.model.range) ~= 1
+                        y(i+1,:) = y(i,:);
+                    else
+                        c = Grid.concrete2cell(yt, obj.eps);
+                        sub_model = obj.get_cell_model(c);
+                        %assert(all(sub_model.sbcl == c));
+                        assert(sub_model.empty == false);
+                        assert(all(yt' >= sub_model.P(:,1) & yt' <= sub_model.P(:,2)));
+                        dyn = sub_model.M;
+                        % y = A*x + b +- e
+                        y(i+1,:) = (dyn.A * yt' + dyn.b + e(i,:)');
+                    end
                 end
                 % strcmp(obj.model_type, 'x')
             else
                 dt = obj.delta_t;
                 n = (0:1:N) * dt;
                 y = zeros(N+1,nd);
+                
+                % for debug
+                %                 A = [];
+                %                 B = [];
                 
                 % init y1
                 y(1,:) = x;
@@ -69,9 +79,14 @@ classdef RelAbs
                     c = Grid.concrete2cell(y(i,:), obj.eps);
                     sub_model = obj.get_cell_model(c);
                     dyn = sub_model.M;
+                    %                     A = [A dyn.A];
+                    %                     B = [B;dyn.b];
                     y(i+1,:) = dyn.A * y(i,:)' + dyn.b + e(i,:)';
                     %y(i+1,:) = fix(dyn.A*1000)/1000 * y(i,:)' + fix(dyn.b*1000)/1000;
                 end
+                % print the dynamics used
+                %                 A'
+                %                 B
             end
         end
         
@@ -100,6 +115,37 @@ classdef RelAbs
             end
         end
         
+        % Takes in the system model (PWA) and a state: rect hypercube
+        % Returns a list of reachable rect hypercubes
+        function S_ = compute_next_cells(obj, s)
+            S_ = {};
+            % get all cells which intersect with the given hypercube
+            %             [~,C] = Grid.generateCellsFromRange(s.x, obj.eps);
+            
+            % for each region of the cube which intersects a different cell
+            % (assumes that every cell has different dynamics for convinience)
+            
+            % if the cube lies outside the range for which the pwa-model
+            % was constructed, map it to the same cell
+            if Cube.check_sat(s.c, obj.model.range) == 0
+                s_ = struct('x', s.x, 'c', s.c, 'n', s.n+1, 'path', [s.path; s.c]);
+                S_ = {s_};
+                %return
+            else
+                sub_model = obj.get_cell_model(s.c);
+                dyn = sub_model.M;
+                x_ = Cube.lin_transform_cube(s.x, dyn);
+                y_ = Cube.vertices2aligned_constraints(x_);
+                
+                [~,C_] = Grid.generateCellsFromRange(y_, obj.eps);
+                
+                for k = 1:size(C_,1)
+                    c_ = C_(k,:);
+                    crange_ = Grid.getCellRange(c_, obj.eps);
+                    S_ = [S_ struct('x', crange_, 'c', c_, 'n', s.n+1, 'path', [s.path; s.c])];
+                end
+            end
+        end
         
         %% Computes mean/max error between the given data and the
         % relationalized model

@@ -1,6 +1,6 @@
 % Expects cell sequences and ranges for x0 and prop
 function [Y,e] = abs2concrete_path(RA, abs_path, x0, prop, dyn_cons_type, tol)
-
+% abs_path
 % dynamics should be encoded as 'inequality' or 'equality'?
 EQ = 'equality';
 INEQ = 'inequality';
@@ -29,7 +29,7 @@ else
     error('unknown option %s\n', dyn_cons_type);
 end
 
-options = optimoptions('linprog','Algorithm','dual-simplex', 'TolCon', 1e-8);
+options = optimoptions('linprog','Algorithm','dual-simplex');
 [X,fval,exitflag] = linprog(f,A,b,Aeq,beq,LB,UB,[],options);
 if exitflag == 1
     fprintf('path found in RA\n');
@@ -57,6 +57,10 @@ for i = 1:n
     x_ = cA{i}*Y(i,:)' + B(i,:)';
     e(i,:) = Y(i+1,:) - x_';
 end
+
+% print the dynamics used
+% cell2mat(cA)'
+% B
 end
 
 % returns cA and B for debug info

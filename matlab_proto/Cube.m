@@ -45,5 +45,10 @@ classdef Cube
             acube = [min(ocubev)' max(ocubev)'];
         end
         
+        % does the coordinate x lie in cube?
+        function sat = check_sat(x,cube)
+            sat = all(cube(:,1) <= x' & cube(:,2) >= x');
+        end
+        
     end
 end
