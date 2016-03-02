@@ -116,6 +116,13 @@ class TopLevelAbs:
         elif controller_abstraction_type == 'concrete':
             import CAConcolic as CA
             controller_abs = CA.ControllerCollectionAbstraction(self.num_dims)
+        elif controller_abstraction_type == 'concrete_no_controller':
+            DummyControllerAbs = type('DummyControllerAbs', (), {})
+            controller_abs = DummyControllerAbs()
+            controller_abs.is_symbolic = False
+            def dummy(*args): return None
+            controller_abs.get_abs_state_from_concrete_state = dummy
+            controller_abs.get_reachable_abs_states = dummy
         else:
             print(controller_abstraction_type)
             raise NotImplementedError

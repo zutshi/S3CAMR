@@ -13,7 +13,6 @@ import utils as U
 from utils import print
 import traces
 #from utils import print
-import concreteController as cc
 
 logger = logging.getLogger(__name__)
 
@@ -643,7 +642,7 @@ def random_test(
 #             print('num_samples', num_samples)
             pi_array = pi_cons_lb + random_arr * (pi_cons_ub - pi_cons_lb)
 
-        (s_array_, u_array) = cc.compute_concrete_controller_output(
+        (s_array_, u_array) = compute_concrete_controller_output(
             A,
             system_params.controller_sim,
             ci_array,
@@ -711,3 +710,6 @@ def random_test(
 
 def check_sat_any(x_array, cons):
     return cons.any_sat(x_array)
+
+def compute_concrete_controller_output(*args):
+    return None, None

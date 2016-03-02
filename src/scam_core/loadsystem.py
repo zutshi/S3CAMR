@@ -18,10 +18,9 @@ import imp
 from numdims import NumDims
 import psim
 import constraints as cns
-import csim
 import utils as U
 from utils import print
-import fileOps as fp
+import fileops as fp
 
 
 class MissingSystemDefError(Exception):
@@ -69,13 +68,7 @@ class System(object):
             plant_pvt_init_data=self.plant_pvt_init_data,
             parallel=False,
             sim_args=psim_args)# TAG:MSH
-        if self.controller_path is None:
-            self.controller_sim = csim.DummyController(self.num_dims)
-        else:
-            self.controller_sim = csim.ControllerSO(
-                fp.construct_path(self.controller_path, self.path),
-                self.num_dims)
-        self.controller_sim.compute = self.controller_sim.call
+        self.controller_sim = None
 
 
 class Property(object):

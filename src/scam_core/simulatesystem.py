@@ -3,7 +3,6 @@
 
 from __future__ import print_function
 
-import controlifc as cifc
 import state as st
 import traces
 import err
@@ -123,10 +122,8 @@ def get_system_simulator(sys):
 def get_step_simulator(csim, psim, delta_t):
 
     def simulate_basic(t0, x0, s0, d0, pvt0, ci, pi):
-
-        controller_ret_val = csim.compute(cifc.ToController(ci, s0, x0))
-        s_, u = controller_ret_val.state_array, controller_ret_val.output_array
-
+        s_ = [None]
+        u = [None]
         concrete_states = get_concrete_state_obj(t0, x0, d0, pvt0, s_, ci, pi, u)
 
         concrete_states_ = psim.simulate(concrete_states, delta_t)

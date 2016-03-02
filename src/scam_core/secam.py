@@ -19,15 +19,12 @@ import tqdm
 
 import abstraction
 import sample
-import fileOps as fp
-import concolicexec as CE
+import fileops as fp
 import simulatesystem as simsys
 import scattersim as SS
 import err
 import loadsystem
 import traces
-import plothelper as ph
-import plot_hack
 import wmanager
 #import utils as U
 from utils import print
@@ -161,6 +158,11 @@ def create_abstraction(sys, prop, opts):
     elif METHOD == 'concrete':
         sampler = sample.IntervalSampler()
         controller_abstraction_type = 'concrete'
+        controller_sym_path_obj = None
+
+    elif METHOD == 'concrete_no_controller':
+        sampler = sample.IntervalSampler()
+        controller_abstraction_type = 'concrete_no_controller'
         controller_sym_path_obj = None
 
         # TODO: manual contruction of paths!!!!
@@ -555,6 +557,10 @@ def main():
                         help='simulate')
     parser.add_argument('-c', '--ss-concrete', action="store_true",
                         help='scatter & simulate')
+
+    parser.add_argument('-cn', '--ss-concrete-no-controller', action="store_true",
+                        help='scatter & simulate')
+
     parser.add_argument('--ss-concolic', action="store_true",
                         help='scatter & simulate with concolic execution using KLEE')
     parser.add_argument('-x', '--ss-symex', type=str, metavar='engine', choices=LIST_OF_SYEMX_ENGINES,
@@ -610,6 +616,9 @@ def main():
     elif args.ss_concrete:
         opts.MODE = 'falsify'
         opts.METHOD = 'concrete'
+    elif args.ss_concrete_no_controller:
+        opts.MODE = 'falsify'
+        opts.METHOD = 'concrete_no_controller'
     elif args.ss_concolic:
         opts.MODE = 'falsify'
         opts.METHOD = 'concolic'

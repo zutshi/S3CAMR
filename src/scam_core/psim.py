@@ -10,7 +10,7 @@ import imp
 
 import utils
 import err
-import fileOps as fp
+import fileops as fp
 import state as st
 
 # only for testing
