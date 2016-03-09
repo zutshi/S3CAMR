@@ -120,8 +120,6 @@ def discover(A, system_params, budget=None):
 
             # ##!!##logger.debug('decided to process abs_state')
 
-            pass
-
             # Mark it as examined
 
             examined_state_set.add(abs_state)

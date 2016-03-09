@@ -5,15 +5,15 @@ classdef FileNames
     
     methods(Static)
         function y = model_file_name(SYS_NAME)
-            y = ['./' SYS_NAME '_flat_model'];
+            y = ['../examples/vdp/data/matlab_model/' SYS_NAME '_flat_model'];
         end
         
         function y = all_file_name(SYS_NAME)
-            y = ['./' SYS_NAME '_all'];
+            y = ['../examples/vdp/data/matlab_model/' SYS_NAME '_all'];
         end
         
         function y = ip_file_name(SYS_NAME)
-            y = ['./' SYS_NAME '_data.mat'];
+            y = ['../examples/vdp/data/sim_data/' SYS_NAME '_data.mat'];
         end
         
     end

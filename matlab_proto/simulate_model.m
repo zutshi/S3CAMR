@@ -13,8 +13,16 @@ load(ALL_FILE);
 fprintf('Done!\n')
 
 % x0 = [-0.4 0.4; -0.4 0.4];
-% prop = [-1, -0.7; -6.5 -5.6];
-% opts = struct('v', 0, 'p', 0);
+x0 = [0.39 0.4; -0.4 -0.39];
+prop = [-1, -0.7; -6.5 -5.6];
+
+figure(1);hold on
+figure(2);hold on
+figure(3);hold on
+
+opts = struct('v', 0, 'p', 0);
+plot_cell(x0,'b',opts)
+plot_cell(prop,'r',opts)
 
 fprintf('verifying paths...\n')
 % my_figure(2)
@@ -22,8 +30,7 @@ fprintf('verifying paths...\n')
 % plot_cell(x0, 'r', opts)
 % plot_cell(prop, 'r', opts)
 
-% X = genRandVectors(N, [-0.4 0.4; -0.4 0.4]);
-X = genRandVectors(N, [-0.4 0.4; -0.4 0.4]);
+X = genRandVectors(N, x0);
 
 if strcmp(model_type,'xt')
     simulate_and_test_model_xt(X,RA,tol);
@@ -35,9 +42,7 @@ end
 end
 
 function simulate_and_test_model_x(X,RA,tol)
-% figure(1);hold on
-% figure(2);hold on
-figure(3);hold on
+
 T = 1;
 % num discrete steps
 n = T/RA.delta_t;
@@ -59,14 +64,12 @@ end
 end
 
 function simulate_and_test_model_xt(X,RA,tol)
-figure(1);hold on
-figure(2);hold on
-figure(3);hold on
+
 
 T = 1;
 % get the grid_eps for time
 % delta_t = RA.eps(end);
-delta_t = 0.1;
+delta_t = 0.05;
 n = round(T/delta_t);
 
 for i = 1:size(X, 1)

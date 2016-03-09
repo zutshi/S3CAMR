@@ -120,7 +120,7 @@ classdef Model
             chk = [];
             M = obj.model;
             num_sub_models = length(M);
-            flattened = cell(1,num_sub_models);
+            flattened = cell(num_sub_models,1);
             for k = 1:num_sub_models
                 m_k = M{k};
                 if m_k.empty

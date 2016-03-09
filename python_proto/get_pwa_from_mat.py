@@ -5,7 +5,7 @@ import scipy as sp
 import pickle
 
 import pwa
-import fileOps as fops
+import fileops as fops
 
 #sp.set_printoptions(suppress=True, precision=2)
 
@@ -39,16 +39,19 @@ def test_pickling(pwa_rep, pickle_fname):
     return pickle.loads(pickled_pwa_r)
 
 
-def main(model_mat, pickle_fname):
+def main(model_mat, pickle_fname, verbose):
     pwa_rep = populate(model_mat)
-    #print pwa_rep
+    if verbose:
+        print pwa_rep
     pwa_rep = test_pickling(pwa_rep, pickle_fname)
-    print pwa_rep
+    if verbose:
+        print pwa_rep
 
 if __name__ == '__main__':
     usage = '%(prog)s <filename>'
     parser = argparse.ArgumentParser(description='demo pwa', usage=usage)
     parser.add_argument('mat_file', default=None, type=str)
     parser.add_argument('-o', default=None, metavar='pickle', type=str, required=True)
+    parser.add_argument('-v', default=False)
     args = parser.parse_args()
-    main(args.mat_file, args.o)
+    main(args.mat_file, args.o, args.v)

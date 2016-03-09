@@ -144,6 +144,16 @@ class IntervalCons(Constraints):
 
         return np.logical_and.reduce(np.logical_and(res_l, res_h), 1)
 
+    def poly(self):
+        '''converts ival cons to polyhedral constrains.
+           Returns C, d, such that Cx <= d.
+           C is a nxn array and d is a 1xn array'''
+
+        # C = [[I], [-I]]
+        C = np.vstack([np.eye(self.dim), -np.eye(self.dim)])
+        d = np.hstack([self.h, -self.l])
+        return C, d
+
     def __repr__(self):
         return '{},{}'.format(str(self.l), str(self.h))
 

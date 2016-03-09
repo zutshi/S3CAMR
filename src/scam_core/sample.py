@@ -434,13 +434,17 @@ class Samples(object):
         else:
             self.pi_array = np.concatenate((self.pi_array, sample.pi_array))
 
+    def iterable(self):
+        for s, x, ci, pi, t in zip(self.s_array,
+                                   self.x_array,
+                                   self.ci_array,
+                                   self.pi_array,
+                                   self.t_array):
+                yield (s, x, ci, pi, t)
+        return
+
     def __repr__(self):
-        return '''samples
-s_array={}
-x_array={}
-ci_array={}
-pi_array={}
-t_array={}'''.format(self.s_array,
-                self.x_array, self.ci_array, self.pi_array, self.t_array)
-
-
+        return '''samples s_array={} x_array={}
+                  ci_array={} pi_array={} t_array={}'''.format(
+                          self.s_array, self.x_array, self.ci_array,
+                          self.pi_array, self.t_array)

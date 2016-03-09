@@ -202,7 +202,7 @@ class PlantAbstraction:
             A,
             system_params,
             ):
-        
+
         pi_ref = system_params.pi_ref
         state = sampled_state
         total_num_samples = state.n

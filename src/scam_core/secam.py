@@ -26,6 +26,7 @@ import err
 import loadsystem
 import traces
 import wmanager
+import modelrefine as MR
 #import utils as U
 from utils import print
 
@@ -231,7 +232,7 @@ def falsify(sys, prop, opts, current_abs, sampler):
     # ss-concrete. It is false if ss-symex (and anything else) is
     # asked for, because then ci_seq consists if concrete values. Can
     # also be activated for symex as an option, but to be done later.
-    sample_ci = opts.METHOD == 'concrete'
+    sample_ci = opts.METHOD == 'concrete' or opts.METHOD == 'concrete_no_controller'
 
     # options
     plot = opts.plot
@@ -257,9 +258,7 @@ def falsify(sys, prop, opts, current_abs, sampler):
 ##
 ##            f1.suptitle('abstraction')
 
-    if opts.refine == 'init':
-        refine_init(
-            current_abs,
+    args = (current_abs,
             init_cons_list,
             final_cons,
             initial_discrete_state,
@@ -277,22 +276,14 @@ def falsify(sys, prop, opts, current_abs, sampler):
             pi_ref,
             ci_ref,
             opts)
-    # seed 4567432
+
+    if opts.refine == 'init':
+        refine_init(*args)
     elif opts.refine == 'trace':
-        refine_trace(
-            current_abs,
-            init_cons_list,
-            final_cons,
-            initial_discrete_state,
-            initial_controller_state,
-            plant_sim,
-            controller_sim,
-            ci,
-            pi,
-            sampler,
-            plot,
-            init_cons,
-            original_plant_cons_list)
+        refine_trace(*args)
+    elif opts.refine == 'model':
+        sys_sim = simsys.get_system_simulator(sys)
+        falsify_using_model(*args, sys_sim=sys_sim)
     else:
         raise err.Fatal('internal')
 
@@ -381,6 +372,116 @@ def refine_trace(
                 current_abs.compute_error_paths(initial_state_set, final_state_set),
                 system_params)
         #init_cons_list = [current_abs.plant_abs.get_ival_constraints(i) for i in valid_promising_initial_state_list]
+
+
+# returns a True when its done
+def falsify_using_model(
+        current_abs,
+        init_cons_list,
+        final_cons,
+        initial_discrete_state,
+        initial_controller_state,
+        plant_sim,
+        controller_sim,
+        ci,
+        pi,
+        sampler,
+        plot,
+        init_cons,
+        original_plant_cons_list,
+        MAX_ITER,
+        sample_ci,
+        pi_ref,
+        ci_ref,
+        opts,
+        sys_sim):
+
+    # TODO: temp function ss.init()
+
+    (initial_state_set, final_state_set, is_final) = \
+        SS.init(current_abs, init_cons_list, final_cons,
+                initial_discrete_state, initial_controller_state)
+
+    system_params = SystemParams(
+        initial_state_set,
+        final_state_set,
+        is_final,
+        plant_sim,
+        controller_sim,
+        ci,
+        pi,
+        sampler,
+        final_cons,
+        pi_ref,
+        ci_ref
+        )
+
+    SS.discover(current_abs, system_params)
+    if plot:
+        plt.show()
+
+    if not system_params.final_state_set:
+        print('did not find any abstract counter example!', file=SYS.stderr)
+        return False
+
+    print('analyzing graph...')
+    # creates a new pi_ref, ci_ref
+    (error_paths,
+     ci_seq_list,
+     pi_seq_list) = current_abs.get_error_paths(initial_state_set,
+                                                final_state_set,
+                                                pi_ref,
+                                                ci_ref,
+                                                pi,
+                                                ci)
+
+    MR.refine_model_based(current_abs,
+                          error_paths,
+                          pi_seq_list,
+                          system_params,
+                          sys_sim)
+
+    exit()
+
+
+    print('begin random testing!')
+
+    print(len(promising_initial_states), len(ci_seq_list), len(pi_seq_list))
+
+    (valid_promising_initial_state_list,
+     pi_seq_list, ci_seq_list) = SS.filter_invalid_abs_states(promising_initial_states,
+                                                              pi_seq_list,
+                                                              ci_seq_list,
+                                                              current_abs,
+                                                              init_cons)
+
+    print(len(valid_promising_initial_state_list), len(ci_seq_list), len(pi_seq_list))
+
+    if valid_promising_initial_state_list == []:
+        print('no valid sample found for random testing. STOP', file=SYS.stderr)
+        return False
+
+    res = SS.random_test(
+        current_abs,
+        system_params,
+        valid_promising_initial_state_list,
+        ci_seq_list,
+        pi_seq_list,
+        init_cons,
+        initial_discrete_state,
+        initial_controller_state,
+        sample_ci
+        )
+
+    if res:
+        print('Concretized', file=SYS.stderr)
+        fp.append_data(opts.op_fname,
+                       '{0} Concrete Traces({2}) for: {1} {0}\n'.
+                       format('='*20, opts.sys_path, len(res)))
+        fp.append_data(opts.op_fname, '{}\n'.format(res))
+        return True
+
+    #print('Failed: MAX iterations {} exceeded'.format(MAX_ITER), file=SYS.stderr)
 
 
 # returns a True when its done
@@ -544,7 +645,7 @@ def main():
     LIST_OF_SYEMX_ENGINES = ['klee', 'pathcrawler']
     LIST_OF_CONTROLLER_REPRS = ['smt2', 'trace']
     LIST_OF_TRACE_STRUCTS = ['list', 'tree']
-    LIST_OF_REFINEMENTS = ['init', 'trace']
+    LIST_OF_REFINEMENTS = ['init', 'trace', 'model']
 
     usage = '%(prog)s <filename>'
     parser = argparse.ArgumentParser(description='S3CAM', usage=usage)

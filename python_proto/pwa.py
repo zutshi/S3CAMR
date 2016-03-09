@@ -11,6 +11,12 @@ class PWA(object):
         self.idx += 1
         return
 
+    def add(self, sub_model):
+        part_id = self.idx
+        self.sub_models[part_id] = sub_model
+        self.idx += 1
+        return
+
     def get_sub_model(self, part_id):
         return self.sub_models[part_id]
 
@@ -27,6 +33,12 @@ class PWA(object):
     def __str__(self):
         s = [str(i) for i in self]
         return '{1}{0}{1}'.format('='*20, '\n').join(s)
+
+    @staticmethod
+    def sub_model(A, b, C, d):
+        model = Model(A, b)
+        partition = Partition(C, d)
+        return SubModel(partition, model)
 
 
 def compute_part_id(guard):

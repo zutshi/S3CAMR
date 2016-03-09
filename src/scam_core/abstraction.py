@@ -20,6 +20,7 @@ import utils as U
 from utils import print
 import err
 import graph as g
+import state as st
 
 logger = logging.getLogger(__name__)
 
@@ -120,9 +121,16 @@ class TopLevelAbs:
             DummyControllerAbs = type('DummyControllerAbs', (), {})
             controller_abs = DummyControllerAbs()
             controller_abs.is_symbolic = False
-            def dummy(*args): return None
+
+            # can not use None because of a check in
+            # get_abs_state_from_concrete_state() which silently makes
+            # the entire abstract state None if a None is encountered
+            # in either plant or contorller abs state.
+            def dummy(*args): return 0
+
             controller_abs.get_abs_state_from_concrete_state = dummy
-            controller_abs.get_reachable_abs_states = dummy
+            controller_abs.get_reachable_abs_states = sample_abs_state
+            controller_abs.get_concrete_states_from_abs_state = dummy
         else:
             print(controller_abstraction_type)
             raise NotImplementedError
@@ -302,6 +310,7 @@ class TopLevelAbs:
 #             ret_list.append(path)
 #         return ret_list
 
+
     def compute_error_paths(self, initial_state_set, final_state_set, MAX_ERROR_PATHS):
         # length of path is num nodes, whereas N = num segments
         max_len = self.N + 1
@@ -315,7 +324,7 @@ class TopLevelAbs:
         #print('attr_map:', attr_map)
         return attr_map['ci'], attr_map['pi']
 
-    def get_initial_states_from_error_paths(self, initial_state_set,
+    def get_error_paths(self, initial_state_set,
                                             final_state_set, pi_ref,
                                             ci_ref, pi_cons, ci_cons):
         '''
@@ -327,7 +336,7 @@ class TopLevelAbs:
         ci_dim = self.num_dims.ci
         pi_dim = self.num_dims.pi
 #         init_set = set()
-        init_list = []
+        path_list = []
         ci_seq_list = []
         pi_seq_list = []
 
@@ -396,7 +405,7 @@ class TopLevelAbs:
 
                 ci_seq_list.append(ci_seq)
                 pi_seq_list.append(pi_seq)
-                init_list.append(path[0])
+                path_list.append(path)
 
         assert(max_len <= self.N + 1)
 
@@ -445,7 +454,13 @@ class TopLevelAbs:
 #         for pi_seq in pi_seq_list:
 #             print(pi_seq)
 
-        return (init_list, ci_seq_list, pi_seq_list)
+        return (path_list, ci_seq_list, pi_seq_list)
+
+    def get_initial_states_from_error_paths(self, *args):
+        '''extracts the initial state from the error paths'''
+        path_list, ci_seq_list, pi_seq_list = self.get_error_paths(*args)
+        init_list = [path[0] for path in path_list]
+        return init_list, ci_seq_list, pi_seq_list
 
     def get_abs_state_from_concrete_state(self, concrete_state):
 
@@ -455,6 +470,8 @@ class TopLevelAbs:
             self.plant_abs.get_abs_state_from_concrete_state(concrete_state)
         abs_controller_state = \
             self.controller_abs.get_abs_state_from_concrete_state(concrete_state.s)
+
+        #TODO: why do we have the below code?
         if abs_plant_state is None or abs_controller_state is None:
             return None
         else:
@@ -490,6 +507,62 @@ class TopLevelAbs:
         # nx.draw_networkx(self.G, pos=pos_dict, labels=pos_dict, with_labels=True)
         # TODO: whats the use of draw?
         # plt.draw()
+
+
+def sample_abs_state(abs_state,
+                     A,
+                     system_params):
+
+    samples = system_params.sampler.sample(abs_state, A, system_params, A.num_samples)
+
+    total_num_samples = samples.n
+
+    x_array = samples.x_array
+    s_array = samples.s_array
+
+    # print s_array
+
+    t_array = samples.t_array
+    pi_array = samples.pi_array
+    ci_array = samples.ci_array
+
+    d = np.array([abs_state.plant_state.d])
+    pvt = np.array([abs_state.plant_state.pvt])
+
+    d_array = np.repeat(d, samples.n, axis=0)
+    pvt_array = np.repeat(pvt, samples.n, axis=0)
+
+    # sanity check
+    assert(len(d_array) == total_num_samples)
+    assert(len(pvt_array) == total_num_samples)
+    assert(len(x_array) == total_num_samples)
+    assert(len(s_array) == total_num_samples)
+    assert(len(t_array) == total_num_samples)
+
+    def inf_list(x):
+        while True:
+            yield x
+
+
+    # can not use None because of a check in
+    # get_abs_state_from_concrete_state() which silently makes
+    # the entire abstract state None if a None is encountered
+    # in either plant or contorller abs state.
+    (s_array_, u_array) = inf_list(0), inf_list(0)
+
+    state = st.StateArray(
+        t=t_array,
+        x=x_array,
+        d=d_array,
+        pvt=pvt_array,
+        s=s_array_,
+        u=u_array,
+        pi=pi_array,
+        ci=ci_array,
+        )
+
+    return state
+
 
 class AbstractState(object):
 

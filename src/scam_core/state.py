@@ -61,22 +61,27 @@ class StateArray(object):
         return len(self.cont_states)
 
     def iterable(self):
-        i = 0
-        while i < self.n:
-            yield State(  # self.controller_extraneous_inputs[i],
-                          # self.plant_extraneous_inputs[i],
-                          # self.controller_outputs[i]
-                          # self.plant_extraneous_inputs[i],
-                self.t[i],
-                self.cont_states[i],
-                self.discrete_states[i],
-                self.pvt_states[i],
-                self.controller_extraneous_inputs[i],
-                self.controller_states[i],
-                self.plant_extraneous_inputs[i],
-                self.controller_outputs[i],
-                )
-            i += 1
+        #i = 0
+        #while i < self.n:
+        for t, x, d, p, ci, s, pi, u in zip(self.t,
+                                            self.cont_states,
+                                            self.discrete_states,
+                                            self.pvt_states,
+                                            self.controller_extraneous_inputs,
+                                            self.controller_states,
+                                            self.plant_extraneous_inputs,
+                                            self.controller_outputs):
+                yield State(t, x, d, p, ci, s, pi, u)
+#                     self.t[i],
+#                     self.cont_states[i],
+#                     self.discrete_states[i],
+#                     self.pvt_states[i],
+#                     self.controller_extraneous_inputs[i],
+#                     self.controller_states[i],
+#                     self.plant_extraneous_inputs[i],
+#                     self.controller_outputs[i],
+#                     )
+            #i += 1
         return
 
     def __getitem__(self, key):

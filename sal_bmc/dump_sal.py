@@ -3,7 +3,7 @@ import pickle
 import argparse
 
 import saltrans as st
-import fileOps as fops
+import fileops as fops
 
 PICKLE_FNAME = '../python_proto/pickled_model'
 np.set_printoptions(suppress=True, precision=2)

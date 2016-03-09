@@ -72,7 +72,7 @@ class SIM(object):
         ret_P = dummy_P
 
         #plt.plot(plot_data[0] + Ti, plot_data[1][:, 0])
-        ##plt.plot(plot_data[1][:, 0], plot_data[1][:, 1])
+        #plt.plot(plot_data[1][:, 0], plot_data[1][:, 1])
         ##plt.plot(plot_data[0] + Ti, np.tile(U, plot_data[0].shape))
 
         return (ret_t, ret_X, ret_D, ret_P)
