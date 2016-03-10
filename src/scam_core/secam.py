@@ -69,6 +69,7 @@ class SystemParams:
             ci,
             pi,
             sampler,
+            init_cons,
             final_cons,
             pi_ref,
             ci_ref
@@ -82,6 +83,7 @@ class SystemParams:
         self.ci = ci
         self.pi = pi
         self.sampler = sampler
+        self.init_cons = init_cons
         self.final_cons = final_cons
         self.pi_ref = pi_ref
         self.ci_ref = ci_ref
@@ -316,6 +318,7 @@ def refine_trace(
         ci,
         pi,
         sampler,
+        init_cons,
         final_cons,
         )
 
@@ -411,6 +414,7 @@ def falsify_using_model(
         ci,
         pi,
         sampler,
+        init_cons,
         final_cons,
         pi_ref,
         ci_ref
@@ -523,6 +527,7 @@ def refine_init(
             ci,
             pi,
             sampler,
+            init_cons,
             final_cons,
             pi_ref,
             ci_ref

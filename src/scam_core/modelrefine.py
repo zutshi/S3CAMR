@@ -1,8 +1,11 @@
 import pwa
-import sample
 import simulatesystem as simsys
 from sklearn import linear_model as skl_lm
 import numpy as np
+
+#import utils as U
+
+np.set_printoptions(suppress=True, precision=2)
 
 # multiply num samples with the
 MORE_FACTOR = 10
@@ -15,12 +18,39 @@ def refine_model_based(A, error_paths, pi_seq_list, sp, sys_sim):
     tas = {state for path in error_paths for state in path}
 
     pwa_model = build_pwa_model(A, tas, sp, sys_sim)
-    bmc = BMC(pwa_model, initial_states, safety_prop)
-    bmc.check(depth=2)
-    if bmc.sat:
-        return bmc.soln
+
+    bmc = BMC_factory('sal')
+    bmc.init(A.num_dims.x, pwa_model, sp.init_cons, sp.final_cons, 'vdp')
+    bmc.check()
+    #bmc.check(depth=2)
+    #if bmc.sat:
+    #    return bmc.soln
+    #else:
+    #    return None
+
+
+def BMC_factory(bmc_engine='sal'):
+    if bmc_engine == 'sal':
+        import salbmc as sbmc
+        return SALBMC(sbmc)
     else:
-        return None
+        raise NotImplementedError
+
+
+class SALBMC(object):
+    def __init__(self, sbmc):
+        self.sbmc = sbmc
+
+    def init(self, nd, pwa_model, init_state, safety_prop, sys_name):
+        self.sbmc = self.sbmc.BMC(nd, pwa_model, init_state, safety_prop, sys_name)
+        return
+
+    def check(self):
+        self.sbmc.dump()
+        self.sbmc.check(3)
+        return
+
+
 
 
 def build_pwa_model(AA, abs_states, sp, sys_sim):
