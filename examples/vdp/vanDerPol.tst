@@ -1,7 +1,9 @@
+inf = float('inf')
 plant_pvt_init_data = None
 
 initial_set = [[-0.4, -0.4], [0.4, 0.4]]
 error_set = [[-1, -6.5], [-0.7, -5.6]]
+#error_set = [[-inf, -inf], [-1, inf]]
 
 grid_eps = [0.1, 0.1]
 num_samples = 3
