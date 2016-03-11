@@ -39,8 +39,9 @@ class SALTransSys(object):
         self.transitions.append(tran)
 
     def __str__(self):
-        return self.sal_file()
+        return self.sal_file
 
+    @property
     def sal_file(self):
         s = tw.dedent('''
         {}
