@@ -20,6 +20,12 @@ class SALTransError(Exception):
 class SALTransSys(object):
 
     def __init__(self, module_name, num_dim, init_cons, prop):
+        '''adds the initial set.
+           The set must be an ival cons (hyper rectangular vector)
+
+           adds the property: is prop reachable?
+           The prop must be an ival cons'''
+
         self.num_dim = num_dim
         self.v = 'x'
         self.prop_name = 'safety'
@@ -29,11 +35,6 @@ class SALTransSys(object):
         self.prop = prop
         # TODO: ask for inputs and outputs
         return
-
-    def add_init(self, init_set):
-        '''adds the initial set.
-           The set must be a hyper rectangular vector'''
-        raise NotImplementedError
 
     def add_transition(self, tran):
         self.transitions.append(tran)
@@ -96,9 +97,6 @@ class SALTransSys(object):
 
     @property
     def safety_prop(self):
-        '''adds the property: is prop reachable?
-           The prop must be a ival cons'''
-
         prop = self.prop
         v = self.v
         expr = '{v}{i} {gle} {c}'
