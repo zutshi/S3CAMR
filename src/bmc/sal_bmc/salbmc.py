@@ -1,12 +1,15 @@
 import numpy as np
+import os
 
 import saltrans as slt
 import fileops as fops
 import utils as U
+import err
 
 np.set_printoptions(suppress=True, precision=2)
 
-SAL_PATH = '''../../sal-3.3/bin/sal-inf-bmc'''
+#SAL_PATH = '''../../sal-3.3/bin/sal-inf-bmc'''
+SAL_INF_BMC = '''/bin/sal-inf-bmc'''
 
 
 # Must separate the arguements. i.e., -v 3 should be given as ['-v', '3']
@@ -45,9 +48,17 @@ class BMC(object):
         return sal_trans_sys
 
     def check(self, depth):
+        try:
+            sal_path_ = os.environ['SAL'] + SAL_INF_BMC
+        except KeyError:
+            err.error("SAL environment variable is not defined. It\n"
+                      "should point to sal's top-level directory")
+            #raise KeyError
+
+        sal_path = fops.sanitize_path(sal_path_)
         verbosity = 3
         sal_cmd = sal_run_cmd(
-                    SAL_PATH,
+                    sal_path,
                     depth,
                     self.module_name,
                     self.prop_name,
