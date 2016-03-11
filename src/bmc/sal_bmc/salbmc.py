@@ -38,7 +38,7 @@ class BMC(object):
 
     @staticmethod
     def sal_module(nd, pwa_model, init_set, safety_prop, module_name):
-        sal_trans_sys = slt.SALTransSys(module_name, 2, init_set, safety_prop)
+        sal_trans_sys = slt.SALTransSys(module_name, nd, init_set, safety_prop)
 
         for sub_model in pwa_model:
             g = slt.Guard(sub_model.p.C, sub_model.p.d)
