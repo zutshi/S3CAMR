@@ -11,6 +11,7 @@ from math import isinf
 # sp.set_printoptions(suppress=True, precision=2)
 PREC = 2
 
+
 class SALTransError(Exception):
     pass
 
@@ -18,17 +19,15 @@ class SALTransError(Exception):
 # Make classes out of every header, prop, init, etc
 class SALTransSys(object):
 
-    def __init__(self, module_name, num_dim, init_set, prop):
-        v = 'x'
-        prop_name = 'safety'
+    def __init__(self, module_name, num_dim, init_cons, prop):
+        self.num_dim = num_dim
+        self.v = 'x'
+        self.prop_name = 'safety'
+        self.init_cons = init_cons
+        self.module_name = module_name
         self.transitions = []
-        self.prop = None
-        self.trans = ''
-        self.hdr = self.__class__.header_(module_name)
-        self.init_set = self.__class__.init_set_(init_set, v)
+        self.prop = prop
         # TODO: ask for inputs and outputs
-        self.decls = self.__class__.decls_(num_dim, v)
-        self.prop = self.__class__.safety_prop_(prop_name, prop, v)
         return
 
     def add_init(self, init_set):
@@ -39,15 +38,10 @@ class SALTransSys(object):
     def add_transition(self, tran):
         self.transitions.append(tran)
 
-    def trans2str(self):
-        ts = '[]\n'.join(('{}'.format(i) for i in self.transitions))
-        self.trans = self.__class__.trans_(ts)
-
     def __str__(self):
         return self.sal_file()
 
     def sal_file(self):
-        self.trans2str()
         s = tw.dedent('''
         {}
         OUTPUT{}
@@ -63,43 +57,49 @@ class SALTransSys(object):
         END;
         system: MODULE = PLANT;
         {}
-        ''').format(self.hdr, self.decls, self.init_set, self.trans, self.prop)
+        ''').format(self.hdr, self.decls, self.init_set, self.trans, self.safety_prop)
         return s
 
-    @staticmethod
-    def header_(module_name):
+    @property
+    def hdr(self):
         s = tw.dedent('''
         {}: CONTEXT =
         BEGIN
 
         PLANT: MODULE =
         BEGIN
-        ''').format(module_name)
+        ''').format(self.module_name)
         return s
 
-    @staticmethod
-    def decls_(num_dim, v):
-        s = ['\n\t{v}{i}:REAL' .format(v=v, i=i) for i in range(num_dim)]
+    @property
+    def decls(self):
+        nd = self.num_dim
+        v = self.v
+        s = ['\n\t{v}{i}:REAL' .format(v=v, i=i) for i in range(nd)]
         return ','.join(s)
 
-    @staticmethod
-    def init_set_(init_set, v):
-        iv = init_set
+    @property
+    def init_set(self):
+        iv = self.init_cons
+        v = self.v
         s = ['\n\t{v}{i} IN {{ r : REAL | r >=  {l} AND r <= {h} }}'.format(
             v=v, i=i, l=iv.l[i], h=iv.h[i]) for i in range(iv.dim)]
         return ';'.join(s)
 
-    @staticmethod
     # sal description
-    def trans_(transitions):
-        s = '{}'.format(transitions)
+    @property
+    def trans(self):
+        ts = '[]\n'.join(('{}'.format(i) for i in self.transitions))
+        s = '{}'.format(ts)
         return s
 
-    @staticmethod
-    def safety_prop_(prop_name, prop, v):
+    @property
+    def safety_prop(self):
         '''adds the property: is prop reachable?
            The prop must be a ival cons'''
 
+        prop = self.prop
+        v = self.v
         expr = '{v}{i} {gle} {c}'
 
         ls = [
@@ -116,7 +116,7 @@ class SALTransSys(object):
         {prop_name} : THEOREM
         system |- NOT F({prop});
         END
-        ''').format(prop_name=prop_name, prop=prop_str)
+        ''').format(prop_name=self.prop_name, prop=prop_str)
         return s
 
 
