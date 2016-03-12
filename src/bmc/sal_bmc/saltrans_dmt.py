@@ -61,5 +61,5 @@ class Transition(saltrans.Transition):
     def __str__(self):
         guard_t = 't = {}'.format(self.dt)
         reset_t = "t' IN " + self.dt_set_repr
-        s = '{} AND {} -->\n{};\n{}\n'.format(self.g, guard_t, self.r, reset_t)
+        s = '{}:\n{} AND {} -->\n{};\n{}\n'.format(self.name, self.g, guard_t, self.r, reset_t)
         return s

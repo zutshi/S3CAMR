@@ -126,12 +126,13 @@ class SALTransSys(object):
 
 class Transition(object):
 
-    def __init__(self, g, r):
+    def __init__(self, name, g, r):
         self.g = g
         self.r = r
+        self.name = name
 
     def __str__(self):
-        s = '{} -->\n{}\n'.format(self.g, self.r)
+        s = '{}:\n{} -->\n{}\n'.format(self.name, self.g, self.r)
         return s
 
 

@@ -57,10 +57,14 @@ class BMC(object):
     def sal_module_dmt(dts, nd, pwa_models, init_set, safety_prop, module_name):
         sal_trans_sys = slt_dmt.SALTransSysDMT(dts, module_name, nd, init_set, safety_prop)
         for dt, pwa_model in pwa_models.iteritems():
-            for sub_model in pwa_model:
+            # replace decimal point with _ else SAL will throw an
+            # error due to incorrect identifier
+            dt_str = str(dt).replace('.', '_')
+            for idx, sub_model in enumerate(pwa_model):
                 g = slt_dmt.Guard(sub_model.p.C, sub_model.p.d)
                 r = slt_dmt.Reset(sub_model.m.A, sub_model.m.b)
-                t = slt_dmt.Transition(dt, dts, g, r)
+                t = slt_dmt.Transition(
+                        dt, dts, 'C_{}_{}'.format(idx, dt_str), g, r)
                 sal_trans_sys.add_transition(t)
         return sal_trans_sys
 
@@ -68,10 +72,10 @@ class BMC(object):
     def sal_module_dft(nd, pwa_model, init_set, safety_prop, module_name):
         sal_trans_sys = slt.SALTransSys(module_name, nd, init_set, safety_prop)
 
-        for sub_model in pwa_model:
+        for idx, sub_model in enumerate(pwa_model):
             g = slt.Guard(sub_model.p.C, sub_model.p.d)
             r = slt.Reset(sub_model.m.A, sub_model.m.b)
-            t = slt.Transition(g, r)
+            t = slt.Transition('C_{}'.format(idx), g, r)
             sal_trans_sys.add_transition(t)
         return sal_trans_sys
 
