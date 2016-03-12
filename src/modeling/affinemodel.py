@@ -27,5 +27,5 @@ class AffineModel(object):
         Y_ = self.predict(X)
         if __debug__:
             print 'score: ', self.clf.score(X, Y)
-            print abs((Y - Y_)/Y)*100
+            #print abs((Y - Y_)/Y)*100
         return np.max((abs((Y - Y_)/Y))*100, axis=0)

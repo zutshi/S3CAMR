@@ -283,7 +283,9 @@ def falsify(sys, prop, opts, current_abs, sampler):
         refine_init(*args)
     elif opts.refine == 'trace':
         refine_trace(*args)
-    elif opts.refine == 'model':
+    elif (opts.refine == 'model_dft'
+         or opts.refine == 'model_dmt'
+         or opts.refine == 'model_dct'):
         sys_sim = simsys.get_system_simulator(sys)
         falsify_using_model(*args, sys_sim=sys_sim)
     else:
@@ -438,12 +440,22 @@ def falsify_using_model(
                                                 ci_ref,
                                                 pi,
                                                 ci)
-
-    MR.refine_model_based(current_abs,
-                          error_paths,
-                          pi_seq_list,
-                          system_params,
-                          sys_sim)
+    if opts.refine == 'model_dft':
+        MR.refine_dft_model_based(current_abs,
+                              error_paths,
+                              pi_seq_list,
+                              system_params,
+                              sys_sim)
+    elif opts.refine == 'model_dmt':
+        MR.refine_dmt_model_based(current_abs,
+                              error_paths,
+                              pi_seq_list,
+                              system_params,
+                              sys_sim)
+    elif opts.refine == 'model_dct':
+        raise NotImplementedError
+    else:
+        assert(False)
 
     exit()
 
@@ -650,7 +662,7 @@ def main():
     LIST_OF_SYEMX_ENGINES = ['klee', 'pathcrawler']
     LIST_OF_CONTROLLER_REPRS = ['smt2', 'trace']
     LIST_OF_TRACE_STRUCTS = ['list', 'tree']
-    LIST_OF_REFINEMENTS = ['init', 'trace', 'model']
+    LIST_OF_REFINEMENTS = ['init', 'trace', 'model_dft', 'model_dmt', 'model_dct']
 
     usage = '%(prog)s <filename>'
     parser = argparse.ArgumentParser(description='S3CAM', usage=usage)

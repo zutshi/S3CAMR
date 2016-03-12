@@ -52,14 +52,21 @@ class SALTransSys(object):
         [
         {}
         []
-        TRUE -->
-        x0' = x0;
-        x1' = x1
+        {}
         ]
         END;
         system: MODULE = PLANT;
         {}
-        ''').format(self.hdr, self.decls, self.init_set, self.trans, self.safety_prop)
+        ''').format(self.hdr, self.decls, self.init_set, self.trans,
+                    self.always_true_transition, self.safety_prop)
+        return s
+
+    @property
+    def always_true_transition(self):
+        s = tw.dedent('''
+        TRUE -->
+        x0' = x0;
+        x1' = x1''')
         return s
 
     @property
@@ -69,8 +76,7 @@ class SALTransSys(object):
         BEGIN
 
         PLANT: MODULE =
-        BEGIN
-        ''').format(self.module_name)
+        BEGIN''').format(self.module_name)
         return s
 
     @property
@@ -114,8 +120,7 @@ class SALTransSys(object):
         s = tw.dedent('''
         {prop_name} : THEOREM
         system |- NOT F({prop});
-        END
-        ''').format(prop_name=self.prop_name, prop=prop_str)
+        END''').format(prop_name=self.prop_name, prop=prop_str)
         return s
 
 
