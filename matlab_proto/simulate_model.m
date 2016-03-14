@@ -69,21 +69,31 @@ function simulate_and_test_model_xt(X,RA,tol)
 T = 1;
 % get the grid_eps for time
 % delta_t = RA.eps(end);
-delta_t = 0.05;
+
+delta_t = 0.1;
 n = round(T/delta_t);
 
+ts = [0.01, 0.1];
+N = 15;
 for i = 1:size(X, 1)
     x = X(i,:);
+    
+    tss = ts(randi(length(ts),1,N));        
     
     [t, y_] = vdp_sim(x, [0 T]);
     figure(1);    plot(t(:,1), y_(:,1), 'k-');
     figure(2);    plot(t(:,1), y_(:,2), 'k-');
     figure(3);    plot(y_(:,1), y_(:,2), 'k-');
     
-    [t,y] = RA.simulate(x,n, 'xt',tol,delta_t);
+%     [t,y] = RA.simulate(x,n, 'xt',tol,delta_t);
+%     figure(1);    plot(t, y(:,1),'b-');
+%     figure(2);    plot(t, y(:,2),'b-');
+%     figure(3);    plot(y(:,1), y(:,2), 'b-');
+
+    [t,y] = RA.simulate_dmt(x, tol, tss);
     figure(1);    plot(t, y(:,1),'b-');
     figure(2);    plot(t, y(:,2),'b-');
     figure(3);    plot(y(:,1), y(:,2), 'b-');
-    
+
 end
 end
