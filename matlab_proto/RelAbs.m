@@ -90,6 +90,34 @@ classdef RelAbs
             end
         end
         
+        % multi time step - uniform randomly chosen
+        function [n,y] = simulate_dmt(obj, x, tol, tss)
+            nd = size(x,2);
+            N = length(tss);
+            if length(tol)>1
+                assert(size(tol,1) == N);
+                assert(size(tol,2) == nd);
+                e = tol;
+            else
+                e = tol*(2*rand(N,nd)-1);
+            end
+                n = [0 cumsum(tss)];
+                y = zeros(N+1,nd);
+                y(1,:) = x;
+                for i = 1:length(tss)
+                    yt = [y(i,:) tss(i)];
+                    if Cube.check_sat(yt, obj.model.range) ~= 1
+                        y(i+1,:) = y(i,:);
+                    else
+                        c = Grid.concrete2cell(yt, obj.eps);
+                        sub_model = obj.get_cell_model(c);
+                        dyn = sub_model.M;
+                        y(i+1,:) = (dyn.A * yt' + dyn.b + e(i,:)');
+                    end
+                end
+            
+            idx = randi(length(tss),1,1);
+        end
         
         % Takes in the system model (PWA) and a state: rect hypercube
         % Returns a list of reachable rect hypercubes
