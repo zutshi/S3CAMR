@@ -7,9 +7,8 @@ import textwrap as tw
 
 from math import isinf
 
-# np.set_printoptions(suppress=True, precision=2)
-# sp.set_printoptions(suppress=True, precision=2)
-PREC = 2
+# full precision
+PREC = '0.4'
 
 
 class SALTransError(Exception):
@@ -189,8 +188,9 @@ class Reset(object):
         ndo, ndi = self.A.shape
 
         xi_s = "x{}'"
-        Axi_s = '{c:.{p}f}*x{j}'
-        bi_s = '{c:.{p}f}'
+        Axi_s = '{c:{p}f}*x{j}'
+        #bi_s = '{c:.{p}f}'
+        bi_s = '{c:{p}f}'
 
         s = ['{xi_} = {Axi} + {bi}'.format(
             xi_=xi_s.format(i),
