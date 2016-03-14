@@ -5,7 +5,7 @@ initial_set = [[-0.4, -0.4], [0.4, 0.4]]
 error_set = [[-1, -6.5], [-0.7, -5.6]]
 #error_set = [[-inf, -inf], [-1, inf]]
 
-grid_eps = [0.1, 0.1]
+grid_eps = [0.15, 0.15]
 num_samples = 3
 delta_t = 0.4
 
