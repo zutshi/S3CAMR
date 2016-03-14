@@ -1,0 +1,10 @@
+numpy==1.10.4
+networkx==1.10
+tqdm==1.0
+matplotlib==1.5.0
+scikit-learn==0.17.1
+scipy==0.17.0
+pyparsing==2.0.7
+networkx
+gblessed==1.14.1raph_tool
+bokeh==0.11.1
