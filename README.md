@@ -1,4 +1,4 @@
-Simulate and Scatter + Relationalization 
+Simulate and Scatter + Relationalization
 ===
 
 S3CAMR is an improvement to S3CAM where refinement is carried symbolically.
@@ -15,6 +15,7 @@ Dependencies (TODO)
 ===
 ###External
 - SAL
+    set SAL_PATH
 - Yices
 - S3CAMSMT
 
