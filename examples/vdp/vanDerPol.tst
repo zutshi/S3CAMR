@@ -6,7 +6,7 @@ error_set = [[-1, -6.5], [-0.7, -5.6]]
 
 # what worked
 grid_eps = [0.04, 0.04]
-num_samples = 10
+num_samples = 5
 delta_t = 0.1
 
 # what did not worked
