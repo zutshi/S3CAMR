@@ -18,9 +18,8 @@ class SALBMC(object):
         self.sbmc = self.sbmc.BMC(nd, pwa_model, init_state, safety_prop, sys_name, model_type)
         return
 
-    def check(self):
+    def check(self, depth):
         self.sbmc.dump()
-        depth = 5
         err.warn('using a depth = {}'.format(depth))
         self.sbmc.check(depth=depth)
         return
