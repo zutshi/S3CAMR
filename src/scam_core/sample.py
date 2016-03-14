@@ -78,12 +78,12 @@ class Sampler(object):
         self.sampling_scheme = None
 
     def sample(
-        self,
-        abstract_state,
-        A,
-        system_params,
-        num_samples,
-        ):
+            self,
+            abstract_state,
+            A,
+            system_params,
+            num_samples,
+            ):
 
         pass
 
@@ -101,6 +101,28 @@ class IntervalSampler(Sampler):
     def __init__(self):
         super(IntervalSampler, self).__init__(None)
 
+    def sample_multiple(
+            self,
+            abstract_states,
+            A,
+            system_params,
+            num_samples, #num_samples per state
+            ):
+        '''samples several abs_states'''
+
+        samples = Samples()
+
+        for abstract_state in abstract_states:
+            s = self.sample(
+                          abstract_state,
+                          A,
+                          system_params,
+                          num_samples
+                          )
+            samples.append(s)
+
+        return samples
+
     def sample(
             self,
             abstract_state,
@@ -108,6 +130,8 @@ class IntervalSampler(Sampler):
             system_params,
             num_samples,
             ):
+
+        '''samples an abs_state'''
 
         pi_ref = system_params.pi_ref
         ci_ref = system_params.ci_ref
@@ -202,11 +226,11 @@ class IntervalConcolic(Sampler):
     # functions
 
     def get_samples_from_test_cases(
-        self,
-        abstract_state,
-        A,
-        system_params,
-        ):
+            self,
+            abstract_state,
+            A,
+            system_params,
+            ):
 
         plant_state_ival_cons = \
             A.plant_abs.get_ival_constraints(abstract_state.plant_state)
