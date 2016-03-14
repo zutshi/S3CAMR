@@ -8,7 +8,6 @@ import fileops as fops
 import constraints as C
 
 PICKLE_FNAME = '../python_proto/pickled_model'
-np.set_printoptions(suppress=True, precision=2)
 
 
 def get_pwa_model(pickle_file):

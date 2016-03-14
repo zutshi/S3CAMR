@@ -7,8 +7,6 @@ import fileops as fops
 import utils as U
 import err
 
-np.set_printoptions(suppress=True, precision=2)
-
 SAL_PATH = 'SAL_PATH'
 SAL_INF_BMC = '''/bin/sal-inf-bmc'''
 
