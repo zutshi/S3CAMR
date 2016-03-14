@@ -11,7 +11,6 @@ from modeling.pwa import simulator as pwa_sim
 import err
 from bmc import bmc
 from modeling.affinemodel import AffineModel
-import sample
 
 #np.set_printoptions(suppress=True, precision=2)
 
@@ -56,6 +55,24 @@ def plot_trace(tx, fig):
 #     BP.show(fig)
 
 
+def simulate_and_plot(AA, tas, sp, pwa_model, max_path_len, S0):
+    #fig = BP.figure(title='S3CAMR')
+    fig = plt.figure()
+    plot_abs_states(AA, tas, fig)
+    plot_rect(sp.final_cons.rect(), fig)
+    # sample only initial abstract state
+    x0_samples = (sp.sampler.sample_multiple(S0, AA, sp, 500)).x_array
+    #print x0_samples
+    # sample the entire given initial set
+    #X0 = sp.init_cons
+    #x0_samples = sample.sample_ival_constraints(X0, n=1000)
+
+    print 'simulating and plotting...'
+    for i in simulate_pwa(pwa_model, x0_samples, N=max_path_len):
+        plot_trace(i, fig)
+    plt.show()
+
+
 def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim):
     '''does not handle pi_seq_list yet'''
 
@@ -65,23 +82,9 @@ def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim):
     S0 = {path[0] for path in error_paths}
     max_path_len = max([len(path) for path in error_paths])
 
-    #fig = BP.figure(title='S3CAMR')
-    fig = plt.figure()
-    plot_abs_states(AA, tas, fig)
-    plot_rect(sp.final_cons.rect(), fig)
-
     pwa_model = build_pwa_dft_model(AA, tas, sp, sys_sim)
-
-    # sample only initial abstract state
-    x0_samples = (sp.sampler.sample_multiple(S0, AA, sp, 500)).x_array
-    #print x0_samples
-    # sample the entire given initial set
-    #X0 = sp.init_cons
-    #x0_samples = sample.sample_ival_constraints(X0, n=1000)
-    print 'simulating and plotting...'
-    for i in simulate_pwa(pwa_model, x0_samples, N=max_path_len):
-        plot_trace(i, fig)
-    plt.show()
+    if __debug__:
+        simulate_and_plot(AA, tas, sp, pwa_model, max_path_len, S0)
 
     sal_bmc = bmc.factory('sal')
     prop = sp.final_cons
@@ -210,7 +213,6 @@ def model(abs_state, AA, sp, step_sim):
     # XXX: Generate different samples for each time step or reuse?
     # Not clear!
     state_samples = sp.sampler.sample(abs_state, AA, sp, AA.num_samples*MORE_FACTOR)
-    test_samples = sp.sampler.sample(abs_state, AA, sp, AA.num_samples*MORE_FACTOR*TEST_FACTOR)
 
     X, Y = getxy(abs_state, state_samples, step_sim)
 
@@ -220,6 +222,7 @@ def model(abs_state, AA, sp, step_sim):
     sub_model = pwa.PWA.sub_model(A, b, C, d)
 
     if __debug__:
+        test_samples = sp.sampler.sample(abs_state, AA, sp, AA.num_samples*MORE_FACTOR*TEST_FACTOR)
         X, Y = getxy(abs_state, test_samples, step_sim)
         e = am.model_error(X, Y)
         print 'error% in pwa model', e
