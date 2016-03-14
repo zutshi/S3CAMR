@@ -1,12 +1,17 @@
-import pwa
-import simulatesystem as simsys
 import numpy as np
+#import bokeh.plotting as BP
+import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 
-import utils as U
-import constraints as C
+import simulatesystem as simsys
+from modeling.pwa import pwa
+from modeling.pwa import simulator as pwa_sim
+#import utils as U
+#import constraints as C
 import err
 from bmc import bmc
 from modeling.affinemodel import AffineModel
+import sample
 
 #np.set_printoptions(suppress=True, precision=2)
 
@@ -17,26 +22,80 @@ TEST_FACTOR = 10
 INF = float('inf')
 
 
-def refine_dft_model_based(A, error_paths, pi_seq_list, sp, sys_sim):
+def simulate_pwa(pwa_model, x_samples, N):
+    #ps = pwa_sim.PWA_SIM(pwa_model)
+    return [pwa_sim.simulate(pwa_model, x0, N) for x0 in x_samples]
+
+
+def plot_rect(r, fig):
+    ax = fig.gca()
+    ax.add_patch(
+        patches.Rectangle(r[0], *r[1], fill=False)
+        #patches.Rectangle((0.1, 0.1), 0.5, 0.5, fill=False)
+    )
+
+
+def plot_abs_states(AA, abs_states, fig):
+    for abs_state in abs_states:
+        #r = AA.plant_abs.rect(abs_state.plant_state)
+        r = AA.plant_abs.get_ival_cons_abs_state(abs_state.plant_state).rect()
+        #if c.dim != 2:
+        #    raise StandardError('dim should be 2 for plotting 2D!')
+        plot_rect(r, fig)
+
+
+def plot_trace(tx, fig):
+    #print tx
+    #t = np.array(tx[0])
+    x = np.vstack(tx[1])
+    ax = fig.gca()
+    ax.plot(x[:, 0], x[:, 1], '-*')
+#     fig.line(x[:, 0], x[:, 1])
+#     print x
+#     BP.output_server('hover')
+#     BP.show(fig)
+
+
+def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim):
     '''does not handle pi_seq_list yet'''
 
     # traversed_abs_state_set
     tas = {state for path in error_paths for state in path}
+    # intial abs state set
+    S0 = {path[0] for path in error_paths}
 
-    pwa_model = build_pwa_model(A, tas, sp, sys_sim)
+    #fig = BP.figure(title='S3CAMR')
+    fig = plt.figure()
+    plot_abs_states(AA, tas, fig)
+    plot_rect(sp.final_cons.rect(), fig)
+
+    pwa_model = build_pwa_dft_model(AA, tas, sp, sys_sim)
+
+    # sample only initial abstract state
+    assert(len(S0) == 1)
+    s0 = list(S0)[0]
+    x0_samples = (sp.sampler.sample(s0, AA, sp, 100)).x_array
+    #print x0_samples
+    # sample the entire given initial set
+    #X0 = sp.init_cons
+    #x0_samples = sample.sample_ival_constraints(X0, n=1000)
+    for i in simulate_pwa(pwa_model, x0_samples, N=3):
+        plot_trace(i, fig)
+    plt.show()
+    exit()
 
     sal_bmc = bmc.factory('sal')
     prop = sp.final_cons
 
-    err.warn_severe('overwriting safety property!')
-    prop = C.IntervalCons(
-            np.array([-INF, -INF]),
-            np.array([-1, INF]))
+#     err.warn_severe('overwriting safety property!')
+#     prop = C.IntervalCons(
+#             np.array([-INF, -INF]),
+#             np.array([-1, INF]))
 #     prop = C.IntervalCons(
 #             np.array([1, -INF]),
 #             np.array([INF, INF]))
 
-    sal_bmc.init(A.num_dims.x, pwa_model, sp.init_cons, prop, 'vdp', 'dft')
+    sal_bmc.init(AA.num_dims.x, pwa_model, sp.init_cons, prop, 'vdp_dft', 'dft')
     sal_bmc.check()
     #bmc.check(depth=2)
     #if bmc.sat:
@@ -45,7 +104,7 @@ def refine_dft_model_based(A, error_paths, pi_seq_list, sp, sys_sim):
     #    return None
 
 
-def refine_dmt_model_based(A, error_paths, pi_seq_list, sp, sys_sim):
+def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim):
     """refine using discrete time models
 
     Parameters
@@ -67,12 +126,12 @@ def refine_dmt_model_based(A, error_paths, pi_seq_list, sp, sys_sim):
     # traversed_abs_state_set
     tas = {state for path in error_paths for state in path}
 
-    pwa_models = build_pwa_dt_model(A, tas, sp, sys_sim)
+    pwa_models = build_pwa_dt_model(AA, tas, sp, sys_sim)
 
     sal_bmc = bmc.factory('sal')
     prop = sp.final_cons
 
-    sal_bmc.init(A.num_dims.x, pwa_models, sp.init_cons, prop, 'vdp_dmt', 'dmt')
+    sal_bmc.init(AA.num_dims.x, pwa_models, sp.init_cons, prop, 'vdp_dmt', 'dmt')
     sal_bmc.check()
 
 
@@ -91,7 +150,7 @@ def getxy(abs_state, state_samples, sim, t0=0):
     return X, Y
 
 
-def build_pwa_model(AA, abs_states, sp, sys_sim):
+def build_pwa_dft_model(AA, abs_states, sp, sys_sim):
     dt = AA.plant_abs.delta_t
     step_sim = simsys.get_step_simulator(sp.controller_sim, sp.plant_sim, dt)
 
@@ -99,30 +158,14 @@ def build_pwa_model(AA, abs_states, sp, sys_sim):
     M = pwa.PWA()
 
     for abs_state in abs_states:
-        state_samples = sp.sampler.sample(abs_state, AA, sp, AA.num_samples*MORE_FACTOR)
-        test_samples = sp.sampler.sample(abs_state, AA, sp, AA.num_samples*MORE_FACTOR*TEST_FACTOR)
-
-        X, Y = getxy(abs_state, state_samples, step_sim)
-
-        am = AffineModel(X, Y)
-        A, b = am.Ab
-        C, d = AA.plant_abs.get_ival_cons_abs_state(abs_state.plant_state).poly()
-
-        sub_model = pwa.PWA.sub_model(A, b, C, d)
+        sub_model = model(abs_state, AA, sp, step_sim)
         M.add(sub_model)
         abs_state_models[abs_state] = sub_model
-
-        if __debug__:
-            X, Y = getxy(abs_state, test_samples, step_sim)
-            e = am.model_error(X, Y)
-            print 'error% in pwa model', e
-            print '='*20
-            U.pause()
 
     return M
 
 
-# TODO: it is a superset of build_pwa_model
+# TODO: it is a superset of build_pwa_dft_model
 # and should replace it
 def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
     """build_pwa_dt_model
@@ -175,14 +218,14 @@ def model(abs_state, AA, sp, step_sim):
     am = AffineModel(X, Y)
     A, b = am.Ab
     C, d = AA.plant_abs.get_ival_cons_abs_state(abs_state.plant_state).poly()
-
     sub_model = pwa.PWA.sub_model(A, b, C, d)
+
     if __debug__:
         X, Y = getxy(abs_state, test_samples, step_sim)
         e = am.model_error(X, Y)
         print 'error% in pwa model', e
         print '='*20
-        U.pause()
+        #U.pause()
     return sub_model
 
 
