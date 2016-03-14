@@ -64,6 +64,7 @@ class SALTransSys(object):
     @property
     def always_true_transition(self):
         s = tw.dedent('''
+        TRUE:
         TRUE -->
         x0' = x0;
         x1' = x1''')

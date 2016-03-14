@@ -18,7 +18,8 @@ class SALTransSysDMT(saltrans.SALTransSys):
     @property
     def always_true_transition(self):
         s = super(SALTransSysDMT, self).always_true_transition
-        t = ";\nt' IN {}".format(self.dt_set_repr)
+        #t = ";\nt' IN {}".format(self.dt_set_repr)
+        t = ";\nt' = t"
         return s + t
 
     @property

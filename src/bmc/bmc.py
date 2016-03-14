@@ -20,7 +20,7 @@ class SALBMC(object):
 
     def check(self):
         self.sbmc.dump()
-        depth = 10
+        depth = 5
         err.warn('using a depth = {}'.format(depth))
         self.sbmc.check(depth=depth)
         return

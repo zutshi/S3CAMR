@@ -9,7 +9,7 @@ import err
 
 np.set_printoptions(suppress=True, precision=2)
 
-#SAL_PATH = '''../../sal-3.3/bin/sal-inf-bmc'''
+SAL_PATH = 'SAL_PATH'
 SAL_INF_BMC = '''/bin/sal-inf-bmc'''
 
 
@@ -81,7 +81,7 @@ class BMC(object):
 
     def check(self, depth):
         try:
-            sal_path_ = os.environ['SAL'] + SAL_INF_BMC
+            sal_path_ = os.environ[SAL_PATH] + SAL_INF_BMC
         except KeyError:
             err.error("SAL environment variable is not defined. It\n"
                       "should point to sal's top-level directory")
