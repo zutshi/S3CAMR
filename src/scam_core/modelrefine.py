@@ -63,6 +63,7 @@ def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim):
     tas = {state for path in error_paths for state in path}
     # intial abs state set
     S0 = {path[0] for path in error_paths}
+    max_path_len = max([len(path) for path in error_paths])
 
     #fig = BP.figure(title='S3CAMR')
     fig = plt.figure()
@@ -72,17 +73,15 @@ def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim):
     pwa_model = build_pwa_dft_model(AA, tas, sp, sys_sim)
 
     # sample only initial abstract state
-    assert(len(S0) == 1)
-    s0 = list(S0)[0]
-    x0_samples = (sp.sampler.sample(s0, AA, sp, 100)).x_array
+    x0_samples = (sp.sampler.sample_multiple(S0, AA, sp, 500)).x_array
     #print x0_samples
     # sample the entire given initial set
     #X0 = sp.init_cons
     #x0_samples = sample.sample_ival_constraints(X0, n=1000)
-    for i in simulate_pwa(pwa_model, x0_samples, N=3):
+    print 'simulating and plotting...'
+    for i in simulate_pwa(pwa_model, x0_samples, N=max_path_len):
         plot_trace(i, fig)
     plt.show()
-    exit()
 
     sal_bmc = bmc.factory('sal')
     prop = sp.final_cons
@@ -96,7 +95,7 @@ def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim):
 #             np.array([INF, INF]))
 
     sal_bmc.init(AA.num_dims.x, pwa_model, sp.init_cons, prop, 'vdp_dft', 'dft')
-    sal_bmc.check()
+    sal_bmc.check(max_path_len)
     #bmc.check(depth=2)
     #if bmc.sat:
     #    return bmc.soln
