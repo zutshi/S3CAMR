@@ -52,10 +52,12 @@ and plot them...
     python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft
     ```
 - Use DMT (Discrete-time Multi Time Step) model
+
     ```
     python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dmt
     ```
 - Use DCT (Discrete-time Continuous Time Step) model [NOT-IMPLEMENTED]
+
     ```
     python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dct
     ```
