@@ -26,21 +26,27 @@ def simulate_pwa(pwa_model, x_samples, N):
     return [pwa_sim.simulate(pwa_model, x0, N) for x0 in x_samples]
 
 
-def plot_rect(r, fig):
+def plot_rect(r, fig, edgecolor='k'):
     ax = fig.gca()
     ax.add_patch(
-        patches.Rectangle(r[0], *r[1], fill=False)
+        patches.Rectangle(r[0], *r[1], fill=False, edgecolor=edgecolor)
         #patches.Rectangle((0.1, 0.1), 0.5, 0.5, fill=False)
     )
 
 
-def plot_abs_states(AA, abs_states, fig):
-    for abs_state in abs_states:
-        #r = AA.plant_abs.rect(abs_state.plant_state)
-        r = AA.plant_abs.get_ival_cons_abs_state(abs_state.plant_state).rect()
-        #if c.dim != 2:
-        #    raise StandardError('dim should be 2 for plotting 2D!')
-        plot_rect(r, fig)
+def plot_abs_states(AA, s, fig):
+    color_map = {
+                'init': 'g',
+                'final': 'r',
+                'regular': 'k'
+                }
+    for atype, abs_states in s.iteritems():
+        for abs_state in abs_states:
+            #r = AA.plant_abs.rect(abs_state.plant_state)
+            #if c.dim != 2:
+            #    raise StandardError('dim should be 2 for plotting 2D!')
+            r = AA.plant_abs.get_ival_cons_abs_state(abs_state.plant_state).rect()
+            plot_rect(r, fig, color_map[atype])
 
 
 def plot_trace(tx, fig):
@@ -55,10 +61,10 @@ def plot_trace(tx, fig):
 #     BP.show(fig)
 
 
-def simulate_and_plot(AA, tas, sp, pwa_model, max_path_len, S0):
+def simulate_and_plot(AA, s, sp, pwa_model, max_path_len, S0):
     #fig = BP.figure(title='S3CAMR')
     fig = plt.figure()
-    plot_abs_states(AA, tas, fig)
+    plot_abs_states(AA, s, fig)
     plot_rect(sp.final_cons.rect(), fig)
     # sample only initial abstract state
     x0_samples = (sp.sampler.sample_multiple(S0, AA, sp, 500)).x_array
@@ -84,7 +90,12 @@ def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim):
 
     pwa_model = build_pwa_dft_model(AA, tas, sp, sys_sim)
     if __debug__:
-        simulate_and_plot(AA, tas, sp, pwa_model, max_path_len, S0)
+        s = {
+            'init': {path[0] for path in error_paths},
+            'final': {path[-1] for path in error_paths},
+            'regular': {state for path in error_paths for state in path[1:-1]}
+            }
+        simulate_and_plot(AA, s, sp, pwa_model, max_path_len, S0)
 
     sal_bmc = bmc.factory('sal')
     prop = sp.final_cons
