@@ -8,8 +8,7 @@ checked in the original continous model.
 
 Installation
 ---
-Clone the repository and install the dependencies using pip.
-pip install -r requirements.txt
+Clone the repository and install the dependencies.
 
 Dependencies (TODO:Evolving)
 ---
