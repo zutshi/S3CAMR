@@ -670,8 +670,10 @@ def main():
     LIST_OF_REFINEMENTS = ['init', 'trace', 'model_dft', 'model_dmt', 'model_dct']
     LIST_OF_GRAPH_LIBS = ['nx', 'gt', 'g']
 
-    usage = '%(prog)s <filename>'
-    parser = argparse.ArgumentParser(description='S3CAM', usage=usage)
+    parser = argparse.ArgumentParser(
+            description='S3CAM',
+            usage='%(prog)s <filename>',
+            formatter_class=argparse.ArgumentDefaultsHelpFormatter)
     parser.add_argument('-f', '--filename', default=None, metavar='file_path.tst')
 
     #parser.add_argument('--run-benchmarks', action="store_true", default=False,
@@ -687,10 +689,10 @@ def main():
 
     parser.add_argument('--ss-concolic', action="store_true",
                         help='scatter & simulate with concolic execution using KLEE')
-    parser.add_argument('-x', '--ss-symex', type=str, metavar='engine', choices=LIST_OF_SYEMX_ENGINES,
+    parser.add_argument('-x', '--ss-symex', type=str, choices=LIST_OF_SYEMX_ENGINES,
                         help='SS + SymEx with static paths')
 
-    parser.add_argument('-r', '--cntrl-rep', type=str, metavar='repr', choices=LIST_OF_CONTROLLER_REPRS,
+    parser.add_argument('-r', '--cntrl-rep', type=str, choices=LIST_OF_CONTROLLER_REPRS,
                         help='Controller Representation')
 
     parser.add_argument('-p', '--plot', action='store_true',
@@ -699,17 +701,17 @@ def main():
     parser.add_argument('--dump', action='store_true',
                         help='dump trace in mat file')
 
-    parser.add_argument('--seed', type=int, metavar='seed_value',
+    parser.add_argument('--seed', type=int, metavar='integer_seed_value',
                         help='seed for the random generator')
 
     # TAG:MSH
     parser.add_argument('--meng', type=str, metavar='engine_name',
                         help='Shared Matlab Engine name')
 
-    parser.add_argument('-t', '--trace-struct', type=str, metavar='struct', default='tree',
+    parser.add_argument('-t', '--trace-struct', type=str, default='tree',
                         choices=LIST_OF_TRACE_STRUCTS, help='structure for cntrl-rep')
 
-    parser.add_argument('--refine', type=str, metavar='method', default='init',
+    parser.add_argument('--refine', type=str, default='init',
                         choices=LIST_OF_REFINEMENTS, help='Refinement method')
 
     parser.add_argument('-o', '--output', type=str, default='vio.log',
