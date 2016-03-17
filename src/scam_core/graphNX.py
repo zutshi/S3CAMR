@@ -79,6 +79,7 @@ class GraphNX(object):
         return self.G.nodes_iter()
 
     def add_edge(self, v1, v2, ci=None, pi=None, weight=1):
+        #print 'nx:', v1, v2
         self.G.add_edge(v1, v2, weight=1, ci=ci, pi=pi)
 
         self.ctr += 1
@@ -336,9 +337,13 @@ class GraphNX(object):
 
         edge_list = zip([dummy_super_source_node] * num_source_nodes,
                         source_list)
+
         H.add_edges_from(edge_list, weight=1)
 
-#        print edge_list
+        if __debug__:
+            print 'source -> list'
+            for e in edge_list:
+                print e
 
         # Add edges:
         #   \forall sink \in sink_list. sink -> super sink node
@@ -346,7 +351,10 @@ class GraphNX(object):
         edge_list = zip(sink_list, [dummy_super_sink_node] * num_sink_nodes)
         H.add_edges_from(edge_list, weight=1)
 
-#        print edge_list
+        if __debug__:
+            print 'sink -> list'
+            for e in edge_list:
+                print e
 
 #        print '='*80
         # TODO: WHY?
@@ -358,6 +366,16 @@ class GraphNX(object):
 
         # TODO: how to do this with lambda?
         # Also, is this indeed correct?
+
+        if __debug__:
+            # delete below lines till exit
+            K = max_paths
+            (len_list, path_list) = self.k_shortest_paths(H,
+                                                          dummy_super_source_node,
+                                                          dummy_super_sink_node,
+                                                          k=K)
+            for p in path_list:
+                print p
 
         def path_gen():
 
