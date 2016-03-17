@@ -1,5 +1,4 @@
 from sal_bmc import salbmc
-import err
 
 
 def factory(bmc_engine='sal'):
@@ -20,6 +19,5 @@ class SALBMC(object):
 
     def check(self, depth):
         self.sbmc.dump()
-        err.warn('using a depth = {}'.format(depth))
         self.sbmc.check(depth=depth)
         return
