@@ -93,8 +93,8 @@ class BMC(object):
                     self.module_name,
                     self.prop_name,
                     verbosity)
+        print sal_cmd
         if __debug__:
-            print sal_cmd
             U.strict_call(['echo'] + sal_cmd)
         U.strict_call(sal_cmd)
 
