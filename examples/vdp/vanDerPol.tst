@@ -6,10 +6,21 @@ error_set = [[-1, -6.5], [-0.7, -5.6]]
 
 # what worked
 grid_eps = [0.04, 0.04]
-num_samples = 5
 delta_t = 0.1
+num_samples = 5
+# seed 0
+
+
+grid_eps = [0.03, 0.03]
+num_samples = 10
+
 
 # what did not worked
+
+# grid_eps = [0.50, 0.04]
+# delta_t = 0.4
+# num_samples = 2
+
 # grid_eps = [0.1, 0.1]
 # num_samples = 3
 # delta_t = 0.4

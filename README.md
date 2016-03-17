@@ -18,6 +18,10 @@ Dependencies (TODO)
     set SAL_PATH
 - Yices
 - S3CAMSMT
+- Graph-Tool [graph-tool-2.13]
+    - Needs Boost >= 1.60 [set environment variable BOOST_ROOT - not working]
+        - ./configure .... 
+        - set LD_LIBRARY_PATH LD_LIBRARY_PATH+=:../boost-1.60.0/lib/
 
 ###Python Modules
 - Will include requirements.txt
