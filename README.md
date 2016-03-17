@@ -17,13 +17,24 @@ Dependencies (TODO:Evolving)
     sudo make install
 
 #####External Dependencies
-- SAL
+- S3CAMSMT
+
+    ```
+    https://github.com/cuplv/S3CAMSMT.git
+    ```
+- py_utils
+
+    ```
+    https://github.com/zutshi/pyutils.git
+    ```
+
+- SAL [optional: model checker]
     - Download and install SAL: http://sal.csl.sri.com/
     - set environment variable SAL_PATH
-    - Yices
+    - ~~Yices~~
         - Download and install Yices: http://yices.csl.sri.com/
-- S3CAMSMT
-- ghraph-tool-2.13 [optional]
+
+- ghraph-tool-2.13 [optional: faster graph library]
     - Needs Boost >= 1.60 [set environment variable BOOST_ROOT - not working]
         - Install using `./configure .... `
         - set `LD_LIBRARY_PATH LD_LIBRARY_PATH+=:../boost-1.60.0/lib/`
