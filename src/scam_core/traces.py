@@ -229,6 +229,13 @@ def plot_trace_list(trace_list, plt):
                 ax.plot(t_array, x_array[:, i])
             plt.show()
 
+        plt.figure()
+        ax = plt.gca()
+        plt.title('x0-x1'.format(i))
+        for trace in trace_list:
+            x_array = trace.x_array
+            ax.plot(x_array[:, 0], x_array[:, 1])
+        plt.show()
 
 
 def plot_trace_list_sat(trace_list, plt):
