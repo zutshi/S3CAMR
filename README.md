@@ -45,7 +45,7 @@ and plot...<br>
 ##Falsification Search using S3CAM:
 `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn`
 
-##Falsification Search using S3CAMR (using multiple time-discretization models):
+##Falsification Search using S3CAMR (using different time-discretization models):
 - Use DFT (Discrete-time Fixed Time Step) model<br>
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft`
 - Use DMT (Discrete-time Multi Time Step) model<br>
