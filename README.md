@@ -36,20 +36,21 @@ Usage
 ####Examples using Van Der Pol system
 
 #####Random Testing using Simulations:
-Run 10 simulations<br>
-    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10`<br>
-and plot...<br>
-    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10 -p`
+Run 10 simulations
+
+    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10
+and plot...
+
+    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10 -p
 
 #####Falsification Search using S3CAM:
-`python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn`
+    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn
 
 #####Falsification Search using S3CAMR (using different time-discretization models):
 - Use DFT (Discrete-time Fixed Time Step) model<br>
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft`
 - Use DMT (Discrete-time Multi Time Step) model<br>
-
-    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dmt
+    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dmt`
 - Use DCT (Discrete-time Continuous Time Step) model [NOT-IMPLEMENTED]<br>
 
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dct`
