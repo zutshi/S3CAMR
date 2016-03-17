@@ -35,9 +35,9 @@ Usage
 
 ###Random Testing using Simulations:
 Run 10 simulations<br>
-`python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10`
+    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10`<br>
 and plot...<br>
-`python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10 -p`
+    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10 -p`
 
 ###Falsification Search using S3CAM:
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn`
