@@ -19,6 +19,9 @@ def graph_factory(graph_type):
     elif graph_type == 'gt':
         from graphGT import GraphGT
         return GraphGT()
+    elif graph_type == 'g':
+        from graph_generic import Graph
+        return Graph()
     else:
         raise err.Fatal('unknown graph library requested: {}'.format(graph_type))
 
