@@ -109,7 +109,7 @@ class Options(object):
         return
 
 
-def parse(file_path):
+def parse(file_path, plant_pvt_init_data):
     test_des_file = file_path
     path = fp.get_abs_base_path(file_path)
 
@@ -117,6 +117,7 @@ def parse(file_path):
     SYS.path.append(test_dir)
 
     sut = imp.load_source('test_des', test_des_file)
+    sut.plant_pvt_init_data = plant_pvt_init_data
 
     try:
         assert(len(sut.initial_set) == 2)
