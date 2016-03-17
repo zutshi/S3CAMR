@@ -7,21 +7,48 @@ model. This discrete model is then queried for violation, which if found is
 checked in the original continous model.
 
 Installation
-===
+---
 Clone the repository and install the dependencies using pip.
 pip install -r requirements.txt
 
-Dependencies (TODO)
-===
+Dependencies (TODO:Evolving)
+---
+###Python Modules
+- Install using the Makefile: `sudo make install`
+
 ###External
 - SAL
-    set SAL_PATH
-- Yices
+    - Download and install SAL: http://sal.csl.sri.com/
+    - set environment variable SAL_PATH
+    - Yices
+        - Download and install Yices: http://yices.csl.sri.com/
 - S3CAMSMT
-- Graph-Tool [graph-tool-2.13]
+- ghraph-tool-2.13 [optional]
     - Needs Boost >= 1.60 [set environment variable BOOST_ROOT - not working]
-        - ./configure .... 
-        - set LD_LIBRARY_PATH LD_LIBRARY_PATH+=:../boost-1.60.0/lib/
+        - Install using `./configure .... `
+        - set `LD_LIBRARY_PATH LD_LIBRARY_PATH+=:../boost-1.60.0/lib/`
 
-###Python Modules
-- Will include requirements.txt
+
+Usage
+---
+(Examples using Van Der Pol system)
+
+###Random Testing using Simulations:
+Run 10 simulations<br>
+`python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10`
+and plot...<br>
+`python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10 -p`
+
+###Falsification Search using S3CAM:
+    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn`
+
+###Falsification Search using S3CAMR (using multiple time-discretization models):
+- Use DFT (Discrete-time Fixed Time Step) model<br>
+    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft`
+- Use DMT (Discrete-time Multi Time Step) model<br>
+    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dmt`
+- Use DCT (Discrete-time Continuous Time Step) model [NOT-IMPLEMENTED]<br>
+    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dct`
+
+###Seeds:
+    S3CAM/R are random in nature. Their output can be made reproducible by using the same seed passed using the switch: `--seed <integer>`
