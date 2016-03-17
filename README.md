@@ -29,18 +29,23 @@ Dependencies (TODO:Evolving)
         - set `LD_LIBRARY_PATH LD_LIBRARY_PATH+=:../boost-1.60.0/lib/`
 
 
-Usage (Examples using Van Der Pol system)
+Usage
 ---
-###Random Testing using Simulations:
+###Details
+`python ./scamr.py --help`
+
+ ###Examples using Van Der Pol system
+
+##Random Testing using Simulations:
 Run 10 simulations<br>
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10`<br>
 and plot...<br>
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10 -p`
 
-###Falsification Search using S3CAM:
+##Falsification Search using S3CAM:
 `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn`
 
-###Falsification Search using S3CAMR (using multiple time-discretization models):
+##Falsification Search using S3CAMR (using multiple time-discretization models):
 - Use DFT (Discrete-time Fixed Time Step) model<br>
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft`
 - Use DMT (Discrete-time Multi Time Step) model<br>
@@ -48,5 +53,5 @@ and plot...<br>
 - Use DCT (Discrete-time Continuous Time Step) model [NOT-IMPLEMENTED]<br>
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dct`
 
-###Seeds:
+##Seeds:
 S3CAM/R are random in nature. Their output can be made reproducible by using the same seed passed using the switch.<br> `--seed <integer>`
