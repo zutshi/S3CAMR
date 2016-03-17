@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 from scam_core import secam
 
 
