@@ -1,13 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-#import matplotlib
+import matplotlib
 # Force GTK3 backend. By default GTK2 gets loaded and conflicts with
 # graph-tool
-#matplotlib.use('GTK3Agg')
+matplotlib.use('GTK3Agg')
 #global plt
 import matplotlib.pyplot as plt
-
 import logging
 import numpy as np
 #from optparse import OptionParser
@@ -26,7 +25,7 @@ import err
 import loadsystem
 import traces
 import wmanager
-import modelrefine as MR
+
 #import utils as U
 from utils import print
 
@@ -210,6 +209,7 @@ def create_abstraction(sys, prop, opts):
         sys.min_smt_sample_dist,
         plant_abstraction_type,
         controller_abstraction_type,
+        opts.graph_lib,
         )
     return current_abs, sampler
 
@@ -439,20 +439,24 @@ def falsify_using_model(
                                                 pi_ref,
                                                 ci_ref,
                                                 pi,
-                                                ci)
+                                                ci,
+                                                opts.max_paths)
     if opts.refine == 'model_dft':
+        import modelrefine as MR
         MR.refine_dft_model_based(current_abs,
                               error_paths,
                               pi_seq_list,
                               system_params,
                               sys_sim)
     elif opts.refine == 'model_dmt':
+        import modelrefine as MR
         MR.refine_dmt_model_based(current_abs,
                               error_paths,
                               pi_seq_list,
                               system_params,
                               sys_sim)
     elif opts.refine == 'model_dct':
+        import modelrefine as MR
         raise NotImplementedError
     else:
         assert(False)
@@ -568,7 +572,8 @@ def refine_init(
                                                                            pi_ref,
                                                                            ci_ref,
                                                                            pi,
-                                                                           ci)
+                                                                           ci,
+                                                                           opts.max_paths)
 
         # ##!!##logger.debug('promising initial states: {}'.format(promising_initial_states))
 
@@ -663,6 +668,7 @@ def main():
     LIST_OF_CONTROLLER_REPRS = ['smt2', 'trace']
     LIST_OF_TRACE_STRUCTS = ['list', 'tree']
     LIST_OF_REFINEMENTS = ['init', 'trace', 'model_dft', 'model_dmt', 'model_dct']
+    LIST_OF_GRAPH_LIBS = ['nx', 'gt', 'g']
 
     usage = '%(prog)s <filename>'
     parser = argparse.ArgumentParser(description='S3CAM', usage=usage)
@@ -708,6 +714,18 @@ def main():
 
     parser.add_argument('-o', '--output', type=str, default='vio.log',
                         help='violation log')
+
+    parser.add_argument('-g', '--graph-lib', type=str, default='nx',
+                        choices=LIST_OF_GRAPH_LIBS, help='graph library')
+
+    parser.add_argument('--max-paths', type=int, default=100,
+                        help='max number of paths to use for refinement')
+
+    # TODO: remove this before thigns get too fancy.
+    # Add a simple package interface so benchmarks/tests can be
+    # written as python files and can call s3cam using an API
+    parser.add_argument('--pvt-init-data', type=str, default=None,
+                        help='will set pvt_init_data in the supplied .tst file')
 
 #    argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -760,8 +778,10 @@ def main():
     opts.refine = args.refine
     opts.op_fname = args.output
     opts.sys_path = filepath
+    opts.graph_lib = args.graph_lib
+    opts.max_paths = args.max_paths
 
-    sys, prop = loadsystem.parse(filepath)
+    sys, prop = loadsystem.parse(filepath, args.pvt_init_data)
     # TAG:MSH
     matlab_engine = args.meng
     sys.init_sims(plt, psim_args=matlab_engine)
