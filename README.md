@@ -1,5 +1,5 @@
 Simulate and Scatter + Relationalization
-===
+---
 
 S3CAMR is an improvement to S3CAM where refinement is carried symbolically.
 Instead of using iterative refinement, we first build a piece-wise affine (PWA)
@@ -29,10 +29,8 @@ Dependencies (TODO:Evolving)
         - set `LD_LIBRARY_PATH LD_LIBRARY_PATH+=:../boost-1.60.0/lib/`
 
 
-Usage
+Usage (Examples using Van Der Pol system)
 ---
-(Examples using Van Der Pol system)
-
 ###Random Testing using Simulations:
 Run 10 simulations<br>
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10`<br>
@@ -40,7 +38,7 @@ and plot...<br>
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10 -p`
 
 ###Falsification Search using S3CAM:
-    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn`
+`python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn`
 
 ###Falsification Search using S3CAMR (using multiple time-discretization models):
 - Use DFT (Discrete-time Fixed Time Step) model<br>
@@ -51,4 +49,4 @@ and plot...<br>
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dct`
 
 ###Seeds:
-    S3CAM/R are random in nature. Their output can be made reproducible by using the same seed passed using the switch: `--seed <integer>`
+S3CAM/R are random in nature. Their output can be made reproducible by using the same seed passed using the switch: `--seed <integer>`
