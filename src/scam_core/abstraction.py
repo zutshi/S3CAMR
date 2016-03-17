@@ -59,6 +59,7 @@ class TopLevelAbs:
         min_smt_sample_dist,
         plant_abstraction_type,
         controller_abstraction_type,
+        graph_lib,
         plant_abs=None,
         controller_abs=None,
         prog_bar=False,
@@ -66,8 +67,9 @@ class TopLevelAbs:
 
         # super(Abstraction, self).__init__()
 
+        self.graph_lib = graph_lib
         self.num_dims = num_dims
-        self.G = g.graph_factory('nx')
+        self.G = g.graph_factory(graph_lib)
         self.T = T
         self.N = None
         self.state = None
@@ -325,14 +327,15 @@ class TopLevelAbs:
         return attr_map['ci'], attr_map['pi']
 
     def get_error_paths(self, initial_state_set,
-                                            final_state_set, pi_ref,
-                                            ci_ref, pi_cons, ci_cons):
+                        final_state_set, pi_ref,
+                        ci_ref, pi_cons, ci_cons,
+                        max_paths):
         '''
         @type pi_cons: constraints.IntervalCons
         @type ci_cons: constraints.IntervalCons
         '''
 
-        MAX_ERROR_PATHS = 100
+        MAX_ERROR_PATHS = max_paths
         ci_dim = self.num_dims.ci
         pi_dim = self.num_dims.pi
 #         init_set = set()
