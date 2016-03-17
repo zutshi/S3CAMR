@@ -31,15 +31,14 @@ Dependencies (TODO:Evolving)
 Usage
 ---
 ####Print help
-    `python ./scamr.py --help`
+    python ./scamr.py --help
 
 ####Examples using Van Der Pol system
-
 #####Random Testing using Simulations:
 Run 10 simulations
 
     python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10
-and plot...
+and plot them...
 
     python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10 -p
 
@@ -47,13 +46,19 @@ and plot...
     python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn
 
 #####Falsification Search using S3CAMR (using different time-discretization models):
-- Use DFT (Discrete-time Fixed Time Step) model<br>
-    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft`
-- Use DMT (Discrete-time Multi Time Step) model<br>
-    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dmt`
-- Use DCT (Discrete-time Continuous Time Step) model [NOT-IMPLEMENTED]<br>
+- Use DFT (Discrete-time Fixed Time Step) model
 
-    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dct`
+    ```
+    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft
+    ```
+- Use DMT (Discrete-time Multi Time Step) model
+    ```
+    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dmt
+    ```
+- Use DCT (Discrete-time Continuous Time Step) model [NOT-IMPLEMENTED]
+    ```
+    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dct
+    ```
 
 #####Reproducible output using seeds:
 S3CAM/R are random in nature. Their output can be made reproducible by using the same seed passed using the switch.
