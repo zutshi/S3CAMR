@@ -112,64 +112,37 @@ def solout_fun(property_checker, violating_state, plot_data):
 # Bad things happen when you modify the passed in X.
 # So, make a copy!
 def dyn_1(t, X, u):
-    '''regular dynamics'''
+    '''decoupled dynamics'''
     X = X.copy()
-    X[0], X[1] = 1*X[0], 1.5*X[1]
+    A = np.array([
+            [1., 0.],
+            [0., 1.5]
+            ])
+    X = np.dot(A, X)
     return X
 
 
 def dyn_2(t, X, u):
-    '''slower dynamics'''
-    X = X.copy()
-    X[0], X[1] = 0.1*X[0], 0.2*X[1]
-    return X
-
-
-def dyn_3(t, X, u):
-    '''stable rotational dynamics'''
+    '''decoupled + slow dynamics:
+        increase the amount of steps req.'''
     X = X.copy()
     A = np.array([
-            [-3, -2],
-            [5, -2]
+            [0.1, 0.],
+            [0., 0.2]
             ])
-    b = np.array([1, 3])
-    X = np.dot(A, X) + b
+    X = np.dot(A, X)
     return X
 
 
-def dyn_4(t, X, u):
-    '''un-stable rotational dynamics'''
-    X = X.copy()
-    A = np.array([
-            [3, -9],
-            [5, -2]
-            ])
-    b = np.array([1, 3])
-    X = np.dot(A, X) + b
-    return X
+def dyn_generic(A):
+    def dyn(t, X, u):
+        '''parameterized dynamics'''
+        X = X.copy()
+        b = np.array([1, -3])
+        X = np.dot(A, X) + b
+        return X
+    return dyn
 
-
-def dyn_5(t, X, u):
-    '''un-stable dynamics'''
-    X = X.copy()
-    A = np.array([
-            [6, -3],
-            [5, -2]
-            ])
-    b = np.array([1, 3])
-    X = np.dot(A, X) + b
-    return X
-
-def dyn_6(t, X, u):
-    '''?'''
-    X = X.copy()
-    A = np.array([
-            [-2, -3],
-            [5, -2]
-            ])
-    b = np.array([1, 3])
-    X = np.dot(A, X) + b
-    return X
 
 def dyn_40(t, X, u):
     '''switching dynamics: simple, dependant
@@ -214,9 +187,30 @@ def dynamics(dyn_id):
     sys_dyn_map = {
         1: dyn_1,
         2: dyn_2,
-        3: dyn_3,
-        4: dyn_4,
-        5: dyn_5,
-        6: dyn_6,
+        # stable non-rotational dynamics
+        3: dyn_generic([
+            [-1., 0.5], # [-a1, a2],
+            [0.5, -1.]  # [a2, -a1]
+            ]),
+        # un-stable non-rotational dynamics
+        4: dyn_generic([
+            [0.5, 1.], # [-a1, a2],
+            [1., 0.5]  # [a2, -a1]
+            ]),
+        # stable rotational dynamics
+        5: dyn_generic([
+            [-3., -2.], # [-a1, a2],
+            [5., -2.]  # [a2, -a1]
+            ]),
+        # un-stable rotational dynamics
+        6: dyn_generic([
+            [3., 2.], # [-a1, a2],
+            [-5., -2.]  # [a2, -a1]
+            ]),
+        # un-stable non-rotational increasing dynamics
+        7: dyn_generic([
+            [6., -3.], # [-a1, a2],
+            [5., -2.]  # [a2, -a1]
+            ]),
         }
     return sys_dyn_map[dyn_id]
