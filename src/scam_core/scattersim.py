@@ -365,6 +365,7 @@ def refine_init_based(A, promising_initial_abs_states,
         A.min_smt_sample_dist,
         A.plant_abstraction_type,
         A.controller_abstraction_type,
+        A.graph_lib
         )
 
     # TODO: what a hack!
@@ -710,4 +711,7 @@ def check_sat_any(x_array, cons):
     return cons.any_sat(x_array)
 
 def compute_concrete_controller_output(*args):
-    return None, None
+    def inf_list(x):
+        while True:
+            yield x
+    return inf_list(0), inf_list(0)
