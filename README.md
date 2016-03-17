@@ -48,10 +48,13 @@ and plot...<br>
 - Use DFT (Discrete-time Fixed Time Step) model<br>
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft`
 - Use DMT (Discrete-time Multi Time Step) model<br>
-    `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dmt`
+
+    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dmt
 - Use DCT (Discrete-time Continuous Time Step) model [NOT-IMPLEMENTED]<br>
+
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dct`
 
 #####Reproducible output using seeds:
 S3CAM/R are random in nature. Their output can be made reproducible by using the same seed passed using the switch.
+
     --seed <integer>
