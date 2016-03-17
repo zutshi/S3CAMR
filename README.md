@@ -53,4 +53,5 @@ and plot...<br>
     `python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dct`
 
 #####Reproducible output using seeds:
-S3CAM/R are random in nature. Their output can be made reproducible by using the same seed passed using the switch.<br> `--seed <integer>`
+S3CAM/R are random in nature. Their output can be made reproducible by using the same seed passed using the switch.
+    --seed <integer>
