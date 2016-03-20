@@ -7,6 +7,7 @@ import logging
 
 import state
 from utils import print
+import err
 
 logger = logging.getLogger(__name__)
 
@@ -55,20 +56,8 @@ def sample_init_UR(sys, prop, num_samples):
 
 
 def sample_ival_constraints(ival_cons, n):
-
-    # ##!!##logger.debug('sampling cons: {}'.format(ival_cons))
-
-    # print('='*40,'sampler','='*40)
-    # print(ival_cons)
-
-    random_arr = np.random.rand(n, ival_cons.dim)
-    x_array = ival_cons.l + random_arr * (ival_cons.h - ival_cons.l)
-
-    # print(x_array)
-    # TODO: assumes state_arry size to be 1
-    # print('='*40,'samplerEND','='*40)
-
-    return x_array
+    err.warn('STOP USING IT')
+    return ival_cons.sample_UR(n)
 
 
 class Sampler(object):
