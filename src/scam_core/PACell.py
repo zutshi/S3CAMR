@@ -95,6 +95,8 @@ class PlantAbstraction:
     def get_ival_cons_abs_state(self, abs_state):
         return CM.ival_constraints(abs_state.cell_id, self.eps)
 
+    def get_abs_state_cell(self, abs_state):
+        return abs_state.cell_id
 
     def get_abs_state_set_from_ival_constraints(
             self,
