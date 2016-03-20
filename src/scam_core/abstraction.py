@@ -69,7 +69,7 @@ class TopLevelAbs:
 
         self.graph_lib = graph_lib
         self.num_dims = num_dims
-        self.G = g.graph_factory(graph_lib)
+        self.G = g.factory(graph_lib)
         self.T = T
         self.N = None
         self.state = None

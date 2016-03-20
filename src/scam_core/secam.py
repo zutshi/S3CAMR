@@ -1,12 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 from __future__ import print_function
-import matplotlib
+#import matplotlib
 # Force GTK3 backend. By default GTK2 gets loaded and conflicts with
 # graph-tool
-matplotlib.use('GTK3Agg')
+#matplotlib.use('GTK3Agg')
 #global plt
-import matplotlib.pyplot as plt
+#import matplotlib.pyplot as plt
 import logging
 import numpy as np
 #from optparse import OptionParser
@@ -23,8 +23,9 @@ import simulatesystem as simsys
 import scattersim as SS
 import err
 import loadsystem
-import traces
+#import traces
 import wmanager
+import plotting
 
 #import utils as U
 from utils import print
@@ -237,7 +238,7 @@ def falsify(sys, prop, opts, current_abs, sampler):
     sample_ci = opts.METHOD == 'concrete' or opts.METHOD == 'concrete_no_controller'
 
     # options
-    plot = opts.plot
+    #plot = opts.plot
 
     initial_discrete_state = tuple(initial_discrete_state)
     initial_controller_state = np.array(initial_controller_state)
@@ -270,7 +271,7 @@ def falsify(sys, prop, opts, current_abs, sampler):
             ci,
             pi,
             sampler,
-            plot,
+            #plot,
             init_cons,
             original_plant_cons_list,
             MAX_ITER,
@@ -303,7 +304,7 @@ def refine_trace(
         ci,
         pi,
         sampler,
-        plot,
+        #plot,
         init_cons,
         original_plant_cons_list):
 
@@ -325,10 +326,11 @@ def refine_trace(
         )
 
     SS.discover(current_abs, system_params)
-
-    if plot:
-        plt.autoscale()
-        plt.show()
+    
+    #POFF
+#     if plot:
+#         plt.autoscale()
+#         plt.show()
 
     while True:
 
@@ -343,9 +345,10 @@ def refine_trace(
         # ##!!##logger.debug('promising initial states: {}'.format(promising_initial_states))
 
         print('begin random testing!')
-        if plot:
-            f2 = plt.figure()
-            f2.suptitle('random testing')
+        #POFF
+#         if plot:
+#             f2 = plt.figure()
+#             f2.suptitle('random testing')
 
 
         # TODO: ugly...should it be another function?
@@ -367,8 +370,9 @@ def refine_trace(
             initial_discrete_state,
             initial_controller_state,
             )
-        if plot:
-            plt.show()
+        #POFF
+#         if plot:
+#             plt.show()
         if done:
             print('Concretized', file=SYS.stderr)
             return True
@@ -391,7 +395,7 @@ def falsify_using_model(
         ci,
         pi,
         sampler,
-        plot,
+        #plot,
         init_cons,
         original_plant_cons_list,
         MAX_ITER,
@@ -423,8 +427,9 @@ def falsify_using_model(
         )
 
     SS.discover(current_abs, system_params)
-    if plot:
-        plt.show()
+    #POFF
+#     if plot:
+#         plt.show()
 
     if not system_params.final_state_set:
         print('did not find any abstract counter example!', file=SYS.stderr)
@@ -518,7 +523,7 @@ def refine_init(
         ci,
         pi,
         sampler,
-        plot,
+        #plot,
         init_cons,
         original_plant_cons_list,
         MAX_ITER,
@@ -552,11 +557,12 @@ def refine_init(
             )
         SS.discover(current_abs, system_params)
 
-        if plot:
-            #plt.autoscale()
-            #ph.figure_for_paper(plt.gca(), plot_hack.LINE_LIST)
-            #plot_hack.LINE_LIST = []
-            plt.show()
+        #POFF
+#         if plot:
+#             #plt.autoscale()
+#             #ph.figure_for_paper(plt.gca(), plot_hack.LINE_LIST)
+#             #plot_hack.LINE_LIST = []
+#             plt.show()
 
         if not system_params.final_state_set:
             print('did not find any abstract counter example!', file=SYS.stderr)
@@ -580,9 +586,10 @@ def refine_init(
         # ##!!##logger.debug('promising initial states: {}'.format(promising_initial_states))
 
         print('begin random testing!')
-        if plot:
-            f2 = plt.figure()
-            f2.suptitle('random testing')
+        #POFF
+#         if plot:
+#             f2 = plt.figure()
+#             f2.suptitle('random testing')
 
         print(len(promising_initial_states), len(ci_seq_list), len(pi_seq_list))
         #U.pause()
@@ -611,9 +618,10 @@ def refine_init(
             initial_controller_state,
             sample_ci
             )
-        if plot:
-            #ph.figure_for_paper(plt.gca(), plot_hack.LINE_LIST)
-            plt.show()
+        # POFF
+#         if plot:
+#             #ph.figure_for_paper(plt.gca(), plot_hack.LINE_LIST)
+#             plt.show()
         if res:
             print('Concretized', file=SYS.stderr)
             fp.append_data(opts.op_fname,
@@ -640,19 +648,15 @@ def dump_trace(trace_list):
 
 def run_secam(sys, prop, opts):
     MODE = opts.MODE
-    plot = opts.plot
+    #plot = opts.plot
 
     if MODE == 'simulate':
         start_time = time.time()
         trace_list = simulate(sys, prop, opts)
-        if plot:
-            if opts.dump_trace:
-                dump_trace(trace_list)
-            if opts.plot_lib == 'mp':
-                traces.plot_trace_list(trace_list, plt)
-            if opts.plot_lib == 'qt':
-                import plotting
-                plotting.plot_trace_list(trace_list)
+        #if plot:
+        if opts.dump_trace:
+            dump_trace(trace_list)
+        opts.plotting.plot_trace_list(trace_list)
     elif MODE == 'falsify':
         # ignore time taken to create_abstraction: mainly to ignore parsing
         # time
@@ -675,7 +679,7 @@ def main():
     LIST_OF_TRACE_STRUCTS = ['list', 'tree']
     LIST_OF_REFINEMENTS = ['init', 'trace', 'model_dft', 'model_dmt', 'model_dct']
     LIST_OF_GRAPH_LIBS = ['nx', 'gt', 'g']
-    LIST_OF_PLOT_LIBS = ['mp', 'qt']
+    LIST_OF_PLOT_LIBS = ['mp', 'pg']
 
     parser = argparse.ArgumentParser(
             description='S3CAM',
@@ -702,8 +706,8 @@ def main():
     parser.add_argument('-r', '--cntrl-rep', type=str, choices=LIST_OF_CONTROLLER_REPRS,
                         help='Controller Representation')
 
-    parser.add_argument('-p', '--plot', action='store_true',
-                        help='enable plotting')
+#     parser.add_argument('-p', '--plot', action='store_true',
+#                         help='enable plotting')
 
     parser.add_argument('--dump', action='store_true',
                         help='dump trace in mat file')
@@ -727,7 +731,7 @@ def main():
     parser.add_argument('-g', '--graph-lib', type=str, default='nx',
                         choices=LIST_OF_GRAPH_LIBS, help='graph library')
 
-    parser.add_argument('--plot-lib', type=str, default='mp',
+    parser.add_argument('-p', '--plot-lib', type=str, default=None,
                         choices=LIST_OF_PLOT_LIBS, help='plot library')
 
     parser.add_argument('--max-paths', type=int, default=100,
@@ -789,7 +793,7 @@ def main():
             opts.trace_struct = args.trace_struct
     else:
         raise err.Fatal('no options passed. Check usage.')
-    opts.plot = args.plot
+    #opts.plot = args.plot
     opts.dump_trace = args.dump
     opts.refine = args.refine
     opts.op_fname = args.output
@@ -797,23 +801,13 @@ def main():
     opts.graph_lib = args.graph_lib
     opts.max_paths = args.max_paths
     opts.max_model_error = args.max_model_error
-    opts.plot_lib = args.plot_lib
+    opts.plotting = plotting.factory(args.plot_lib)
 
     sys, prop = loadsystem.parse(filepath, args.pvt_init_data)
     # TAG:MSH
     matlab_engine = args.meng
-    sys.init_sims(plt, psim_args=matlab_engine)
+    sys.init_sims(opts.plotting, psim_args=matlab_engine)
 
-    if opts.plot:
-        pass
-        #import matplotlib
-
-        # Force GTK3 backend. By default GTK2 gets loaded and conflicts with
-        # graph-tool
-
-        #matplotlib.use('GTK3Agg')
-        #global plt
-        #import matplotlib.pyplot as plt
     sanity_check_input(sys, prop, opts)
     run_secam(sys, prop, opts)
     # ##!!##logger.debug('execution ends')

@@ -12,18 +12,18 @@ import random as rand
 
 
 
-def graph_factory(graph_type):
-    if graph_type == 'nx':
+def factory(graph_lib):
+    if graph_lib == 'nx':
         from graphNX import GraphNX
         return GraphNX()
-    elif graph_type == 'gt':
+    elif graph_lib == 'gt':
         from graphGT import GraphGT
         return GraphGT()
-    elif graph_type == 'g':
+    elif graph_lib == 'g':
         from graph_generic import Graph
         return Graph()
     else:
-        raise err.Fatal('unknown graph library requested: {}'.format(graph_type))
+        raise err.Fatal('unknown graph library requested: {}'.format(graph_lib))
 
 
 def random_graph(
