@@ -656,6 +656,7 @@ def run_secam(sys, prop, opts):
         #if plot:
         if opts.dump_trace:
             dump_trace(trace_list)
+        #opts.plotting.
         opts.plotting.plot_trace_list(trace_list)
     elif MODE == 'falsify':
         # ignore time taken to create_abstraction: mainly to ignore parsing

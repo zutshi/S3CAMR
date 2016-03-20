@@ -1,7 +1,4 @@
 import numpy as np
-#import bokeh.plotting as BP
-import matplotlib.pyplot as plt
-import matplotlib.patches as patches
 
 import simulatesystem as simsys
 from modeling.pwa import pwa
@@ -27,47 +24,8 @@ def simulate_pwa(pwa_model, x_samples, N):
     return [pwa_sim.simulate(pwa_model, x0, N) for x0 in x_samples]
 
 
-def plot_rect(r, fig, edgecolor='k'):
-    ax = fig.gca()
-    ax.add_patch(
-        patches.Rectangle(r[0], *r[1], fill=False, edgecolor=edgecolor)
-        #patches.Rectangle((0.1, 0.1), 0.5, 0.5, fill=False)
-    )
-
-
-def plot_abs_states(AA, s, fig):
-    color_map = {
-                'init': 'g',
-                'final': 'r',
-                'regular': 'k'
-                }
-    for atype, abs_states in s.iteritems():
-        for abs_state in abs_states:
-            #r = AA.plant_abs.rect(abs_state.plant_state)
-            #if c.dim != 2:
-            #    raise StandardError('dim should be 2 for plotting 2D!')
-            r = AA.plant_abs.get_ival_cons_abs_state(abs_state.plant_state).rect()
-            plot_rect(r, fig, color_map[atype])
-
-
-def plot_trace(tx, fig):
-    #print tx
-    #t = np.array(tx[0])
-    x = np.vstack(tx[1])
-    ax = fig.gca()
-    ax.plot(x[:, 0], x[:, 1], '-*')
-#     fig.line(x[:, 0], x[:, 1])
-#     print x
-#     BP.output_server('hover')
-#     BP.show(fig)
-
-
-def simulate_and_plot(AA, s, sp, pwa_model, max_path_len, S0):
+def simulate(AA, s, sp, pwa_model, max_path_len, S0):
     NUM_SIMS = 500
-    #fig = BP.figure(title='S3CAMR')
-    fig = plt.figure()
-    plot_abs_states(AA, s, fig)
-    plot_rect(sp.final_cons.rect(), fig)
     # sample only initial abstract state
     x0_samples = (sp.sampler.sample_multiple(S0, AA, sp, NUM_SIMS)).x_array
     #print x0_samples
@@ -75,10 +33,8 @@ def simulate_and_plot(AA, s, sp, pwa_model, max_path_len, S0):
     #X0 = sp.init_cons
     #x0_samples = sample.sample_ival_constraints(X0, n=1000)
 
-    print 'simulating and plotting...'
-    for i in simulate_pwa(pwa_model, x0_samples, N=max_path_len):
-        plot_trace(i, fig)
-    plt.show()
+    traces = [i for i in simulate_pwa(pwa_model, x0_samples, N=max_path_len)]
+    return traces
 
 
 def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, opts):
@@ -101,7 +57,17 @@ def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, opts):
             'final': {path[-1] for path in error_paths},
             'regular': {state for path in error_paths for state in path[1:-1]}
             }
-        simulate_and_plot(AA, s, sp, pwa_model, max_path_len, S0)
+        print 'simulating...'
+        pwa_traces = simulate(AA, s, sp, pwa_model, max_path_len, S0)
+        print 'done'
+        opts.plotting.figure()
+        print 'plotting...'
+        opts.plotting.plot_abs_states(AA, s)
+        opts.plotting.plot_rect(sp.final_cons.rect())
+        opts.plotting.plot_pwa_traces(pwa_traces)
+        #fig = BP.figure(title='S3CAMR')
+        #fig = plt.figure()
+        opts.plotting.show()
 
     sal_bmc = bmc.factory('sal')
     prop = sp.final_cons

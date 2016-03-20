@@ -12,6 +12,10 @@ def factory(lib_name):
     elif lib_name == 'pg':
         import plotPG
         plotting = plotPG.Plotting()
+    # Bokeh
+    elif lib_name == 'bk':
+        import plotBK
+        raise NotImplementedError
     # Plotting disabled
     elif lib_name is None:
         plotting = PlottingDisabled()

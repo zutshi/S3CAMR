@@ -4,7 +4,9 @@ import matplotlib
 matplotlib.use('GTK3Agg')
 #global plt
 import matplotlib.pyplot as plt
+import matplotlib.patches as patches
 import numpy as np
+
 from plotting_abstract import PlottingBase
 
 plot_figure_for_paper = False
@@ -13,7 +15,49 @@ plot_figure_for_paper = False
 class Plotting(PlottingBase):
 
     def __init__(self):
+        self.fig = None
         return
+
+    def figure(self):
+        fig = plt.figure()
+        self.ax = fig.gca()
+
+    def show(self):
+        plt.show()
+
+    def plot_abs_states(self, AA, s):
+        color_map = {
+                    'init': 'g',
+                    'final': 'r',
+                    'regular': 'k'
+                    }
+        for atype, abs_states in s.iteritems():
+            for abs_state in abs_states:
+                #r = AA.plant_abs.rect(abs_state.plant_state)
+                #if c.dim != 2:
+                #    raise StandardError('dim should be 2 for plotting 2D!')
+                r = AA.plant_abs.get_ival_cons_abs_state(abs_state.plant_state).rect()
+                self.plot_rect(r, color_map[atype])
+
+    def plot_rect(self, r, edgecolor='k'):
+        self.ax.add_patch(
+            patches.Rectangle(r[0], *r[1], fill=False, edgecolor=edgecolor)
+            #patches.Rectangle((0.1, 0.1), 0.5, 0.5, fill=False)
+        )
+
+    def plot_pwa_traces(self, txs):
+        N = np.array([None])
+        x = []
+        y = []
+        for tx in txs:
+            #t = np.array(tx[0])
+            xy = np.vstack(tx[1])
+            x.append(xy[:, 0])
+            x.append(N)
+            y.append(xy[:, 1])
+            y.append(N)
+            #self.ax.plot(x[:, 0], x[:, 1], '-*')
+        self.ax.plot(np.hstack(x), np.hstack(y), '-*')
 
     def parse_plot_cmd(self, plot_cmd, trace_obj):
         if len(plot_cmd) != 4:
@@ -44,8 +88,6 @@ class Plotting(PlottingBase):
 
         return x, y
 
-
-
     def get_plot_cmd_from_stdin(self):
         plot_cmd_format = \
             '''########### plot command format ########## \n
@@ -56,7 +98,6 @@ class Plotting(PlottingBase):
         print plot_cmd_format
         corrected_plot_cmd = raw_input('please type the correct command:')
         return corrected_plot_cmd
-
 
     def plot_trace_list_slow(self, trace_list):
         '''
@@ -152,9 +193,10 @@ class Plotting(PlottingBase):
     #                 ax.plot(t_array, x_array[:, i])
     #             #plt.show()
 
-        plt.figure()
-        ax = plt.gca()
-        plt.title('x0-x1')
+        #plt.figure()
+        #ax = plt.gca()
+        #plt.title('x0-x1')
+        ax.title('x0-x1')
         x = []
         y = []
         N = np.array([None])
@@ -165,9 +207,8 @@ class Plotting(PlottingBase):
             y.append(x_array[:, 1])
             y.append(N)
             #ax.plot(x_array[:, 0], x_array[:, 1])
-        ax.plot(np.hstack(x), np.hstack(y))
-        plt.show()
-
+        self.ax.plot(np.hstack(x), np.hstack(y))
+        #plt.show()
 
     def plot_trace_list_sat(self, trace_list):
         '''
