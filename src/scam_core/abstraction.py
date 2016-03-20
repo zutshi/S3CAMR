@@ -542,16 +542,13 @@ def sample_abs_state(abs_state,
     assert(len(s_array) == total_num_samples)
     assert(len(t_array) == total_num_samples)
 
-    def inf_list(x):
-        while True:
-            yield x
 
 
     # can not use None because of a check in
     # get_abs_state_from_concrete_state() which silently makes
     # the entire abstract state None if a None is encountered
     # in either plant or contorller abs state.
-    (s_array_, u_array) = inf_list(0), inf_list(0)
+    (s_array_, u_array) = U.inf_list(0), U.inf_list(0)
 
     state = st.StateArray(
         t=t_array,
