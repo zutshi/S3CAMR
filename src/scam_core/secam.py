@@ -25,7 +25,7 @@ import err
 import loadsystem
 #import traces
 import wmanager
-import plotting
+from plot import plotting
 
 #import utils as U
 from utils import print
