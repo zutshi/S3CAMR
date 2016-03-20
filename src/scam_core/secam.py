@@ -447,14 +447,16 @@ def falsify_using_model(
                               error_paths,
                               pi_seq_list,
                               system_params,
-                              sys_sim)
+                              sys_sim,
+                              opts)
     elif opts.refine == 'model_dmt':
         import modelrefine as MR
         MR.refine_dmt_model_based(current_abs,
                               error_paths,
                               pi_seq_list,
                               system_params,
-                              sys_sim)
+                              sys_sim,
+                              opts)
     elif opts.refine == 'model_dct':
         import modelrefine as MR
         raise NotImplementedError
@@ -646,7 +648,11 @@ def run_secam(sys, prop, opts):
         if plot:
             if opts.dump_trace:
                 dump_trace(trace_list)
-            traces.plot_trace_list(trace_list, plt)
+            if opts.plot_lib == 'mp':
+                traces.plot_trace_list(trace_list, plt)
+            if opts.plot_lib == 'qt':
+                import plotting
+                plotting.plot_trace_list(trace_list)
     elif MODE == 'falsify':
         # ignore time taken to create_abstraction: mainly to ignore parsing
         # time
@@ -669,6 +675,7 @@ def main():
     LIST_OF_TRACE_STRUCTS = ['list', 'tree']
     LIST_OF_REFINEMENTS = ['init', 'trace', 'model_dft', 'model_dmt', 'model_dct']
     LIST_OF_GRAPH_LIBS = ['nx', 'gt', 'g']
+    LIST_OF_PLOT_LIBS = ['mp', 'qt']
 
     parser = argparse.ArgumentParser(
             description='S3CAM',
@@ -720,6 +727,9 @@ def main():
     parser.add_argument('-g', '--graph-lib', type=str, default='nx',
                         choices=LIST_OF_GRAPH_LIBS, help='graph library')
 
+    parser.add_argument('--plot-lib', type=str, default='mp',
+                        choices=LIST_OF_PLOT_LIBS, help='plot library')
+
     parser.add_argument('--max-paths', type=int, default=100,
                         help='max number of paths to use for refinement')
 
@@ -728,6 +738,10 @@ def main():
     # written as python files and can call s3cam using an API
     parser.add_argument('--pvt-init-data', type=str, default=None,
                         help='will set pvt_init_data in the supplied .tst file')
+
+    # TODO: This error can be computed against the cell sizes?
+    parser.add_argument('--max-model-error', type=float, default=float('inf'),
+                        help='split cells till model error (over a single step) <= max-error')
 
 #    argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -782,6 +796,8 @@ def main():
     opts.sys_path = filepath
     opts.graph_lib = args.graph_lib
     opts.max_paths = args.max_paths
+    opts.max_model_error = args.max_model_error
+    opts.plot_lib = args.plot_lib
 
     sys, prop = loadsystem.parse(filepath, args.pvt_init_data)
     # TAG:MSH
