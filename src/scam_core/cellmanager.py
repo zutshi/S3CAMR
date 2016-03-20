@@ -78,6 +78,8 @@ def ival_constraints(cell, eps):
 
 
 def get_children(parent_cell_id, lvl=1):
+    if lvl != 1:
+        raise NotImplementedError
     #print(parent_cell_id)
     l = [[coord, coord+1] for coord in parent_cell_id]
     #print(list(itertools.product(*l)))
@@ -90,3 +92,28 @@ def get_parent_hash(abs_state, lvl=1):
     # as i is an int, i/2 is equivalent to int(floor(i/2.0))
     # return tuple(int(floor(i/2.0)) for i in cell_id) # for clarity
     return tuple(i/2 for i in cell_id) # same as above
+
+
+class Cell(object):
+
+    def __init__(self, cell, eps):
+        """__init__
+
+        Parameters
+        ----------
+        abs_state : plant abstract state
+        A : plant abstraction (for eps)
+        """
+        self.cell = cell
+        self.eps = eps
+        return
+
+    def sample_UR(self, N):
+        ic = ival_constraints(self.cell, self.eps)
+        return ic.sample_UR(N)
+
+    def split(self):
+        return [Cell(i, self.eps/2) for i in get_children(self.cell)]
+
+    def ival_cons(self):
+        return ival_constraints(self.cell, self.eps)
