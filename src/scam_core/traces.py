@@ -159,7 +159,7 @@ def get_plot_cmd_from_stdin():
     return corrected_plot_cmd
 
 
-def plot_trace_list(trace_list, plt):
+def plot_trace_list_slow(trace_list, plt):
     '''
     @type plt: matplotlib.pyplot
     '''
@@ -219,23 +219,55 @@ def plot_trace_list(trace_list, plt):
             print('plotted {} sims'.format(ctr_total))
             ph.figure_for_paper(ax, line_list)
     else:
-        for i in range(NUM_PLOTS):
-            plt.figure()
-            ax = plt.gca()
-            plt.title('x{}'.format(i))
-            for trace in trace_list:
-                x_array = trace.x_array
-                t_array = trace.t_array
-                ax.plot(t_array, x_array[:, i])
-            plt.show()
+#         for i in range(NUM_PLOTS):
+#             plt.figure()
+#             ax = plt.gca()
+#             plt.title('x{}'.format(i))
+#             for trace in trace_list:
+#                 x_array = trace.x_array
+#                 t_array = trace.t_array
+#                 ax.plot(t_array, x_array[:, i])
+#             #plt.show()
 
         plt.figure()
         ax = plt.gca()
-        plt.title('x0-x1'.format(i))
+        plt.title('x0-x1')
         for trace in trace_list:
             x_array = trace.x_array
             ax.plot(x_array[:, 0], x_array[:, 1])
-        plt.show()
+        #plt.show()
+
+def plot_trace_list(trace_list, plt):
+    '''
+    @type plt: matplotlib.pyplot
+    '''
+
+    NUM_PLOTS = trace_list[0].x_array.shape[1]
+#         for i in range(NUM_PLOTS):
+#             plt.figure()
+#             ax = plt.gca()
+#             plt.title('x{}'.format(i))
+#             for trace in trace_list:
+#                 x_array = trace.x_array
+#                 t_array = trace.t_array
+#                 ax.plot(t_array, x_array[:, i])
+#             #plt.show()
+
+    plt.figure()
+    ax = plt.gca()
+    plt.title('x0-x1')
+    x = []
+    y = []
+    N = np.array([None])
+    for trace in trace_list:
+        x_array = trace.x_array
+        x.append(x_array[:, 0])
+        x.append(N)
+        y.append(x_array[:, 1])
+        y.append(N)
+        #ax.plot(x_array[:, 0], x_array[:, 1])
+    ax.plot(np.hstack(x), np.hstack(y))
+    #plt.show()
 
 
 def plot_trace_list_sat(trace_list, plt):
