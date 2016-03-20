@@ -267,7 +267,7 @@ def plot_trace_list(trace_list, plt):
         y.append(N)
         #ax.plot(x_array[:, 0], x_array[:, 1])
     ax.plot(np.hstack(x), np.hstack(y))
-    #plt.show()
+    plt.show()
 
 
 def plot_trace_list_sat(trace_list, plt):
