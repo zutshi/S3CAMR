@@ -160,7 +160,6 @@ class GraphGT(object):
         def path_gen():
             for path in U.bounded_iter(path_it, max_paths):
                 p = [G.v_attr[v] for v in path]
-                print p
                 yield p[1:-1]
 
         return path_gen()
