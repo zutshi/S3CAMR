@@ -121,7 +121,7 @@ def dyn_1(t, X, u):
 def dyn_2(t, X, u):
     '''slower dynamics'''
     X = X.copy()
-    X[0], X[1] = (0.1, 0.2)
+    X[0], X[1] = (0.1, 1.34)
     return X
 
 
@@ -159,14 +159,14 @@ def dyn_5():
     def dyn(t, X, u):
         X = X.copy()
         cell0, cell1 = np.ceil(X[0]/grid_eps), np.ceil(X[1]/grid_eps)
-        print cell0, cell1
+        #print cell0, cell1
         R.seed(cell0)
         X[0] = R.random()
         R.seed(cell1)
         X[1] = R.random()
         X_ = rngx[:, 0] + (rngx[:, 1] - rngx[:, 0])*X
-        if abs(X_[0]) > 10:
-            print X
+        #if abs(X_[0]) > 10:
+            #print X
         #print X_
         return X_
 
