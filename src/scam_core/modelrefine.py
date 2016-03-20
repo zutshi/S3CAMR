@@ -6,11 +6,12 @@ import matplotlib.patches as patches
 import simulatesystem as simsys
 from modeling.pwa import pwa
 from modeling.pwa import simulator as pwa_sim
-#import utils as U
+import utils as U
 #import constraints as C
 import err
 from bmc import bmc
 from modeling.affinemodel import AffineModel
+import cellmanager as CM
 
 #np.set_printoptions(suppress=True, precision=2)
 
@@ -62,12 +63,13 @@ def plot_trace(tx, fig):
 
 
 def simulate_and_plot(AA, s, sp, pwa_model, max_path_len, S0):
+    NUM_SIMS = 500
     #fig = BP.figure(title='S3CAMR')
     fig = plt.figure()
     plot_abs_states(AA, s, fig)
     plot_rect(sp.final_cons.rect(), fig)
     # sample only initial abstract state
-    x0_samples = (sp.sampler.sample_multiple(S0, AA, sp, 500)).x_array
+    x0_samples = (sp.sampler.sample_multiple(S0, AA, sp, NUM_SIMS)).x_array
     #print x0_samples
     # sample the entire given initial set
     #X0 = sp.init_cons
@@ -79,16 +81,20 @@ def simulate_and_plot(AA, s, sp, pwa_model, max_path_len, S0):
     plt.show()
 
 
-def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim):
+def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, opts):
     '''does not handle pi_seq_list yet'''
 
     # traversed_abs_state_set
     tas = {state for path in error_paths for state in path}
     # intial abs state set
     S0 = {path[0] for path in error_paths}
-    max_path_len = max([len(path) for path in error_paths])
 
-    pwa_model = build_pwa_dft_model(AA, tas, sp, sys_sim)
+    max_path_len = max([len(path) for path in error_paths])
+    print max_path_len
+    max_path_len = int(np.ceil(AA.T/AA.delta_t))
+    print max_path_len
+
+    pwa_model = build_pwa_dft_model(AA, tas, sp, sys_sim, opts.max_model_error)
     if __debug__:
         s = {
             'init': {path[0] for path in error_paths},
@@ -148,33 +154,43 @@ def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim):
     sal_bmc.check()
 
 
-def getxy(abs_state, state_samples, sim, t0=0):
-    d = abs_state.plant_state.d
-    pvt = abs_state.plant_state.pvt
+def getxy_ignoramous(cell, N, sim, t0=0):
+    """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
+    """
+    d, pvt, s = [np.array([])]*3
+    ci, pi = [np.array([])]*2
+    t0 = 0
     Yl = []
 
-    for s, x, ci, pi, t in state_samples.iterable():
+    x_array = cell.sample_UR(N)
+    for x in x_array:
         (t_, x_, s_, d_, pvt_, u_) = sim(t0, x, s, d, pvt, ci, pi)
         Yl.append(x_)
-        #trace = sys_sim(x, s, d, 0, t0, t0 + dt, ci, pi)
 
-    Y = np.vstack(Yl)
-    X = state_samples.x_array
-    return X, Y
+    return x_array, np.vstack(Yl)
 
 
-def build_pwa_dft_model(AA, abs_states, sp, sys_sim):
+def build_pwa_dft_model(AA, abs_states, sp, sys_sim, tol):
     dt = AA.plant_abs.delta_t
     step_sim = simsys.get_step_simulator(sp.controller_sim, sp.plant_sim, dt)
 
-    abs_state_models = {}
+    #abs_state_models = {}
     M = pwa.PWA()
 
-    for abs_state in abs_states:
-        sub_model = model(abs_state, AA, sp, step_sim)
-        M.add(sub_model)
-        abs_state_models[abs_state] = sub_model
+#     # refine the abs states
+#     if num_splits == 1:
+#         pass
+#     elif num_splits == 2:
+#         abs_states = [c for abs_state in abs_states for c in split_abs_state(AA, abs_state)]
+#     else:
+#         raise NotImplementedError
 
+    for abs_state in abs_states:
+        for sub_model in affine_models(
+                abs_state, AA,
+                step_sim, tol, sp):
+            M.add(sub_model)
+            #abs_state_models[abs_state] = sub_model
     return M
 
 
@@ -213,33 +229,83 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
     for dt, step_sim in zip(dt_steps, step_sims):
         pwa_model = pwa.PWA()
         for abs_state in abs_states:
-            sub_model = model(abs_state, AA, sp, step_sim)
+            sub_model = affine_model(abs_state, AA, sp, step_sim)
             pwa_model.add(sub_model)
 
         pwa_models[dt] = pwa_model
     return pwa_models
 
 
-def model(abs_state, AA, sp, step_sim):
+def affine_models(abs_state, AA, step_sim, tol, sp):
+    cell = CM.Cell(abs_state.plant_state.cell_id, AA.plant_abs.eps)
+    # number of training samples
+    ntrain = AA.num_samples * MORE_FACTOR
+    # number of test samples
+    ntest = ntrain * TEST_FACTOR
+
+#     test_samples = sp.sampler.sample(abs_state, AA, sp, 5)
+#     d = abs_state.plant_state.d
+#     pvt = abs_state.plant_state.pvt
+#     for s, x, ci, pi, t in test_samples.iterable():
+#         print 's:', s
+#         print 'd:', d
+#         print 'pvt:', pvt
+#         print 'ci:', ci
+#         print 'pi:', pi
+#     exit()
+    return cell_affine_models(cell, step_sim, ntrain, ntest, tol)
+
+
+#AA.plant_abs.get_abs_state_cell(abs_state.plant_state),
+def cell_affine_models(cell, step_sim, ntrain, ntest, tol):
+    """cell_affine_models
+
+    Parameters
+    ----------
+    cell : cell
+    step_sim : 1 time step (delta_t) simulator
+    tol : each abs state is split further into num_splits cells
+    in order to meet: modeling error < tol (module ntests samples)
+
+    Returns
+    -------
+    pwa.SubModel()
+
+    Notes
+    ------
+    """
     # XXX: Generate different samples for each time step or reuse?
     # Not clear!
-    state_samples = sp.sampler.sample(abs_state, AA, sp, AA.num_samples*MORE_FACTOR)
+    sub_models = []
 
-    X, Y = getxy(abs_state, state_samples, step_sim)
-
+    X, Y = getxy_ignoramous(cell, ntrain, step_sim)
     am = AffineModel(X, Y)
-    A, b = am.Ab
-    C, d = AA.plant_abs.get_ival_cons_abs_state(abs_state.plant_state).poly()
-    sub_model = pwa.PWA.sub_model(A, b, C, d)
-
+    X, Y = getxy_ignoramous(cell, ntest, step_sim)
+    e = am.model_error(X, Y)
     if __debug__:
-        test_samples = sp.sampler.sample(abs_state, AA, sp, AA.num_samples*MORE_FACTOR*TEST_FACTOR)
-        X, Y = getxy(abs_state, test_samples, step_sim)
-        e = am.model_error(X, Y)
-        print 'error% in pwa model', e
-        print '='*20
-        #U.pause()
-    return sub_model
+        print e
+    error = np.linalg.norm(e, 2)
+
+    # split states if tol is not satisfied
+    if error > tol:
+        err.warn('splitting on e:{}, |e|:{}'.format(e, error))
+        for split_cell in cell.split():
+            sub_models_ = cell_affine_models(
+                    split_cell, step_sim, ntrain, ntest, tol)
+            sub_models.extend(sub_models_)
+        return sub_models
+    else:
+        A, b = am.Ab
+        C, d = cell.ival_cons().poly()
+        sub_models = [pwa.PWA.sub_model(A, b, C, d)]
+        print '----------------Finalized------------------'
+
+#     if __debug__:
+#         e = test_model(abs_state, AA, sp, am, step_sim)
+#         print 'error% in pwa model', e
+#         print '='*20
+#         #U.pause()
+    return sub_models
 
 
 def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
@@ -266,3 +332,76 @@ def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
     not only the one chosen one.
     """
     raise NotImplementedError
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+##############################################
+################## CEMETEREY #################
+##############################################
+
+# TODO: move it to PACell/ or use an existing function
+def split_abs_state(AA, abs_state):
+    import cellmanager as cm
+    import PACell as P
+    import abstraction as A
+    child_cells = cm.get_children(abs_state.ps.cell_id)
+    child_states = [
+        A.AbstractState(
+            P.PlantAbstractState(
+                          cell,
+                          abs_state.ps.n,
+                          abs_state.ps.d,
+                          abs_state.ps.pvt),
+            abs_state.cs)
+        for cell in child_cells
+        ]
+    return child_states
+
+# DO NOT USE
+# TODO: DELETE
+def test_model_(abs_state, AA, sp, am, step_sim):
+    test_samples = sp.sampler.sample(abs_state, AA, sp, AA.num_samples*MORE_FACTOR*TEST_FACTOR)
+    X, Y = getxy(abs_state, test_samples, step_sim)
+    e = am.model_error(X, Y)
+    if __debug__:
+        print e
+    return e
+
+def getxy_generic(abs_state, state_samples, sim, t0=0):
+    """TODO: uses t, d, pvt, ci, pi
+    but its getting ignored while modeling!
+    """
+    d = abs_state.plant_state.d
+    pvt = abs_state.plant_state.pvt
+    Yl = []
+
+    for s, x, ci, pi, t in state_samples.iterable():
+        (t_, x_, s_, d_, pvt_, u_) = sim(t0, x, s, d, pvt, ci, pi)
+        Yl.append(x_)
+        #trace = sys_sim(x, s, d, 0, t0, t0 + dt, ci, pi)
+
+    Y = np.vstack(Yl)
+    X = state_samples.x_array
+    return X, Y
