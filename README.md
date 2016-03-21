@@ -9,6 +9,7 @@ checked in the original continous model.
 Clone the repository and install the dependencies.
 
 ##### Python Modules: Install using the Makefile
+
     sudo make install
 
 #####External Dependencies
@@ -50,6 +51,7 @@ and plot them...
     python -O ./scamr.py -f <filename>.tst -s 10 -p
 
 **Falsification Search using S3CAM:**
+
     python -O ./scamr.py -f <filename>.tst -cn
 
 **Falsification Search using S3CAMR (using different time-discretization models):**
