@@ -24,6 +24,10 @@ class SIM(object):
         pvt_init_data : pvt_init_data must contain sys_id
         """
         #sys_id = int(raw_input('enter system ID: '))
+        if pvt_init_data is None:
+            raise Exception(
+                'use --pvt-init-data <test_case_number> to run the '
+                'test case')
         self.dyn = dynamics(int(pvt_init_data))
 
     def sim(self, TT, X0, D, P, U, I, property_checker, property_violated_flag):
