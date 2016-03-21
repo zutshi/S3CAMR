@@ -15,12 +15,19 @@ plot_figure_for_paper = False
 class Plotting(PlottingBase):
 
     def __init__(self):
-        self.fig = None
+        self._ax = None
         return
 
     def figure(self):
         fig = plt.figure()
-        self.ax = fig.gca()
+        self._ax = fig.gca()
+
+    @property
+    def ax(self):
+        if self._ax is None:
+            fig = plt.figure()
+            self._ax = fig.gca()
+        return self._ax
 
     def show(self):
         plt.show()
@@ -177,38 +184,78 @@ class Plotting(PlottingBase):
                 ax.plot(x_array[:, 0], x_array[:, 1])
             #plt.show()
 
-    def plot_trace_list(self, trace_list):
-        '''
-        @type plt: matplotlib.pyplot
-        '''
+    def plot_trace_list(self, trace_list, xvsy=[]):
+        """plot all state vars """
+        if not xvsy:
+            nd = trace_list[0].x_array.shape[1]
+            xvsy = [('t', 'x{}'.format(i)) for i in range(nd)]
+        print xvsy
+        self.plot_trace_list_xvsy(trace_list, xvsy)
 
-        NUM_PLOTS = trace_list[0].x_array.shape[1]
-    #         for i in range(NUM_PLOTS):
-    #             plt.figure()
-    #             ax = plt.gca()
-    #             plt.title('x{}'.format(i))
-    #             for trace in trace_list:
-    #                 x_array = trace.x_array
-    #                 t_array = trace.t_array
-    #                 ax.plot(t_array, x_array[:, i])
-    #             #plt.show()
+    def plot_trace_list_xvsy(self, trace_list, xVsy):
+        """plot_trace_list
 
-        #plt.figure()
-        #ax = plt.gca()
-        #plt.title('x0-x1')
-        ax.title('x0-x1')
-        x = []
-        y = []
-        N = np.array([None])
-        for trace in trace_list:
-            x_array = trace.x_array
-            x.append(x_array[:, 0])
-            x.append(N)
-            y.append(x_array[:, 1])
-            y.append(N)
-            #ax.plot(x_array[:, 0], x_array[:, 1])
-        self.ax.plot(np.hstack(x), np.hstack(y))
-        #plt.show()
+        Parameters
+        ----------
+        trace_list :
+        xVsy : [(x,y)]: x Vs y
+               e.g. [(t, x0), (t, x0),(t, x1),(x0, x1)]
+        """
+
+        # Would be good to handle errors in the x Vs y string
+        #sanity_check_xVsy()
+
+        def prep_t_trace(trace_list):
+            N = np.array([None])
+            t_ = []
+            for trace in trace_list:
+                t_.append(trace.t_array)
+                t_.append(N)
+            return t_
+
+        def prep_x_trace(trace_list, idx):
+            N = np.array([None])
+            x_ = []
+            for trace in trace_list:
+                x_.append(trace.x_array[:, idx])
+                x_.append(N)
+            return x_
+
+        # ordinate, abcissa
+        for a, o in xVsy:
+            ax = plt.figure().gca()
+            a_str = a[0]
+            o_str = o[0]
+
+            a_idx = int(a[1:]) if a[1:] else 0
+            o_idx = int(o[1:]) if o[1:] else 0
+
+            title = '{} - {}'.format(a, o)
+
+            ax.set_title(title)
+
+            # collect t_array
+            x = (prep_t_trace(trace_list) if a_str == 't'
+                 else prep_x_trace(trace_list, a_idx))
+            # collect t_array
+            y = (prep_t_trace(trace_list) if o_str == 't'
+                 else prep_x_trace(trace_list, o_idx))
+
+            ax.plot(np.hstack(x), np.hstack(y))
+
+#         self.ax.set_title('x0-x1')
+#         x = []
+#         y = []
+#         N = np.array([None])
+#         for trace in trace_list:
+#             x_array = trace.x_array
+#             x.append(x_array[:, 0])
+#             x.append(N)
+#             y.append(x_array[:, 1])
+#             y.append(N)
+#             #ax.plot(x_array[:, 0], x_array[:, 1])
+#         self.ax.plot(np.hstack(x), np.hstack(y))
+#         #plt.show()
 
     def plot_trace_list_sat(self, trace_list):
         '''

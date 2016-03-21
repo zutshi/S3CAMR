@@ -1,7 +1,6 @@
-from plotting_abstract import PlottingBase
-
 import err
 
+from plotting_abstract import PlottingBase
 
 def factory(lib_name):
     # Matplotlib
@@ -27,5 +26,28 @@ def factory(lib_name):
 
 
 class PlottingDisabled(PlottingBase):
+    def figure(self):
+        return
+
+    def show(self):
+        return
+
+    def plot_rect(self, r, edgecolor='k'):
+        return
+
+    def plot_abs_states(self, AA, s):
+        return
+
     def plot_trace_list(self, trace_list):
         return
+
+    def plot_pwa_traces(self, txs):
+        return
+
+
+def plot_opts_parse(popts):
+    if popts:
+        xVsy = popts.split('-')
+        return xVsy
+    else:
+        return []

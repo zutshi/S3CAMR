@@ -656,8 +656,8 @@ def run_secam(sys, prop, opts):
         #if plot:
         if opts.dump_trace:
             dump_trace(trace_list)
-        #opts.plotting.
-        opts.plotting.plot_trace_list(trace_list)
+        opts.plotting.plot_trace_list(trace_list, opts.plots)
+        opts.plotting.show()
     elif MODE == 'falsify':
         # ignore time taken to create_abstraction: mainly to ignore parsing
         # time
@@ -735,6 +735,9 @@ def main():
     parser.add_argument('-p', '--plot-lib', type=str, default=None,
                         choices=LIST_OF_PLOT_LIBS, help='plot library')
 
+    parser.add_argument('--plots', type=plotting.plot_opts_parse, default='',
+                        nargs='+', help='plots x vs y: t-x1 x0-x1')
+
     parser.add_argument('--max-paths', type=int, default=100,
                         help='max number of paths to use for refinement')
 
@@ -803,6 +806,7 @@ def main():
     opts.max_paths = args.max_paths
     opts.max_model_error = args.max_model_error
     opts.plotting = plotting.factory(args.plot_lib)
+    opts.plots = args.plots
 
     sys, prop = loadsystem.parse(filepath, args.pvt_init_data)
     # TAG:MSH
