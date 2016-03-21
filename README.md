@@ -1,17 +1,16 @@
-Simulate and Scatter + Relationalization
----
+#Simulate and Scatter + Relationalization
 
 S3CAMR is an improvement to S3CAM where refinement is carried symbolically.
 Instead of using iterative refinement, we first build a piece-wise affine (PWA)
 model. This discrete model is then queried for violation, which if found is
 checked in the original continous model.
 
-Installation
----
+##Installation
+
 Clone the repository and install the dependencies.
 
-Dependencies (TODO:Evolving)
----
+**Evolving Dependencies**
+
 ##### Python Modules: Install using the Makefile
     sudo make install
 
@@ -38,8 +37,8 @@ Dependencies (TODO:Evolving)
         - Install using `./configure .... `
         - set `LD_LIBRARY_PATH LD_LIBRARY_PATH+=:../boost-1.60.0/lib/`
 
-Usage
----
+##Usage
+
 ####Print help
     python ./scamr.py --help
 
