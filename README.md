@@ -6,10 +6,7 @@ model. This discrete model is then queried for violation, which if found is
 checked in the original continous model.
 
 ##Installation
-
 Clone the repository and install the dependencies.
-
-**Evolving Dependencies**
 
 ##### Python Modules: Install using the Makefile
     sudo make install
@@ -39,39 +36,40 @@ Clone the repository and install the dependencies.
 
 ##Usage
 
-####Print help
+**Print List of Options**
+    
     python ./scamr.py --help
 
-####Examples using Van Der Pol system
-#####Random Testing using Simulations:
+####Examples
+**Random Testing using Simulations:**
 Run 10 simulations
 
-    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10
+    python -O ./scamr.py -f <filename>.tst -s 10
 and plot them...
 
-    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10 -p
+    python -O ./scamr.py -f <filename>.tst -s 10 -p
 
-#####Falsification Search using S3CAM:
-    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn
+**Falsification Search using S3CAM:**
+    python -O ./scamr.py -f <filename>.tst -cn
 
-#####Falsification Search using S3CAMR (using different time-discretization models):
+**Falsification Search using S3CAMR (using different time-discretization models):**
 - Use DFT (Discrete-time Fixed Time Step) model
 
     ```
-    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft
+    python -O ./scamr.py -f <filename>.tst -cn --refine model_dft
     ```
 - Use DMT (Discrete-time Multi Time Step) model
 
     ```
-    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dmt
+    python -O ./scamr.py -f <filename>.tst -cn --refine model_dmt
     ```
 - Use DCT (Discrete-time Continuous Time Step) model [NOT-IMPLEMENTED]
 
     ```
-    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dct
+    python -O ./scamr.py -f <filename>.tst -cn --refine model_dct
     ```
 
-#####Reproducible output using seeds:
+**Reproducible output using seeds:**
 S3CAM/R are random in nature. Their output can be made reproducible by using the same seed passed using the switch.
 
     --seed <integer>
