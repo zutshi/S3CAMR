@@ -192,13 +192,13 @@ class Plotting(PlottingBase):
         print xvsy
         self.plot_trace_list_xvsy(trace_list, xvsy)
 
-    def plot_trace_list_xvsy(self, trace_list, xVsy):
+    def plot_trace_list_xvsy(self, trace_list, x_vs_y):
         """plot_trace_list
 
         Parameters
         ----------
         trace_list :
-        xVsy : [(x,y)]: x Vs y
+        x_vs_y : [(x,y)]: x Vs y
                e.g. [(t, x0), (t, x0),(t, x1),(x0, x1)]
         """
 
@@ -222,7 +222,7 @@ class Plotting(PlottingBase):
             return x_
 
         # ordinate, abcissa
-        for a, o in xVsy:
+        for a, o in x_vs_y:
             ax = plt.figure().gca()
             a_str = a[0]
             o_str = o[0]
