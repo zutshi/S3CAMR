@@ -17,7 +17,6 @@ import numpy as np
 import time
 
 import external_interface as exifc
-import sample
 import traces
 
 
@@ -35,9 +34,9 @@ def main():
     for s in systems:
         one_shot_sim, prop = exifc.load_system(s)
         NUM_SIMS = 1
-        x0 = sample.sample_ival_constraints(prop.init_cons, NUM_SIMS)
+        x0 = prop.init_cons.sample_UR(NUM_SIMS)
 
-        w0 = sample.sample_ival_constraints(prop.ci, np.ceil(prop.T/prop.delta_t))
+        w0 = prop.ci.sample_UR(np.ceil(prop.T/prop.delta_t))
 
         trace_list = []
         tic = time.time()

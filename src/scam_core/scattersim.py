@@ -532,7 +532,7 @@ def random_test(
 
             # scatter the continuous states
 
-            x_samples = SaMpLe.sample_ival_constraints(ic, A.num_samples)
+            x_samples = ic.sample_UR(A.num_samples)
 
             # ##!!##logger.debug('ic: {}'.format(ic))
             # ##!!##logger.debug('samples: {}'.format(x_samples))

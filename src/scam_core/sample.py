@@ -29,7 +29,7 @@ def sample_init_UR(sys, prop, num_samples):
 
     s_array = np.tile(np.array([init_controller_state]), (num_samples, 1))
 
-    x_array = sample_ival_constraints(init_cons, num_samples)
+    x_array = init_cons.sample_UR(num_samples)
 
     if prop.ci is not None:
         ci_lb = prop.ci.l
@@ -53,11 +53,6 @@ def sample_init_UR(sys, prop, num_samples):
 
     init_conrete_states = state.StateArray(t=t_array, x=x_array, d=d_array, pvt=p_array, s=s_array, u=u_array, pi=pi_array, ci=ci_array)
     return init_conrete_states
-
-
-def sample_ival_constraints(ival_cons, n):
-    err.warn('STOP USING IT')
-    return ival_cons.sample_UR(n)
 
 
 class Sampler(object):
