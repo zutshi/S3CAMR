@@ -4,18 +4,36 @@ plant_pvt_init_data = None
 initial_set = [[-0.4, -0.4], [0.4, 0.4]]
 error_set = [[-1, -6.5], [-0.7, -5.6]]
 
+################
 # what worked
+################
+# NOTES:
+#   grid_eps <= [0.04, 0.04] for model_dft to succeed...why?
+
+# param 1
 grid_eps = [0.04, 0.04]
 delta_t = 0.1
 num_samples = 5
-# seed 0
+
+# param 2
+#grid_eps <= [0.01, 0.01]
+#num_samples = 1
+
+# param 3
+#grid_eps <= [0.05, 0.05]
+#num_samples = 10
 
 
-grid_eps = [0.03, 0.03]
-num_samples = 10
+# param 4
+# This does not work even after splitting because the underlying paths
+# are very coarse?
+#grid_eps = [0.1, 0.1]
+#delta_t = 0.1
+#num_samples = 10
 
-
+######################
 # what did not worked
+######################
 
 # grid_eps = [0.50, 0.04]
 # delta_t = 0.4
