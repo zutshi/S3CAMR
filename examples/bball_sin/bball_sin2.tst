@@ -23,7 +23,7 @@ grid_eps = [0.04, 0.04]
 delta_t = 1
 num_samples = 1
 
-T = 100
+T = 1000
 
 plant_description = 'python'
 plant_path = 'bball_sin2.py'
