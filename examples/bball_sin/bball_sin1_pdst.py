@@ -1,7 +1,15 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-# Must satisfy the signature
-# [t,X,D,P] = sim_function(T,X0,D0,P0,I0);
+
+# This example is from HyCU [Matlab's S3CAM implementation]
+# Which was in turn taken from
+# Reference:
+# The Dynamics of a Bouncing Ball with a SinusoidallyVibrating Table Revisited
+# ALBERT C. Jo LUO and RAY P. S. HAN
+
+
+"""BROKEN: Simulator is really terrible at zero crossing detection
+"""
 
 import numpy as np
 import PyDSTool as dst
@@ -10,14 +18,20 @@ import matplotlib.pyplot as plt
 
 class SIM(object):
 
-    def __init__(self, plt, pvt_init_data):
+    def __init__(self, _, pvt_init_data):
         self.model = create_model()
 
     def sim(self, TT, X0, D, P, U, I, property_checker, property_violated_flag):
+
+        traj_name = 'tj'
+
         icdict = {'x': X0[0], 'y': X0[1], 'vx': X0[2], 'vy': X0[3], 'tt': X0[4]}
         self.model.compute(
-            'test_traj', tdata=[TT[0], TT[1]], ics=icdict, verboselevel=2, force=True)
-        pts = self.model.sample('test_traj', ['x', 'y', 'vx', 'vy', 'tt'])
+            traj_name, tdata=[TT[0], TT[1]], ics=icdict,
+            verboselevel=0, force=True)
+        traj = self.model.trajectories[traj_name]
+        pts = traj.sample()
+        #pts = self.model.sample('test_traj', ['x', 'y', 'vx', 'vy', 'tt'])
         ret_D = D
         ret_P = P
         ret_t = np.array(pts['t'][-1])
@@ -25,8 +39,8 @@ class SIM(object):
         ret_t = pts['t'][-1]
         ret_X = np.hstack((pts['x'][-1], pts['y'][-1], pts['vx'][-1], pts['vy'][-1], pts['tt'][-1]))
         plt.figure(10)
-        plt.plot(pts['t'], pts['x'], 'b', linewidth=2)
-        plt.plot(pts['t'], pts['y'], 'b', linewidth=2)
+        plt.plot(pts['t'], pts['x'], 'b-*', linewidth=2)
+        plt.plot(pts['t'], pts['y'], 'r-*', linewidth=2)
         return (ret_t, ret_X, ret_D, ret_P)
 
 
@@ -41,15 +55,14 @@ def create_model():
            'vy': '-g',
            'tt': '1.0',
             }
-
     event_bounce = dst.makeZeroCrossEvent(
-            'x-y', 0,
+            'x-y', 1,
             {'name': 'bounce',
-             'eventtol': 1e-2,
+             'eventtol': 1e-3,
              'term': True,
              'active': True,
              'eventinterval': 1,
-             'eventdelay': 1e-5,
+             'eventdelay': 1e-2,
              'starttime': 0,
              'precise': True
              },
@@ -61,7 +74,7 @@ def create_model():
     #DSargs.pars = pars
     #DSargs.tdata = [0, 10]
     #DSargs.algparams = {'max_pts': 3000, 'stiff': False}
-    DSargs.algparams = {'init_step': 0.02, 'stiff': True}
+    DSargs.algparams = {'stiff': False, 'init_step': 0.01}
     DSargs.varspecs = ode_def
     DSargs.pars = pars
     #DSargs.xdomain = {'y': [0, 100]}
@@ -70,7 +83,7 @@ def create_model():
     DS_fall_MI = dst.intModelInterface(DS_fall)
 
     # Reset
-    ev_map = dst.EvMapping({'y': 'x+0.01', 'vy': '0.9*(vx-vy)'}, model=DS_fall)
+    ev_map = dst.EvMapping({'y': 'x+0.001', 'vy': '0.9*(vx-vy)'}, model=DS_fall)
     #ev_map = dst.EvMapping({'y': '10', 'x': '20'}, model=DS_fall)
 
     DS_BBall = dst.makeModelInfoEntry(DS_fall_MI, ['bball_sin'],

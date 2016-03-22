@@ -1,3 +1,11 @@
+# This example is from HyCU [Matlab's S3CAM implementation]
+# Which was in turn taken from
+# Reference:
+# The Dynamics of a Bouncing Ball with a SinusoidallyVibrating Table Revisited
+# ALBERT C. Jo LUO and RAY P. S. HAN
+
+
+
 inf = float('inf')
 from math import sin, cos, pi
 plant_pvt_init_data = None
