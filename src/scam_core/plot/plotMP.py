@@ -5,6 +5,7 @@ matplotlib.use('GTK3Agg')
 #global plt
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+import matplotlib.cm as cm
 import numpy as np
 
 from plotting_abstract import PlottingBase
@@ -190,10 +191,10 @@ class Plotting(PlottingBase):
             nd = trace_list[0].x_array.shape[1]
             xvsy = [('t', 'x{}'.format(i)) for i in range(nd)]
         print xvsy
-        self.plot_trace_list_xvsy(trace_list, xvsy)
+        self.plot_trace_list_xvsy_dc(trace_list, xvsy)
 
-    def plot_trace_list_xvsy(self, trace_list, x_vs_y):
-        """plot_trace_list
+    def plot_trace_list_xvsy_sc(self, trace_list, x_vs_y):
+        """plot_trace_list: Same Color but faster?
 
         Parameters
         ----------
@@ -204,6 +205,7 @@ class Plotting(PlottingBase):
 
         # Would be good to handle errors in the x Vs y string
         #sanity_check_xVsy()
+        print 'plotting...'
 
         def prep_t_trace(trace_list):
             N = np.array([None])
@@ -243,19 +245,49 @@ class Plotting(PlottingBase):
 
             ax.plot(np.hstack(x), np.hstack(y))
 
-#         self.ax.set_title('x0-x1')
-#         x = []
-#         y = []
-#         N = np.array([None])
-#         for trace in trace_list:
-#             x_array = trace.x_array
-#             x.append(x_array[:, 0])
-#             x.append(N)
-#             y.append(x_array[:, 1])
-#             y.append(N)
-#             #ax.plot(x_array[:, 0], x_array[:, 1])
-#         self.ax.plot(np.hstack(x), np.hstack(y))
-#         #plt.show()
+    def plot_trace_list_xvsy_dc(self, trace_list, x_vs_y):
+        """plot_trace_list: Different Color but slower?
+
+        Parameters
+        ----------
+        trace_list :
+        x_vs_y : [(x,y)]: x Vs y
+               e.g. [(t, x0), (t, x0),(t, x1),(x0, x1)]
+        """
+
+        # Would be good to handle errors in the x Vs y string
+        #sanity_check_xVsy()
+
+        print 'plotting...'
+
+        def prep_t_trace(trace_list):
+            return [trace.t_array for trace in trace_list]
+
+        def prep_x_trace(trace_list, idx):
+            return [trace.x_array[:, idx] for trace in trace_list]
+
+        # ordinate, abcissa
+        for a, o in x_vs_y:
+            ax = plt.figure().gca()
+            a_str = a[0]
+            o_str = o[0]
+
+            a_idx = int(a[1:]) if a[1:] else 0
+            o_idx = int(o[1:]) if o[1:] else 0
+
+            title = '{} - {}'.format(a, o)
+
+            ax.set_title(title)
+
+            # collect t_array
+            x = (prep_t_trace(trace_list) if a_str == 't'
+                 else prep_x_trace(trace_list, a_idx))
+            # collect t_array
+            y = (prep_t_trace(trace_list) if o_str == 't'
+                 else prep_x_trace(trace_list, o_idx))
+
+            for i, j in zip(x, y):
+                ax.plot(i, j)
 
     def plot_trace_list_sat(self, trace_list):
         '''
