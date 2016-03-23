@@ -1,6 +1,7 @@
 '''
-Creates a SAL transition system
+Creates a SAL transition system: DFT
 '''
+#TODO: rename to saltrans_dft.py
 
 #import sympy as sm
 import textwrap as tw
@@ -164,14 +165,10 @@ class Guard(object):
 
 
 class Reset(object):
-    def __init__(self, A, b, tol=0):
+    def __init__(self, A, b, error=None):
         self.A = A
         self.b = b
-
-        # use tolerance to change == into (<= and >=)
-        if tol != 0:
-            raise NotImplementedError
-
+        self.e = error
 #     def __str__(self):
 #         s = []
 #         ndo, ndi = self.A.shape
@@ -189,14 +186,34 @@ class Reset(object):
 
         xi_s = "x{}'"
         Axi_s = '{c:{p}f}*x{j}'
-        #bi_s = '{c:.{p}f}'
-        bi_s = '{c:{p}f}'
 
-        s = ['{xi_} = {Axi} + {bi}'.format(
-            xi_=xi_s.format(i),
-            Axi=' + '.join(Axi_s.format(p=PREC, c=self.A[i, j], j=j) for j in range(ndi)),
-            bi=bi_s.format(p=PREC, c=self.b[i])) for i in range(ndo)]
-        return ';\n'.join(s)
+        if self.e is None:
+            #bi_s = '{c:.{p}f}'
+            bi_s = '{c:{p}f}'
+
+            s = ['{xi_} = {Axi} + {bi}'.format(
+                xi_=xi_s.format(i),
+                Axi=' + '.join(Axi_s.format(p=PREC, c=self.A[i, j], j=j) for j in range(ndi)),
+                bi=bi_s.format(p=PREC, c=self.b[i])) for i in range(ndo)]
+            return ';\n'.join(s)
+
+        else:
+            deltai_s = '{c:{p}f}'
+
+            delta_h = self.b + self.e.h
+            delta_l = self.b + self.e.l
+
+            s = ['{xi_} IN {{ r : REAL| '
+                 'r >= {Axi} + {delta_li} AND '
+                 'r <= {Axi} + {delta_hi} }}'
+                 .format(
+                    xi_=xi_s.format(i),
+                    Axi=' + '.join(Axi_s.format(p=PREC, c=self.A[i, j], j=j) for j in range(ndi)),
+                    delta_li=deltai_s.format(p=PREC, c=delta_l[i]),
+                    delta_hi=deltai_s.format(p=PREC, c=delta_h[i])) for i in range(ndo)
+                 ]
+            return ';\n'.join(s)
+
 
 #         for i in range(ndo):
 #             row = ['{}*x{}'.format(self.A[i, j], j) for j in range(ndi)]

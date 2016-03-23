@@ -1,7 +1,7 @@
 import numpy as np
 import os
 
-import saltrans as slt
+import saltrans as slt_dft
 import saltrans_dmt as slt_dmt
 import fileops as fops
 import utils as U
@@ -68,12 +68,12 @@ class BMC(object):
 
     @staticmethod
     def sal_module_dft(nd, pwa_model, init_set, safety_prop, module_name):
-        sal_trans_sys = slt.SALTransSys(module_name, nd, init_set, safety_prop)
+        sal_trans_sys = slt_dft.SALTransSys(module_name, nd, init_set, safety_prop)
 
         for idx, sub_model in enumerate(pwa_model):
-            g = slt.Guard(sub_model.p.C, sub_model.p.d)
-            r = slt.Reset(sub_model.m.A, sub_model.m.b)
-            t = slt.Transition('C_{}'.format(idx), g, r)
+            g = slt_dft.Guard(sub_model.p.C, sub_model.p.d)
+            r = slt_dft.Reset(sub_model.m.A, sub_model.m.b, sub_model.m.error)
+            t = slt_dft.Transition('C_{}'.format(idx), g, r)
             sal_trans_sys.add_transition(t)
         return sal_trans_sys
 
@@ -81,7 +81,7 @@ class BMC(object):
         try:
             sal_path_ = os.environ[SAL_PATH] + SAL_INF_BMC
         except KeyError:
-            err.error("SAL environment variable is not defined. It\n"
+            err.Fatal("SAL environment variable is not defined. It\n"
                       "should point to sal's top-level directory")
             #raise KeyError
 

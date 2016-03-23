@@ -7,7 +7,7 @@ import utils as U
 #import constraints as C
 import err
 from bmc import bmc
-from modeling.affinemodel import AffineModel
+from modeling.affinemodel import RegressionModel
 import cellmanager as CM
 
 #np.set_printoptions(suppress=True, precision=2)
@@ -50,7 +50,8 @@ def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, opts):
     max_path_len = int(np.ceil(AA.T/AA.delta_t))
     print max_path_len
 
-    pwa_model = build_pwa_dft_model(AA, tas, sp, sys_sim, opts.max_model_error)
+    pwa_model = build_pwa_dft_model(
+            AA, tas, sp, sys_sim, opts.max_model_error, opts.model_err)
     if __debug__:
         s = {
             'init': {path[0] for path in error_paths},
@@ -136,7 +137,7 @@ def getxy_ignoramous(cell, N, sim, t0=0):
     return x_array, np.vstack(Yl)
 
 
-def build_pwa_dft_model(AA, abs_states, sp, sys_sim, tol):
+def build_pwa_dft_model(AA, abs_states, sp, sys_sim, tol, include_err):
     dt = AA.plant_abs.delta_t
     step_sim = simsys.get_step_simulator(sp.controller_sim, sp.plant_sim, dt)
 
@@ -154,7 +155,7 @@ def build_pwa_dft_model(AA, abs_states, sp, sys_sim, tol):
     for abs_state in abs_states:
         for sub_model in affine_models(
                 abs_state, AA,
-                step_sim, tol, sp):
+                step_sim, tol, sp, include_err):
             M.add(sub_model)
             #abs_state_models[abs_state] = sub_model
     return M
@@ -202,7 +203,7 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
     return pwa_models
 
 
-def affine_models(abs_state, AA, step_sim, tol, sp):
+def affine_models(abs_state, AA, step_sim, tol, sp, include_err):
     cell = CM.Cell(abs_state.plant_state.cell_id, AA.plant_abs.eps)
     # number of training samples
     ntrain = AA.num_samples * MORE_FACTOR
@@ -219,11 +220,12 @@ def affine_models(abs_state, AA, step_sim, tol, sp):
 #         print 'ci:', ci
 #         print 'pi:', pi
 #     exit()
-    return cell_affine_models(cell, step_sim, ntrain, ntest, tol)
+    return cell_affine_models(
+            cell, step_sim, ntrain, ntest, tol, include_err)
 
 
 #AA.plant_abs.get_abs_state_cell(abs_state.plant_state),
-def cell_affine_models(cell, step_sim, ntrain, ntest, tol):
+def cell_affine_models(cell, step_sim, ntrain, ntest, tol, include_err):
     """cell_affine_models
 
     Parameters
@@ -245,16 +247,16 @@ def cell_affine_models(cell, step_sim, ntrain, ntest, tol):
     sub_models = []
 
     X, Y = getxy_ignoramous(cell, ntrain, step_sim)
-    am = AffineModel(X, Y)
+    am = RegressionModel(X, Y)
     X, Y = getxy_ignoramous(cell, ntest, step_sim)
-    e = am.model_error(X, Y)
+    e_pc = am.error_pc(X, Y) # error %
     if __debug__:
-        print e
-    error = np.linalg.norm(e, 2)
+        print e_pc
+    error = np.linalg.norm(e_pc, 2)
 
     # split states if tol is not satisfied
     if error > tol:
-        err.warn('splitting on e:{}, |e|:{}'.format(e, error))
+        err.warn('splitting on e%:{}, |e%|:{}'.format(e_pc, error))
         for split_cell in cell.split():
             sub_models_ = cell_affine_models(
                     split_cell, step_sim, ntrain, ntest, tol)
@@ -263,15 +265,12 @@ def cell_affine_models(cell, step_sim, ntrain, ntest, tol):
     else:
         A, b = am.Ab
         C, d = cell.ival_cons().poly()
-        sub_models = [pwa.PWA.sub_model(A, b, C, d)]
+        sub_model = (pwa.sub_model_helper(
+                A, b, C, d, e=am.error(X, Y)) if include_err
+                else pwa.sub_model_helper(A, b, C, d)
+                    )
         print '----------------Finalized------------------'
-
-#     if __debug__:
-#         e = test_model(abs_state, AA, sp, am, step_sim)
-#         print 'error% in pwa model', e
-#         print '='*20
-#         #U.pause()
-    return sub_models
+    return [sub_model]
 
 
 def build_pwa_ct_model(AA, abs_states, sp, sys_sim):

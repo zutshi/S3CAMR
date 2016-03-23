@@ -1,4 +1,5 @@
 import numpy as np
+import constraints as cons
 
 
 class PWAError(Exception):
@@ -41,11 +42,6 @@ class PWA(object):
         s = [str(i) for i in self]
         return '{1}{0}{1}'.format('='*20, '\n').join(s)
 
-    @staticmethod
-    def sub_model(A, b, C, d):
-        model = Model(A, b)
-        partition = Partition(C, d)
-        return SubModel(partition, model)
 
     # returns the first sub_model whose parition the point x belongs
     # to
@@ -86,6 +82,12 @@ def compute_part_id(guard):
     return
 
 
+def sub_model_helper(A, b, C, d, e=None):
+    model = Model(A, b, e)
+    partition = Partition(C, d)
+    return SubModel(partition, model)
+
+
 class SubModel(object):
     def __init__(self, p, m):
         '''
@@ -123,18 +125,30 @@ class Partition(object):
 
 
 class Model(object):
-    def __init__(self, A, b):
+    def __init__(self, A, b, e=None):
         '''
         x' = Ax + b
         '''
         self.A = A
         self.b = b
+        self._error = e
         return
 
+    @property
+    def error(self):
+        #if self._error is None:
+        #    raise AttributeError('error has not been set yet!')
+        return self._error
+
+    @error.setter
+    def error(self, val):
+        assert(isinstance(val) == cons.IntervalCons)
+        self._error = val
+
     def __repr__(self):
-        s = '({},{})'.format(self.A, self.b)
+        s = '({},{},{})'.format(self.A, self.b, self.e)
         return s
 
     def __str__(self):
-        s = 'Mi - >(\n{},\n{})'.format(self.A, self.b)
+        s = 'Mi - >(\n{},\n{}+-{})'.format(self.A, self.b, self.e)
         return s
