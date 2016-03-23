@@ -26,6 +26,7 @@ import loadsystem
 #import traces
 import wmanager
 from plot import plotting
+import random_testing as RT
 
 #import utils as U
 from utils import print
@@ -361,7 +362,7 @@ def refine_trace(
             print('no valid sample found during random testing. STOP', file=SYS.stderr)
             return True
 
-        done = SS.random_test(
+        done = RT.random_test(
             current_abs,
             system_params,
             valid_promising_initial_state_list,
@@ -488,7 +489,7 @@ def falsify_using_model(
         print('no valid sample found for random testing. STOP', file=SYS.stderr)
         return False
 
-    res = SS.random_test(
+    res = RT.random_test(
         current_abs,
         system_params,
         valid_promising_initial_state_list,
@@ -607,7 +608,7 @@ def refine_init(
         if valid_promising_initial_state_list == []:
             print('no valid sample found during random testing. STOP', file=SYS.stderr)
             return False
-        res = SS.random_test(
+        res = RT.random_test(
             current_abs,
             system_params,
             valid_promising_initial_state_list,
@@ -726,6 +727,9 @@ def main():
     parser.add_argument('--refine', type=str, default='init',
                         choices=LIST_OF_REFINEMENTS, help='Refinement method')
 
+    parser.add_argument('--model-err', action='store_true',
+                        help='Include errors in model for bmc')
+
     parser.add_argument('-o', '--output', type=str, default='vio.log',
                         help='violation log')
 
@@ -797,6 +801,7 @@ def main():
             opts.trace_struct = args.trace_struct
     else:
         raise err.Fatal('no options passed. Check usage.')
+
     #opts.plot = args.plot
     opts.dump_trace = args.dump
     opts.refine = args.refine
@@ -807,6 +812,7 @@ def main():
     opts.max_model_error = args.max_model_error
     opts.plotting = plotting.factory(args.plot_lib)
     opts.plots = args.plots
+    opts.model_err = args.model_err
 
     sys, prop = loadsystem.parse(filepath, args.pvt_init_data)
     # TAG:MSH
