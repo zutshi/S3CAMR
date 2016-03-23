@@ -30,6 +30,10 @@ class SIM(object):
         #Print event information
         #sim.print_event_data()
 
+        if property_checker is not None:
+            print 'hua'
+            property_violated_flag[0] = property_checker(t, y)
+
         ret_D = D
         ret_P = P
         ret_t = t[-1]

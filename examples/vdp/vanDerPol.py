@@ -50,7 +50,7 @@ class SIM(object):
         Tf = TT[1]
         T = Tf - Ti
 
-        if property_checker:
+        if property_checker is not None:
             violating_state = [()]
             #solver.set_solout(solout_fun(property_checker, violating_state, plot_data))  # (2)
 
@@ -60,7 +60,7 @@ class SIM(object):
         # Y = C*x + D*u
 
         if property_checker is not None:
-            if property_checker(Tf, X_):
+            if property_checker.check(Tf, X_):
                 property_violated_flag[0] = True
 
         dummy_D = np.zeros(D.shape)

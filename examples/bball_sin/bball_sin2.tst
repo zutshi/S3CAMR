@@ -18,6 +18,16 @@ initial_set = [[2, 0, 0],
 error_set = [[0,0,0],
              [0,0,0]]
 
+
+true_until_5_x0_gt_2 = 'U[0,5] (TRUE, x0 > 2)'
+true_until_10 = 'U[0,10] (TRUE, NOT({}))'.format(true_until_5_x0_gt_2)
+
+ltl_property_1 = 'x0 > 2'
+ltl_property_2 = 'U[0,5] (TRUE, x0 > 2)'
+ltl_property_2 = 'NOT (U[0,5] (TRUE, x0 > 2))'
+ltl_property_3 = 'U[0,10] (TRUE, NOT(U[0,5](TRUE), x0 > 2))'
+ltl_property_4 = 'NOT(U[0,10] (TRUE, NOT(U[0,5](TRUE), x0 > 2)))'
+
 grid_eps = [0.04, 0.04]
 
 delta_t = 1

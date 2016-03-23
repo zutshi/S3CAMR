@@ -29,14 +29,24 @@ w = pi
 
 initial_set = [[A*sin(phi), 1+A*sin(phi), A*w*cos(phi), Y0 - A*w*cos(phi)-1, 0],
                [A*sin(phi), 1+A*sin(phi+pi/4), A*w*cos(phi), Y0 - A*w*cos(phi)+1, 0]]
-
+# P1
 error_set = [[-inf, 16, -inf, -inf, 9.8],
-             [inf, 18.2, inf, inf, 10.4]]
+             [inf, 19, inf, inf, 10.4]]
+# # P2
+# error_set = [[-inf, 16, -inf, -inf, 9.8],
+#              [inf, 18.4, inf, inf, 10.4]]
+# # P3
+# error_set = [[-inf, 16, -inf, -inf, 9.8],
+#              [inf, 18.2, inf, inf, 10.4]]
 
-grid_eps = [0.04, 0.04]
+grid_eps = [0.001, 0.2, 0.001, 0.2, 0.001]
 
-delta_t = 0.2
-num_samples = 1
+# Founds the most falsifications
+delta_t = 0.1
+
+delta_t = 2
+
+num_samples = 2
 
 T = 11.0
 

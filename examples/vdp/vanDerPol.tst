@@ -12,8 +12,9 @@ error_set = [[-1, -6.5], [-0.7, -5.6]]
 
 # param 1
 grid_eps = [0.04, 0.04]
-delta_t = 0.1
-num_samples = 5
+#delta_t = 0.1
+delta_t = 0.4
+num_samples = 10
 
 # param 2
 #grid_eps <= [0.01, 0.01]
