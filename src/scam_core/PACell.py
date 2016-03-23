@@ -6,6 +6,7 @@ import logging
 import numpy as np
 
 from utils import print
+from properties import PropertyChecker
 
 # import matplotlib.pyplot as plt
 
@@ -209,7 +210,8 @@ class PlantAbstraction:
         state = sampled_state
         total_num_samples = state.n
 
-        property_checker = lambda t, Y: Y in system_params.final_cons
+        #property_checker = lambda t, Y: Y in system_params.final_cons
+        property_checker = PropertyChecker(system_params.final_cons)
         rchd_concrete_state_array = cp.compute_concrete_plant_output(
                 A,
                 system_params.plant_sim,
@@ -263,7 +265,8 @@ class PlantAbstraction:
         state = intermediate_state
         total_num_samples = state.n
 
-        property_checker = lambda t, Y: Y in system_params.final_cons
+        #property_checker = lambda t, Y: Y in system_params.final_cons
+        property_checker = PropertyChecker(system_params.final_cons)
         rchd_concrete_state_array = cp.compute_concrete_plant_output(
                 A,
                 system_params.plant_sim,
