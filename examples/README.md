@@ -9,6 +9,6 @@ Various demos/benchmarks.
     - Helicopter [scipy]
 
 ### Dependencies
-   - scipy
-   - pydstool: `pip install pydstool`
-   - Assimulo: [Install](http://www.jmodelica.org/assimulo_home/installation.html)
+    - scipy
+    - pydstool: `pip install pydstool`
+    - Assimulo: [Install](http://www.jmodelica.org/assimulo_home/installation.html)
