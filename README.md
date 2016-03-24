@@ -5,6 +5,9 @@ Instead of using iterative refinement, we first build a piece-wise affine (PWA)
 model. This discrete model is then queried for violation, which if found is
 checked in the original continous model.
 
+##Current Status: [Partial Implementation]
+SAL + YICES are required as they are the only working BMC engine.
+
 ##Installation
 Clone the repository and install the dependencies.
 
@@ -13,7 +16,7 @@ Clone the repository and install the dependencies.
     sudo make install
 
 #####External Dependencies
-- S3CAMSMT
+- S3CAMSMT [**optional**]
 
     ```
     https://github.com/cuplv/S3CAMSMT.git
@@ -27,10 +30,11 @@ Clone the repository and install the dependencies.
 - SAL [optional: model checker]
     - Download and install SAL: http://sal.csl.sri.com/
     - set environment variable SAL_PATH
-    - ~~Yices~~
-        - Download and install Yices: http://yices.csl.sri.com/
+    - Yices2 [Performs better than Yices]
+        - Download and install Yices2: http://yices.csl.sri.com/
 
-- ghraph-tool-2.13 [optional: faster graph library]
+- ghraph-tool-2.13 [ (**optional**): faster graph library]
+    - Warning: Takes a few hours to compile (not painless)
     - Needs Boost >= 1.60 [set environment variable BOOST_ROOT - not working]
         - Install using `./configure .... `
         - set `LD_LIBRARY_PATH LD_LIBRARY_PATH+=:../boost-1.60.0/lib/`
@@ -41,7 +45,7 @@ Clone the repository and install the dependencies.
     
     python ./scamr.py --help
 
-####Examples
+####Example runs
 **Random Testing using Simulations:**
 Run 10 simulations
 
