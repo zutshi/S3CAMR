@@ -28,10 +28,13 @@ External Dependencies can be installed as required. Refer to the below section.
     ```
 
 - Graph Library (two options)
-    1. Networkx [slower, painless to install]
-    2. ghraph-tool-2.13 [faster, painfull to install]
-      Partial integration. Instead of K-shortest paths, All-shortest paths are being computed!
-        - Warning: Takes a few hours to compile (not painless)
+    1. Networkx
+        - Slower
+        - Gets installed usign make
+    2. ghraph-tool-2.13
+        - Faster
+        - Warning: Takes a few hours to compile (and painful to install)
+        - Partial integration. Instead of K-shortest paths, All-shortest paths are being computed!
         - Needs Boost >= 1.60 [set environment variable BOOST_ROOT - not working]
             - Install using `./configure .... `
             - set `LD_LIBRARY_PATH LD_LIBRARY_PATH+=:../boost-1.60.0/lib/`
