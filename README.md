@@ -28,8 +28,8 @@ External Dependencies can be installed as required. Refer to the below section.
     ```
 
 - Graph Library (two options)
-    - Networkx
-    - ghraph-tool-2.13 [faster graph library]
+    1. Networkx [slower, painless to install]
+    2. ghraph-tool-2.13 [faster, painfull to install]
       Partial integration. Instead of K-shortest paths, All-shortest paths are being computed!
         - Warning: Takes a few hours to compile (not painless)
         - Needs Boost >= 1.60 [set environment variable BOOST_ROOT - not working]
@@ -37,13 +37,16 @@ External Dependencies can be installed as required. Refer to the below section.
             - set `LD_LIBRARY_PATH LD_LIBRARY_PATH+=:../boost-1.60.0/lib/`
 
 - BMC engine (two options)
-    - SAL
+    1. SAL
         - Download and install SAL: http://sal.csl.sri.com/
-        - set environment variable SAL_PATH
+        - set environment variable SAL_PATH to point to the installation
+        ```
+        export SAL_PATH='/home/zutshi/work/RA/tools/sal-3.3/'
+        ```
         - Yices2 [Performs better than Yices]
             - Download and install Yices2: http://yices.csl.sri.com/
 
-    - S3CAMSMT [**under development**]
+    2. S3CAMSMT [**under development**]
     
         ```
         https://github.com/cuplv/S3CAMSMT.git
@@ -66,17 +69,13 @@ Run 10 simulations
 **Plotting: only supported for random simulations**
 
 - Plot all state variabless against time using either Matplotlib(mp) or PyQTGraph(pg)
-    
     ```
     --p [mp, pg]
     ```
-    
 - Plot only x0 vs x1, t vs x2 and x4 vs x7
-    
     ```
     --p [mp, pg] --plots x0-x1 t-x2 x4-x7
     ```
-
 **Falsification Search using S3CAM:**
 
     python -O ./scamr.py -f <filename>.tst -cn
