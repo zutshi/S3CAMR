@@ -41,7 +41,7 @@ External Dependencies can be installed as required. Refer to the below section.
         - Download and install SAL: http://sal.csl.sri.com/
         - set environment variable SAL_PATH to point to the installation
         ```
-        export SAL_PATH='/home/zutshi/work/RA/tools/sal-3.3/'
+        export SAL_PATH='<path>/sal-3.3/'
         ```
         - Yices2 [Performs better than Yices]
             - Download and install Yices2: http://yices.csl.sri.com/
@@ -51,6 +51,7 @@ External Dependencies can be installed as required. Refer to the below section.
         ```
         https://github.com/cuplv/S3CAMSMT.git
         ```
+
 ##Usage
 
 **Print List of Options**
