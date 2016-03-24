@@ -60,12 +60,12 @@ and plot them...
     ```
     python -O ./scamr.py -f <filename>.tst -cn --refine model_dft
     ```
-- Use DMT (Discrete-time Multi Time Step) model
+- Use DMT (Discrete-time Multi Time Step) model (**broken**)
 
     ```
     python -O ./scamr.py -f <filename>.tst -cn --refine model_dmt
     ```
-- Use DCT (Discrete-time Continuous Time Step) model [NOT-IMPLEMENTED]
+- Use DCT (Discrete-time Continuous Time Step) model (**not-implemented**)
 
     ```
     python -O ./scamr.py -f <filename>.tst -cn --refine model_dct
@@ -75,3 +75,17 @@ and plot them...
 S3CAM/R are random in nature. Their output can be made reproducible by using the same seed passed using the switch.
 
     --seed <integer>
+    
+**Plotting:**
+
+- Plot all state variabless against time using either Matplotlib(mp) or PyQTGraph(pg)
+    
+    ```
+    --p [mp, pg]
+    ```
+    
+- Plot only x0 vs x1, t vs x2 and x4 vs x7
+    
+    ```
+    --p [mp, pg] --plots x0-x1 t-x2 x4-x7
+    ```
