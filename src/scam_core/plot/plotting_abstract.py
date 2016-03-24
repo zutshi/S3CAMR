@@ -30,7 +30,7 @@ class PlottingBase():
         return
 
     @abc.abstractmethod
-    def plot_trace_list(self, trace_list, x_vs_y=[]):
+    def plot_trace_list(self, trace_list, x_vs_y=None):
         """plot all the traces in the trace list"""
         return
 

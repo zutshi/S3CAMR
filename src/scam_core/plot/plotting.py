@@ -38,7 +38,7 @@ class PlottingDisabled(PlottingBase):
     def plot_abs_states(self, AA, s):
         return
 
-    def plot_trace_list(self, trace_list, x_vs_y=[]):
+    def plot_trace_list(self, trace_list, x_vs_y=None):
         return
 
     def plot_pwa_traces(self, txs):

@@ -185,12 +185,12 @@ class Plotting(PlottingBase):
                 ax.plot(x_array[:, 0], x_array[:, 1])
             #plt.show()
 
-    def plot_trace_list(self, trace_list, xvsy=[]):
+    def plot_trace_list(self, trace_list, x_vs_y=None):
         """plot all state vars """
-        if not xvsy:
+
+        if x_vs_y is None:
             nd = trace_list[0].x_array.shape[1]
             xvsy = [('t', 'x{}'.format(i)) for i in range(nd)]
-        print xvsy
         self.plot_trace_list_xvsy_dc(trace_list, xvsy)
 
     def plot_trace_list_xvsy_sc(self, trace_list, x_vs_y):
