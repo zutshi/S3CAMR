@@ -6,7 +6,6 @@ Example Name [ODE solver library used]
     - Bouncing ball [pydstool]
     - Bouncing ball + sinusoidally oscillating platform [Assimulo]
     - Helicopter [scipy]
-    - ...
 
 # Dependencies
    - scipy
