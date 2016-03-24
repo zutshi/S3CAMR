@@ -6,7 +6,7 @@ model. This discrete model is then queried for violation, which if found is
 checked in the original continous model.
 
 ##Current Status: [Partial Implementation]
-SAL + YICES are required as they are the only working BMC engine.
+- SAL + YICES are required as they are the only working BMC engine.
 
 ##Installation
 Clone the repository and install the dependencies.
@@ -14,13 +14,7 @@ Clone the repository and install the dependencies.
 ##### Python Modules: Install using the Makefile
 
     sudo make install
-
-#####External Dependencies
-- S3CAMSMT [**optional**]
-
-    ```
-    https://github.com/cuplv/S3CAMSMT.git
-    ```
+#####External Dependencies [Required]
 - py_utils
     Clone the below repo and add it to the Python Path environment variable: PYTHONPATH
 
@@ -34,7 +28,17 @@ Clone the repository and install the dependencies.
     - Yices2 [Performs better than Yices]
         - Download and install Yices2: http://yices.csl.sri.com/
 
+#####External Dependencies [Optional]
+- S3CAMSMT [**optional bmc engine**]
+    Still being developed
+
+    ```
+    https://github.com/cuplv/S3CAMSMT.git
+    ```
+
 - ghraph-tool-2.13 [ (**optional**): faster graph library]
+  Partial integration. Instead of K-shortest paths, All-shortest paths are being computed!
+
     - Warning: Takes a few hours to compile (not painless)
     - Needs Boost >= 1.60 [set environment variable BOOST_ROOT - not working]
         - Install using `./configure .... `
