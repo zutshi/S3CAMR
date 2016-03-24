@@ -22,6 +22,7 @@ Clone the repository and install the dependencies.
     https://github.com/cuplv/S3CAMSMT.git
     ```
 - py_utils
+    Clone the below repo and add it to the Python Path environment variable: PYTHONPATH
 
     ```
     https://github.com/zutshi/pyutils.git
@@ -46,6 +47,9 @@ Clone the repository and install the dependencies.
     python ./scamr.py --help
 
 ####Example runs
+
+Navigate to the source directory ./src before running the below examples.
+
 **Random Testing using Simulations:**
 Run 10 simulations
 
