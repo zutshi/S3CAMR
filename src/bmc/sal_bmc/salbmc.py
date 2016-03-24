@@ -81,8 +81,8 @@ class BMC(object):
         try:
             sal_path_ = os.environ[SAL_PATH] + SAL_INF_BMC
         except KeyError:
-            err.Fatal("SAL environment variable is not defined. It\n"
-                      "should point to sal's top-level directory")
+            raise err.Fatal("SAL environment variable is not defined. It\n"
+                            "should point to sal's top-level directory")
             #raise KeyError
 
         sal_path = fops.sanitize_path(sal_path_)
