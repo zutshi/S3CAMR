@@ -1,4 +1,5 @@
-#Simulate and Scatter + Relationalization
+#S3CAMR
+Simulate and Scatter + Relationalization
 
 S3CAMR is an improvement to S3CAM where refinement is carried symbolically.
 Instead of using iterative refinement, we first build a piece-wise affine (PWA)
@@ -11,10 +12,14 @@ checked in the original continous model.
 ##Installation
 Clone the repository and install the dependencies.
 
-##### Python Modules: Install using the Makefile
+Python modules available on PyPI (Python Package Index) can be installed using the Makefile
 
     sudo make install
-#####External Dependencies [Required]
+
+External Dependencies can be installed as required. Refer to the below section.
+
+##Dependencies
+
 - py_utils
     Clone the below repo and add it to the Python Path environment variable: PYTHONPATH
 
@@ -22,28 +27,27 @@ Clone the repository and install the dependencies.
     https://github.com/zutshi/pyutils.git
     ```
 
-- SAL [optional: model checker]
-    - Download and install SAL: http://sal.csl.sri.com/
-    - set environment variable SAL_PATH
-    - Yices2 [Performs better than Yices]
-        - Download and install Yices2: http://yices.csl.sri.com/
+- Graph Library (two options)
+    - Networkx
+    - ghraph-tool-2.13 [faster graph library]
+      Partial integration. Instead of K-shortest paths, All-shortest paths are being computed!
+        - Warning: Takes a few hours to compile (not painless)
+        - Needs Boost >= 1.60 [set environment variable BOOST_ROOT - not working]
+            - Install using `./configure .... `
+            - set `LD_LIBRARY_PATH LD_LIBRARY_PATH+=:../boost-1.60.0/lib/`
 
-#####External Dependencies [Optional]
-- S3CAMSMT [**optional bmc engine**]
-    Still being developed
+- BMC engine (two options)
+    - SAL
+        - Download and install SAL: http://sal.csl.sri.com/
+        - set environment variable SAL_PATH
+        - Yices2 [Performs better than Yices]
+            - Download and install Yices2: http://yices.csl.sri.com/
 
-    ```
-    https://github.com/cuplv/S3CAMSMT.git
-    ```
-
-- ghraph-tool-2.13 [ (**optional**): faster graph library]
-  Partial integration. Instead of K-shortest paths, All-shortest paths are being computed!
-
-    - Warning: Takes a few hours to compile (not painless)
-    - Needs Boost >= 1.60 [set environment variable BOOST_ROOT - not working]
-        - Install using `./configure .... `
-        - set `LD_LIBRARY_PATH LD_LIBRARY_PATH+=:../boost-1.60.0/lib/`
-
+    - S3CAMSMT [**under development**]
+    
+        ```
+        https://github.com/cuplv/S3CAMSMT.git
+        ```
 ##Usage
 
 **Print List of Options**
@@ -52,7 +56,7 @@ Clone the repository and install the dependencies.
 
 ####Example runs
 
-Navigate to the source directory ./src before running the below examples.
+Navigate to the source directory `./src` before running the below examples.
 
 **Random Testing using Simulations:**
 Run 10 simulations
