@@ -54,9 +54,20 @@ Navigate to the source directory ./src before running the below examples.
 Run 10 simulations
 
     python -O ./scamr.py -f <filename>.tst -s 10
-and plot them...
 
-    python -O ./scamr.py -f <filename>.tst -s 10 -p
+**Plotting: only supported for random simulations**
+
+- Plot all state variabless against time using either Matplotlib(mp) or PyQTGraph(pg)
+    
+    ```
+    --p [mp, pg]
+    ```
+    
+- Plot only x0 vs x1, t vs x2 and x4 vs x7
+    
+    ```
+    --p [mp, pg] --plots x0-x1 t-x2 x4-x7
+    ```
 
 **Falsification Search using S3CAM:**
 
@@ -83,17 +94,3 @@ and plot them...
 S3CAM/R are random in nature. Their output can be made reproducible by using the same seed passed using the switch.
 
     --seed <integer>
-    
-**Plotting:**
-
-- Plot all state variabless against time using either Matplotlib(mp) or PyQTGraph(pg)
-    
-    ```
-    --p [mp, pg]
-    ```
-    
-- Plot only x0 vs x1, t vs x2 and x4 vs x7
-    
-    ```
-    --p [mp, pg] --plots x0-x1 t-x2 x4-x7
-    ```
