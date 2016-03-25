@@ -43,7 +43,8 @@ class SIM(object):
 
 
 # uses pyodeint
-def sim_pyodeint(self, TT, X0, D, P, U, I, property_checker, property_violated_flag):
+def sim_pyodeint(self, TT, X0, D, P, U, I, property_checker):
+    property_violated_flag = False
 
     atol = 1e-12
     rtol = 1e-8
@@ -65,7 +66,7 @@ def sim_pyodeint(self, TT, X0, D, P, U, I, property_checker, property_violated_f
 
     if property_checker is not None:
         if property_checker(Tf, X_):
-            property_violated_flag[0] = True
+            property_violated_flag = True
 
     dummy_D = np.zeros(D.shape)
     dummy_P = np.zeros(P.shape)
@@ -74,11 +75,12 @@ def sim_pyodeint(self, TT, X0, D, P, U, I, property_checker, property_violated_f
     ret_D = dummy_D
     ret_P = dummy_P
 
-    return (ret_t, ret_X, ret_D, ret_P)
+    return (ret_t, ret_X, ret_D, ret_P), property_violated_flag
 
 
 # uses scipy.integrate.odeint
-def sim_scipy_odeint(self, TT, X0, D, P, U, I, property_checker, property_violated_flag):
+def sim_scipy_odeint(self, TT, X0, D, P, U, I, property_checker):
+    property_violated_flag = False
 
     rtol = 1e-6
     if property_checker is not None:
@@ -101,7 +103,7 @@ def sim_scipy_odeint(self, TT, X0, D, P, U, I, property_checker, property_violat
 
     if property_checker is not None:
         if property_checker(Tf, X_):
-            property_violated_flag[0] = True
+            property_violated_flag = True
 
     dummy_D = np.zeros(D.shape)
     dummy_P = np.zeros(P.shape)
@@ -110,10 +112,11 @@ def sim_scipy_odeint(self, TT, X0, D, P, U, I, property_checker, property_violat
     ret_D = dummy_D
     ret_P = dummy_P
 
-    return (ret_t, ret_X, ret_D, ret_P)
+    return (ret_t, ret_X, ret_D, ret_P), property_violated_flag
 
 # uses scipy.integrate.ode
-def sim_scipy_integrate_ode(self, TT, X0, D, P, U, I, property_checker, property_violated_flag):
+def sim_scipy_integrate_ode(self, TT, X0, D, P, U, I, property_checker):
+    property_violated_flag = False
     # atol = 1e-10
     rtol = 1e-6
     if property_checker is not None:
@@ -139,7 +142,7 @@ def sim_scipy_integrate_ode(self, TT, X0, D, P, U, I, property_checker, property
 
     if property_checker is not None:
         if property_checker(Tf, X_):
-            property_violated_flag[0] = True
+            property_violated_flag = True
 
     dummy_D = np.zeros(D.shape)
     dummy_P = np.zeros(P.shape)
@@ -148,7 +151,7 @@ def sim_scipy_integrate_ode(self, TT, X0, D, P, U, I, property_checker, property
     ret_D = dummy_D
     ret_P = dummy_P
 
-    return (ret_t, ret_X, ret_D, ret_P)
+    return (ret_t, ret_X, ret_D, ret_P), property_violated_flag
 
 def dyn_non_opt(t, X, u):
     x1 = X[0]

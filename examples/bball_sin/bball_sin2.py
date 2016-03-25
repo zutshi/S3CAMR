@@ -24,7 +24,7 @@ class SIM(object):
     def __init__(self, _, pvt_init_data):
         self.model = create_model()
 
-    def sim(self, TT, X0, D, P, U, I, property_checker, property_violated_flag):
+    def sim(self, TT, X0, D, P, U, I, property_checker):
         #print X0
         #Simulation
         ncp = 200     #Number of communication points
@@ -33,6 +33,8 @@ class SIM(object):
         #Print event information
         #sim.print_event_data()
 
+        property_violated_flag = property_checker.check_array(t, y)
+
         ret_D = D
         ret_P = P
         ret_t = t[-1]
@@ -40,7 +42,7 @@ class SIM(object):
         #plt.figure(10)
         #plt.plot(t, y[:, 0], 'b-', linewidth=2)
         #plt.plot(t, y[:, 1], 'r-', linewidth=2)
-        return (ret_t, ret_X, ret_D, ret_P)
+        return (ret_t, ret_X, ret_D, ret_P), property_violated_flag
 
 
 def create_model():

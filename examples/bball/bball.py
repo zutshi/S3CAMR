@@ -13,7 +13,7 @@ class SIM(object):
     def __init__(self, _, pvt_init_data):
         self.model = create_model()
 
-    def sim(self, TT, X0, D, P, U, I, property_checker, property_violated_flag):
+    def sim(self, TT, X0, D, P, U, I, property_checker):
         icdict = {'y': X0[0], 'vy': X0[1]}
         self.model.compute(
             'test_traj', tdata=[TT[0], TT[1]], ics=icdict, verboselevel=0, force=True)
@@ -29,7 +29,11 @@ class SIM(object):
         #print ret_X
         #plt.figure(10)
         #plt.plot(pts['t'], pts['y'], 'b', linewidth=2)
-        return (ret_t, ret_X, ret_D, ret_P)
+        if property_checker is not None:
+            property_violated_flag = property_checker.check_array(ret_t, ret_X)
+        else:
+            property_violated_flag = False
+        return (ret_t, ret_X, ret_D, ret_P), property_violated_flag
 
 
 def create_model():

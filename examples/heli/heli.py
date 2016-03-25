@@ -26,7 +26,8 @@ class SIM(object):
                 #nsteps=nsteps
                 )  # (1)
 
-    def sim(self, TT, X0, D, P, U, I, property_checker, property_violated_flag):
+    def sim(self, TT, X0, D, P, U, I, property_checker):
+        property_violated_flag = False
         #num_dim_x = len(X0)
         #plot_data = [np.empty(0, dtype=float), np.empty((0, num_dim_x), dtype=float)]
 
@@ -49,7 +50,7 @@ class SIM(object):
 
         if property_checker is not None:
             if property_checker(Tf, X_):
-                property_violated_flag[0] = True
+                property_violated_flag = True
 
         dummy_D = np.zeros(D.shape)
         dummy_P = np.zeros(P.shape)
@@ -63,7 +64,7 @@ class SIM(object):
         #plt.plot(plot_data[1][:, 0], plot_data[1][:, 1])
         ##plt.plot(plot_data[0] + Ti, np.tile(U, plot_data[0].shape))
 
-        return (ret_t, ret_X, ret_D, ret_P)
+        return (ret_t, ret_X, ret_D, ret_P), property_violated_flag
 
 
 def dyn(t, X, u):
@@ -330,6 +331,7 @@ def dyn(t, X, u):
              0.199818976539*X[24] - 0.002648145523*X[25] -
              0.101212258081*X[26] - 5.199268943788*X[27])
 
+    Y[28] = 1
     return Y
 
 

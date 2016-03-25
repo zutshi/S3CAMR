@@ -10,10 +10,10 @@ error_set = [[-1, -6.5], [-0.7, -5.6]]
 # NOTES:
 #   grid_eps <= [0.04, 0.04] for model_dft to succeed...why?
 
-# param 1
-grid_eps = [0.04, 0.04]
-#delta_t = 0.1
-num_samples = 5
+# param 1: works for S3CAMR
+# grid_eps = [0.04, 0.04]
+# delta_t = 0.1
+# num_samples = 5
 
 # param 2
 #grid_eps <= [0.01, 0.01]
@@ -30,6 +30,12 @@ num_samples = 5
 #grid_eps = [0.1, 0.1]
 #delta_t = 0.1
 #num_samples = 10
+
+
+# param 5: works for S3CAM
+grid_eps = [0.1, 0.1]
+delta_t = 0.1
+num_samples = 3
 
 ######################
 # what did not worked

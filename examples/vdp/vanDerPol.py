@@ -9,7 +9,7 @@ from scipy.integrate import ode
 import copy_reg as cr
 import types
 
-#import matplotlib.pyplot as plt
+import matplotlib.pyplot as plt
 
 
 def _pickle_method(m):
@@ -26,7 +26,8 @@ class SIM(object):
     def __init__(self, plt, pvt_init_data):
         pass
 
-    def sim(self, TT, X0, D, P, U, I, property_checker, property_violated_flag):
+    def sim(self, TT, X0, D, P, U, I, property_checker):
+        property_violated_flag = False
         # atol = 1e-10
         rtol = 1e-5
 
@@ -52,7 +53,7 @@ class SIM(object):
 
         if property_checker is not None:
             violating_state = [()]
-            #solver.set_solout(solout_fun(property_checker, violating_state, plot_data))  # (2)
+        solver.set_solout(solout_fun(property_checker, violating_state, plot_data))  # (2)
 
         solver.set_initial_value(X0, t=0.0)
         solver.set_f_params(U)
@@ -61,7 +62,7 @@ class SIM(object):
 
         if property_checker is not None:
             if property_checker.check(Tf, X_):
-                property_violated_flag[0] = True
+                property_violated_flag = True
 
         dummy_D = np.zeros(D.shape)
         dummy_P = np.zeros(P.shape)
@@ -72,10 +73,10 @@ class SIM(object):
         ret_P = dummy_P
 
         #plt.plot(plot_data[0] + Ti, plot_data[1][:, 0])
-        #plt.plot(plot_data[1][:, 0], plot_data[1][:, 1])
+        plt.plot(plot_data[1][:, 0], plot_data[1][:, 1])
         ##plt.plot(plot_data[0] + Ti, np.tile(U, plot_data[0].shape))
 
-        return (ret_t, ret_X, ret_D, ret_P)
+        return (ret_t, ret_X, ret_D, ret_P), property_violated_flag
 
 
 def dyn_non_opt(t, X, u):

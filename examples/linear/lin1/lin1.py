@@ -26,7 +26,8 @@ class SIM(object):
         #sys_id = int(raw_input('enter system ID: '))
         self.dyn = dynamics(int(pvt_init_data))
 
-    def sim(self, TT, X0, D, P, U, I, property_checker, property_violated_flag):
+    def sim(self, TT, X0, D, P, U, I, property_checker):
+        property_violated_flag = False
         # atol = 1e-10
         rtol = 1e-6
         rtol = 1.0
@@ -67,7 +68,7 @@ class SIM(object):
 
         if property_checker is not None:
             if property_checker.check(Tf, X_):
-                property_violated_flag[0] = True
+                property_violated_flag = True
 
         dummy_D = np.zeros(D.shape)
         dummy_P = np.zeros(P.shape)
@@ -81,7 +82,7 @@ class SIM(object):
         #plt.plot(plot_data[1][:, 0], plot_data[1][:, 1])
         ##plt.plot(plot_data[0] + Ti, np.tile(U, plot_data[0].shape))
 
-        return (ret_t, ret_X, ret_D, ret_P)
+        return (ret_t, ret_X, ret_D, ret_P), property_violated_flag
 
 
 def solout_fun(property_checker, violating_state, plot_data):

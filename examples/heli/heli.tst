@@ -18,7 +18,7 @@ error_set[0][28], error_set[1][28] = 7, 9
 
 
 
-grid_eps = [0.04, 0.04]
+grid_eps = [0.04, 0.04 
 delta_t = 0.1
 num_samples = 5
 

@@ -22,7 +22,7 @@ class SIM(object):
     def __init__(self, _, pvt_init_data):
         self.model = create_model()
 
-    def sim(self, TT, X0, D, P, U, I, property_checker, property_violated_flag):
+    def sim(self, TT, X0, D, P, U, I, property_checker):
         #Simulation
         ncp = 200     #Number of communication points
         self.model.re_init(TT[0], X0)
@@ -31,8 +31,9 @@ class SIM(object):
         #sim.print_event_data()
 
         if property_checker is not None:
-            print 'hua'
-            property_violated_flag[0] = property_checker(t, y)
+            property_violated_flag = property_checker.check_array(t, y)
+        else:
+            property_violated_flag = False
 
         ret_D = D
         ret_P = P
@@ -41,7 +42,7 @@ class SIM(object):
 #         plt.figure(10)
 #         plt.plot(t, y[:, 0], 'b-*', linewidth=2)
 #         plt.plot(t, y[:, 1], 'r-*', linewidth=2)
-        return (ret_t, ret_X, ret_D, ret_P)
+        return (ret_t, ret_X, ret_D, ret_P), property_violated_flag
 
 def create_model():
     def pendulum(t, X, sw):

@@ -12,7 +12,11 @@ class PropertyChecker():
         T : Time Vector of the trace
         Y : Array of state vectors of the trace
         """
-        return self.final_cons.contains(Y)
+        # XXX: any() seems to work although np.any will be the riight
+        # function. Looks like any() just works on the array as an
+        # iterator.
+        return any(self.final_cons.contains(Y))
+        #return np.any(self.final_cons.contains(Y))
 
     def check(self, t, y):
         """check
