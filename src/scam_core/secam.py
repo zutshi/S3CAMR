@@ -558,12 +558,7 @@ def refine_init(
             )
         SS.discover(current_abs, system_params)
 
-        #POFF
-#         if plot:
-#             #plt.autoscale()
-#             #ph.figure_for_paper(plt.gca(), plot_hack.LINE_LIST)
-#             #plot_hack.LINE_LIST = []
-#             plt.show()
+        opts.plotting.show()
 
         if not system_params.final_state_set:
             print('did not find any abstract counter example!', file=SYS.stderr)
@@ -619,10 +614,9 @@ def refine_init(
             initial_controller_state,
             sample_ci
             )
-        # POFF
-#         if plot:
-#             #ph.figure_for_paper(plt.gca(), plot_hack.LINE_LIST)
-#             plt.show()
+
+        opts.plotting.show()
+
         if res:
             print('Concretized', file=SYS.stderr)
             fp.append_data(opts.op_fname,

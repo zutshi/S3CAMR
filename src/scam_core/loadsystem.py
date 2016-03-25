@@ -116,7 +116,12 @@ def parse(file_path, plant_pvt_init_data):
     test_dir = fp.get_abs_base_path(test_des_file)
     SYS.path.append(test_dir)
 
-    sut = imp.load_source('test_des', test_des_file)
+    try:
+        sut = imp.load_source('test_des', test_des_file)
+    except IOError as e:
+        print('File not found: {}'.format(test_des_file))
+        raise e
+
     sut.plant_pvt_init_data = plant_pvt_init_data
 
     try:

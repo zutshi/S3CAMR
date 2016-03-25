@@ -8,10 +8,10 @@ import graph_tool.all as gt
 # can not import sub modules for some reasons!!
 # e.e. gt.topology gives an error
 #import graph_tool as gt
-
 from blessed import Terminal
 
 import utils as U
+import err
 
 term = Terminal()
 
@@ -157,11 +157,24 @@ class GraphGT(object):
                 print >> sys.stderr, p
             path_it = (i for i in paths)
 
+#############################################################
+        # TODO: Remove the extra step to count paths
+        # It is there just as a debug print
+        paths = list(U.bounded_iter(path_it, max_paths))
+        num_paths = len(paths)
+        err.warn('counting paths...found: {}'.format(num_paths))
         def path_gen():
-            for path in U.bounded_iter(path_it, max_paths):
+            for path in paths:
                 p = [G.v_attr[v] for v in path]
                 yield p[1:-1]
 
+        # END: CODE TO BE REMOVED
+        # CORRECT CODE BELOW
+#         def path_gen():
+#             for path in U.bounded_iter(path_it, max_paths):
+#                 p = [G.v_attr[v] for v in path]
+#                 yield p[1:-1]
+#############################################################
         return path_gen()
 
     def all_shortest_paths(self, source, target):

@@ -1,20 +1,17 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-import err
-import utils as U
-
 import logging
 
 logger = logging.getLogger(__name__)
 
 
 def compute_concrete_plant_output(
-    A,
-    plant_sim,
-    states,
-    total_num_samples,
-    property_checker,
-    ):
+        A,
+        plant_sim,
+        states,
+        total_num_samples,
+        property_checker,
+        ):
 
     # ##!!##logger.debug(U.decorate('simulating plant'))
 
@@ -36,8 +33,8 @@ def compute_concrete_plant_output(
 #                                                     A.delta_t,
 #                                                     property_checker=None)
 
-    rchd_concrete_state_array = plant_sim.simulate(concrete_states, A.delta_t,
-                                                   property_checker, [False])
+    rchd_concrete_state_array, property_violated_flag = plant_sim.simulate(
+            concrete_states, A.delta_t, property_checker)
 
     # ##!!##logger.debug('output concrete states\n{}'.format(rchd_concrete_state_array))
 
@@ -54,16 +51,8 @@ def compute_concrete_plant_output(
     # destroying the assumed direct correspondance between
     # input array and output array
 
-    if rchd_concrete_state_array.n != concrete_states.n:
-
-        print rchd_concrete_state_array
-        print
-        print concrete_states
-
-        raise err.Fatal('Internal')
+    assert(rchd_concrete_state_array.n != concrete_states.n)
 
     # ##!!##logger.debug(U.decorate('simulating plant done'))
 
     return rchd_concrete_state_array
-
-
