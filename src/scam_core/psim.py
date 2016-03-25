@@ -156,8 +156,7 @@ class NativeSim(Simulator):
             self,
             sim_states,
             T,
-            property_checker=None,
-            property_violated_flag=None,
+            property_checker=None
             ):
         t_array = np.empty((sim_states.n, 1))
 
@@ -172,22 +171,23 @@ class NativeSim(Simulator):
 
         i = 0
 
+        property_violated_flag = False
         for state in sim_states.iterable():
-            (t, X, D, pvt) = self.sim(
+            (t, X, D, pvt), pvf = self.sim(
                 (state.t, state.t + T),
                 state.x,
                 state.d,
                 state.pvt,
                 state.u,
                 state.pi,
-                property_checker,
-                property_violated_flag,
+                property_checker
                 )
             t_array[i, :] = t
             X_array[i, :] = X
             D_array[i, :] = D
             P_array[i, :] = pvt
             i += 1
+            property_violated_flag = property_violated_flag or pvf
 
         return st.StateArray(
             t=t_array,
@@ -198,7 +198,7 @@ class NativeSim(Simulator):
             u=sim_states.controller_outputs,
             pi=sim_states.plant_extraneous_inputs,
             ci=sim_states.controller_extraneous_inputs,
-            )
+            ), property_violated_flag
 
     def check_property(self, trace):
         pass

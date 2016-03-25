@@ -195,19 +195,17 @@ def random_test(
 
         # print(concrete_states)
 
-        property_violated_flag = [False]
-
-        rchd_concrete_state_array = system_params.plant_sim.simulate(
+        rchd_concrete_state_array, property_violated_flag = system_params.plant_sim.simulate(
                 concrete_states,
                 A.delta_t,
-                PropertyChecker(system_params.final_cons),
-                property_violated_flag)
+                PropertyChecker(system_params.final_cons)
+                )
 
         for kdx, rchd_state in enumerate(rchd_concrete_state_array.iterable()):
             trace = trace_list[kdx]
             trace.append(rchd_state.s, rchd_state.u, rchd_state.x, rchd_state.ci, rchd_state.pi, rchd_state.t, rchd_state.d)
 
-        if property_violated_flag[0]:
+        if property_violated_flag:
             print(U.decorate('concretized!'))
             for (idx, xf) in enumerate(rchd_concrete_state_array.iterable()):
                 if xf.x in system_params.final_cons:
