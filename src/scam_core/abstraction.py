@@ -584,15 +584,17 @@ class AbstractState(object):
     def __eq__(self, x):
 
         # print('abstraction_eq_invoked')
-#        return hash((self.plant_state, self.controller_state)) == hash(as)
-
-        return hash(self) == hash(x)
+        # return hash((self.plant_state, self.controller_state)) == hash(as)
+        if isinstance(x, AbstractState):
+            return (self.ps, self.cs) == (x.ps, x.cs)
+        else:
+            return False
 
     def __hash__(self):
 
         # print('abstraction_hash_invoked')
 
-        return hash((self.plant_state, self.controller_state))
+        return hash((self.ps, self.cs))
 
     def __repr__(self):
         return 'p={' + self.plant_state.__repr__() + '},c={' \
