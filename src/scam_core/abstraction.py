@@ -19,7 +19,7 @@ import numpy as np
 import utils as U
 from utils import print
 import err
-import graph as g
+import graphs.graph as g
 import state as st
 import cellmanager as CM
 
