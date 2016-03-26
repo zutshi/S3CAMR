@@ -126,7 +126,8 @@ def get_step_simulator(csim, psim, delta_t):
         u = [None]
         concrete_states = get_concrete_state_obj(t0, x0, d0, pvt0, s_, ci, pi, u)
 
-        concrete_states_ = psim.simulate(concrete_states, delta_t)
+        # ignore pvf
+        concrete_states_, _ = psim.simulate(concrete_states, delta_t)
 
         (t, x, s, d, pvt, u, _, _) = get_individual_states(concrete_states_)
         return (t[0], x[0], s[0], d[0], pvt[0], u[0])
