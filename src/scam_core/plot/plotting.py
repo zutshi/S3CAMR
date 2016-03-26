@@ -2,15 +2,15 @@ import err
 
 from plotting_abstract import PlottingBase
 
-def factory(lib_name):
+def factory(lib_name, *args):
     # Matplotlib
     if lib_name == 'mp':
         import plotMP
-        plotting = plotMP.Plotting()
+        plotting = plotMP.Plotting(*args)
     # pyQtGraph
     elif lib_name == 'pg':
         import plotPG
-        plotting = plotPG.Plotting()
+        plotting = plotPG.Plotting(*args)
     # Bokeh
     elif lib_name == 'bk':
         import plotBK

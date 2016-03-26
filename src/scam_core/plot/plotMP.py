@@ -5,7 +5,7 @@ matplotlib.use('GTK3Agg')
 #global plt
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
-import matplotlib.cm as cm
+#import matplotlib.cm as cm
 import numpy as np
 
 from plotting_abstract import PlottingBase
@@ -15,8 +15,9 @@ plot_figure_for_paper = False
 
 class Plotting(PlottingBase):
 
-    def __init__(self):
+    def __init__(self, *args):
         self._ax = None
+        self.fast_plot = True if 'fast-plot' in args else False
         return
 
     def figure(self):
@@ -191,7 +192,10 @@ class Plotting(PlottingBase):
         if x_vs_y is None:
             nd = trace_list[0].x_array.shape[1]
             xvsy = [('t', 'x{}'.format(i)) for i in range(nd)]
-        self.plot_trace_list_xvsy_dc(trace_list, xvsy)
+        if self.fast_plot:
+            self.plot_trace_list_xvsy_sc(trace_list, xvsy)
+        else:
+            self.plot_trace_list_xvsy_dc(trace_list, xvsy)
 
     def plot_trace_list_xvsy_sc(self, trace_list, x_vs_y):
         """plot_trace_list: Same Color but faster?
