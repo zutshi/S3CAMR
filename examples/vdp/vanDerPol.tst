@@ -43,10 +43,10 @@ error_set = [[-1, -6.5], [-0.7, -5.6]]
 # num_samples = 10
 # delta_t = 0.5
 
-# # Must have prop check ON
-# grid_eps = [.51, .51]
-# num_samples = 10
-# delta_t = 0.5
+# Must have prop check ON
+grid_eps = [.51, .51]
+num_samples = 10
+delta_t = 0.5
 
 
 
