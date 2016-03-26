@@ -29,10 +29,11 @@ logger.setLevel(logging.INFO)
 COMMA = ','
 SQ = '\''
 
-
+# TODO: fix this horror by using **kwargs
 def simulator_factory(
         config_dict,
         benchmark_os_path,
+        property_checker,
         plt,
         plant_pvt_init_data,
         parallel=False,
@@ -71,7 +72,8 @@ def simulator_factory(
             raise err.Fatal('Python file extension py expected, found: {}'.format(file_ext))
         module_path = fp.construct_path(python_file_path, benchmark_os_path)
         if fp.validate_file_names([module_path]):
-            return NativeSim(module_name, module_path, plt, plant_pvt_init_data, parallel)
+            return NativeSim(module_name, module_path,
+                    property_checker, plt, plant_pvt_init_data, parallel)
         else:
             raise err.FileNotFound('file does not exist: ' + python_file_path)
     elif sim_type == 'test':
@@ -142,6 +144,7 @@ class NativeSim(Simulator):
             self,
             module_name,
             module_path,
+            property_checker,
             plt,
             plant_pvt_init_data,
             parallel,
@@ -151,12 +154,36 @@ class NativeSim(Simulator):
         sim_module = imp.load_source(module_name, module_path)
         self.sim_obj = sim_module.SIM(plt, plant_pvt_init_data)
         self.sim = self.sim_obj.sim
+        self.property_checker = property_checker
+
+#     @property_checker.setter
+#     def property_checker(self, property_checker):
+#         self._property_checker = property_checker
+
+    @property
+    def property_checker(self):
+        return self._property_checker
+
+    @property_checker.setter
+    def property_checker(self, property_checker):
+        self._property_checker = property_checker
+
+    # TODO: Not the cleanest way to do this. Can be confusing
+    def simulate_with_property_checker(
+            self,
+            sim_states,
+            T,
+            property_checker):
+        """override the already set prop checker"""
+        saved_pc = self.property_checker
+        self.property_checker = property_checker
+        return self.simulate(sim_states, T)
+        self.property_checker = saved_pc
 
     def simulate(
             self,
             sim_states,
-            T,
-            property_checker=None
+            T
             ):
         t_array = np.empty((sim_states.n, 1))
 
@@ -180,7 +207,7 @@ class NativeSim(Simulator):
                 state.pvt,
                 state.u,
                 state.pi,
-                property_checker
+                self._property_checker
                 )
             t_array[i, :] = t
             X_array[i, :] = X
