@@ -33,9 +33,22 @@ error_set = [[-1, -6.5], [-0.7, -5.6]]
 
 
 # param 5: works for S3CAM
-grid_eps = [0.1, 0.1]
-delta_t = 0.1
-num_samples = 3
+# grid_eps = [0.1, 0.1]
+# delta_t = 0.1
+# num_samples = 3
+
+
+# # Must have prop check ON
+# grid_eps = [.21, .21]
+# num_samples = 10
+# delta_t = 0.5
+
+# # Must have prop check ON
+# grid_eps = [.51, .51]
+# num_samples = 10
+# delta_t = 0.5
+
+
 
 ######################
 # what did not worked
@@ -49,13 +62,15 @@ num_samples = 3
 # num_samples = 3
 # delta_t = 0.4
 
+
+
 initial_discrete_state = []
 initial_private_state = []
 
 T = 1.0
 
 
-MAX_ITER = 4
+MAX_ITER = inf
 
 
 plant_description = 'python'
