@@ -274,7 +274,7 @@ def cell_affine_models(cell, step_sim, ntrain, ntest, tol, include_err):
         return sub_models
     else:
         A, b = rm.Ab
-        C, d = cell.ival_cons().poly()
+        C, d = cell.ival_constraints.poly()
         sub_model = (
                 pwa.sub_model_helper(A, b, C, d, e=rm.error(X, Y)) if include_err
                 else pwa.sub_model_helper(A, b, C, d)
