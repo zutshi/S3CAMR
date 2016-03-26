@@ -60,10 +60,11 @@ class System(object):
 
         return
 
-    def init_sims(self, plt_lib, psim_args):
+    def init_sims(self, plt_lib, property_checker, psim_args):
         self.plant_sim = psim.simulator_factory(
             self.plant_config_dict,
             self.path,
+            property_checker,
             plt=plt_lib,
             plant_pvt_init_data=self.plant_pvt_init_data,
             parallel=False,
@@ -234,14 +235,9 @@ def parse(file_path, plant_pvt_init_data):
         controller_path = sut.controller_path
         plant_pvt_init_data = sut.plant_pvt_init_data
 
-        sys = System(controller_path, num_dims, plant_config_dict,
-                     delta_t, controller_path_dir_path,
-                     controller_object_str, path, plant_pvt_init_data,
-                     sut.min_smt_sample_dist, sut.ci_grid_eps,
-                     sut.pi_grid_eps)
-        prop = Property(T, init_cons_list, init_cons, final_cons, ci,
-                        pi, initial_discrete_state, initial_controller_state,
-                        MAX_ITER, num_segments)
+        min_smt_sample_dist = sut.min_smt_sample_dist
+        ci_grid_eps = sut.ci_grid_eps
+        pi_grid_eps = sut.pi_grid_eps
 
         #num_sim_samples = sut.num_sim_samples
         #METHOD = sut.METHOD
@@ -251,6 +247,16 @@ def parse(file_path, plant_pvt_init_data):
         #opts = Options(plot, MODE, num_sim_samples, METHOD, symbolic_analyzer)
     except AttributeError as e:
         raise MissingSystemDefError(e)
+
+    sys = System(controller_path, num_dims, plant_config_dict,
+                 delta_t, controller_path_dir_path,
+                 controller_object_str, path, plant_pvt_init_data,
+                 min_smt_sample_dist, ci_grid_eps,
+                 pi_grid_eps)
+    prop = Property(T, init_cons_list, init_cons, final_cons, ci,
+                    pi, initial_discrete_state, initial_controller_state,
+                    MAX_ITER, num_segments)
+
     print('system loaded...')
     return sys, prop
 
