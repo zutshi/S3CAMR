@@ -5,11 +5,9 @@ Creates a SAL transition system: DFT
 
 #import sympy as sm
 import textwrap as tw
-
 from math import isinf
 
-# full precision
-PREC = '0.4'
+from ..helpers.expr2str import linexpr2str, float2str
 
 
 class SALTransError(Exception):
@@ -146,10 +144,10 @@ class Guard(object):
     def __str__(self):
         # num_constraints , num_dimensions
         nc, nd = self.C.shape
+
         cons = ('{Cxi} <= {di}'.format(
-            Cxi=' + '.join('{}*x{}'.format(self.C[i, j], j) for j in range(nd)),
-            di=self.d[i])
-                for i in range(nc))
+            Cxi=linexpr2str(self.C[i, :], ('x'+str(j) for j in range(nd))),
+            di=float2str(self.d[i])) for i in range(nc))
         return ' AND '.join(cons)
         #return ' AND '.join('{}*x{} + {} <= 0'.format(self.C[i, j], j, -self.d[j]) for i in range(nc) for j in range(nd))
 
@@ -185,21 +183,22 @@ class Reset(object):
         ndo, ndi = self.A.shape
 
         xi_s = "x{}'"
-        Axi_s = '{c:{p}f}*x{j}'
+        #Axi_s = '{c}*x{j}'
 
         if self.e is None:
-            #bi_s = '{c:.{p}f}'
-            bi_s = '{c:{p}f}'
-
             s = ['{xi_} = {Axi} + {bi}'.format(
                 xi_=xi_s.format(i),
-                Axi=' + '.join(Axi_s.format(p=PREC, c=self.A[i, j], j=j) for j in range(ndi)),
-                bi=bi_s.format(p=PREC, c=self.b[i])) for i in range(ndo)]
+                Axi=linexpr2str(
+                    self.A[i, :], ('x'+str(j) for j in range(ndi))
+                    ),
+                bi=float2str(self.b[i])
+                ) for i in range(ndo)
+                ]
+            #Axi=' + '.join(Axi_s.format(c=float2str(self.A[i, j]), j=j) for j in range(ndi)),
+            #bi=float2str(self.b[i])) for i in range(ndo)]
             return ';\n'.join(s)
 
         else:
-            deltai_s = '{c:{p}f}'
-
             delta_h = self.b + self.e.h
             delta_l = self.b + self.e.l
 
@@ -208,10 +207,14 @@ class Reset(object):
                  'r <= {Axi} + {delta_hi} }}'
                  .format(
                     xi_=xi_s.format(i),
-                    Axi=' + '.join(Axi_s.format(p=PREC, c=self.A[i, j], j=j) for j in range(ndi)),
-                    delta_li=deltai_s.format(p=PREC, c=delta_l[i]),
-                    delta_hi=deltai_s.format(p=PREC, c=delta_h[i])) for i in range(ndo)
+                    Axi=linexpr2str(
+                        self.A[i, :], ('x'+str(j) for j in range(ndi))
+                        ),
+                    delta_li=float2str(delta_l[i]),
+                    delta_hi=float2str(delta_h[i])
+                    ) for i in range(ndo)
                  ]
+            #Axi=' + '.join(Axi_s.format(c=float2str(self.A[i, j]), j=j) for j in range(ndi)),
             return ';\n'.join(s)
 
 
