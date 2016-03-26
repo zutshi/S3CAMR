@@ -45,18 +45,10 @@ def ival_cons_to_cell_list(cons, eps):
     return x_iter_list
 
 
-def get_cells_from_ival_constraints(x_cons, eps):
-
-    x_list = ival_cons_to_cell_list(x_cons, eps)
-    cell_list = [tuple(map(int, abs_state_array_repr)) for abs_state_array_repr in zip(*x_list)]
-
-    return cell_list
-
-
-def get_pi_cells_from_ival_constraints(cons, pi_eps):
-    pi_list = ival_cons_to_cell_list(cons, pi_eps)
-    pi_cells = [tuple(map(int, abs_state_array_repr)) for abs_state_array_repr in zip(*pi_list)]
-    return pi_cells
+def get_cells_from_ival_constraints(ic, eps):
+    x_list = ival_cons_to_cell_list(ic, eps)
+    cells = [tuple(map(int, abs_state_array_repr)) for abs_state_array_repr in zip(*x_list)]
+    return cells
 
 
 def cell_from_concrete(X, eps):
@@ -70,10 +62,12 @@ def cell_from_concrete(X, eps):
     return tuple(cell_id)
 
 
+# Cell is defined as left closed and right open: [ )
 def ival_constraints(cell, eps):
+    tol = (1e-5)*np.array(eps) # 0.001% of eps
     cell_coordinates = np.array(cell) * eps
     ival_l = cell_coordinates
-    ival_h = cell_coordinates + eps
+    ival_h = cell_coordinates + eps - tol
     return cons.IntervalCons(ival_l, ival_h)
 
 
@@ -81,10 +75,9 @@ def get_children(parent_cell_id, lvl=1):
     if lvl != 1:
         raise NotImplementedError
     #print(parent_cell_id)
-    l = [[coord, coord+1] for coord in parent_cell_id]
+    l = [[2*coord, 2*coord+1] for coord in parent_cell_id]
     #print(list(itertools.product(*l)))
     return list(itertools.product(*l))
-
 
 #TODO: Direct Format manipulation of abstract state
 def get_parent_hash(abs_state, lvl=1):
@@ -108,12 +101,44 @@ class Cell(object):
         self.eps = eps
         return
 
-    def sample_UR(self, N):
-        ic = ival_constraints(self.cell, self.eps)
-        return ic.sample_UR(N)
+#     def split(self, axes=None):
+#         '''verbose override of split_()'''
+#         cells = self.split_(axes)
+#         print '='*10
+#         print 'splitting cell: {}'.format(self.ival_constraints)
+#         for c in cells:
+#             print c.ival_constraints
+#         print '='*10
+#         return cells
 
-    def split(self):
-        return [Cell(i, self.eps/2) for i in get_children(self.cell)]
+    def split(self, axes=None):
+        """split
 
-    def ival_cons(self):
+        Parameters
+        ----------
+        dims : dimensions to split along
+
+        Returns
+        -------
+        child cells
+        """
+        if axes is None:
+            return [Cell(i, self.eps/2) for i in get_children(self.cell)]
+        else:
+            cell = self.cell
+            l = [[i] for i in cell]
+            for i in axes:
+                l[i] = [2*cell[i], 2*cell[i]+1]
+            cells = list(itertools.product(*l))
+            e_ = self.eps/2
+            return [Cell(c, e_) for c in cells]
+
+    @property
+    def ival_constraints(self):
         return ival_constraints(self.cell, self.eps)
+
+    def sample_UR(self, N):
+        return self.ival_constraints.sample_UR(N)
+
+    def __str__(self):
+        return str(self.cell)
