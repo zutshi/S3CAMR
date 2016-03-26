@@ -6,63 +6,54 @@
 import numpy as np
 from scipy.integrate import ode
 
-import copy_reg as cr
-import types
-
 import matplotlib.pyplot as plt
 
-
-def _pickle_method(m):
-    if m.im_self is None:
-        return getattr, (m.im_class, m.im_func.func_name)
-    else:
-        return getattr, (m.im_self, m.im_func.func_name)
-
-cr.pickle(types.MethodType, _pickle_method)
-
+PLOT = False
 
 class SIM(object):
 
     def __init__(self, plt, pvt_init_data):
-        pass
+        property_checker = True
 
-    def sim(self, TT, X0, D, P, U, I, property_checker):
-        property_violated_flag = False
         # atol = 1e-10
         rtol = 1e-5
-
         rtol = 1e-6
         if property_checker is not None:
             max_step = 1e-2
         else:
             max_step = 0.0
         nsteps = 1000
-        num_dim_x = len(X0)
-        plot_data = [np.empty(0, dtype=float), np.empty((0, num_dim_x), dtype=float)]
 
         # tt,YY,dummy_D,dummy_P
         # The orer of these calls is strict... do not change
         # (1):set_integrator -> (2):set_solout -> (3):set_initial_value
 
-        solver = ode(dyn).set_integrator('dopri5', rtol=rtol, max_step=max_step,
-                                         nsteps=nsteps)  # (1)
+        self.solver = ode(dyn).set_integrator('dopri5', rtol=rtol, max_step=max_step, nsteps=nsteps)  # (1)
+
+    def sim(self, TT, X0, D, P, U, I, property_checker):
+        property_violated_flag = False
+        num_dim_x = len(X0)
+
+        plot_data = ([np.empty(0, dtype=float), np.empty((0, num_dim_x), dtype=float)]
+                     if PLOT else None)
 
         Ti = TT[0]
         Tf = TT[1]
         T = Tf - Ti
 
-        if property_checker is not None:
-            violating_state = [()]
-        solver.set_solout(solout_fun(property_checker, violating_state, plot_data))  # (2)
+        #if property_checker is not None:
+        #violating_state = [()]
+        solver = self.solver
+        solver.set_solout(solout_fun(property_checker, plot_data))  # (2)
 
         solver.set_initial_value(X0, t=0.0)
         solver.set_f_params(U)
         X_ = solver.integrate(T)
         # Y = C*x + D*u
 
-        if property_checker is not None:
-            if property_checker.check(Tf, X_):
-                property_violated_flag = True
+        #if property_checker is not None:
+        if property_checker.check(Tf, X_):
+            property_violated_flag = True
 
         dummy_D = np.zeros(D.shape)
         dummy_P = np.zeros(P.shape)
@@ -73,7 +64,10 @@ class SIM(object):
         ret_P = dummy_P
 
         #plt.plot(plot_data[0] + Ti, plot_data[1][:, 0])
-        plt.plot(plot_data[1][:, 0], plot_data[1][:, 1])
+
+        if PLOT:
+            plt.plot(plot_data[1][:, 0], plot_data[1][:, 1])
+
         ##plt.plot(plot_data[0] + Ti, np.tile(U, plot_data[0].shape))
 
         return (ret_t, ret_X, ret_D, ret_P), property_violated_flag
@@ -95,23 +89,23 @@ def dyn(t, X, u):
     return X
 
 
-def solout_fun(property_checker, violating_state, plot_data):
+def solout_fun(property_checker, plot_data):
 
     def solout(t, Y):
-
-        plot_data[0] = np.concatenate((plot_data[0], np.array([t])))
-        plot_data[1] = np.concatenate((plot_data[1], np.array([Y])))
+        if PLOT:
+            plot_data[0] = np.concatenate((plot_data[0], np.array([t])))
+            plot_data[1] = np.concatenate((plot_data[1], np.array([Y])))
 
         # print Y
         # print t, Y
 
-#        if property_checker(t, Y):
-#            pvf_local[0] = True
-#            violating_state[0] = (np.copy(t), np.copy(Y))
-#
-#            # print 'violation found:', violating_state[0]
-
-        return 0
+        if property_checker.check(t, Y):
+            #violating_state[0] = (np.copy(t), np.copy(Y))
+            # print 'violation found:', violating_state[0]
+            # return -1 to stop integration
+            return -1
+        else:
+            return 0
 
     return solout
 
