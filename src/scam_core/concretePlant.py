@@ -9,8 +9,7 @@ def compute_concrete_plant_output(
         A,
         plant_sim,
         states,
-        total_num_samples,
-        property_checker,
+        total_num_samples
         ):
 
     # ##!!##logger.debug(U.decorate('simulating plant'))
@@ -34,7 +33,7 @@ def compute_concrete_plant_output(
 #                                                     property_checker=None)
 
     rchd_concrete_state_array, property_violated_flag = plant_sim.simulate(
-            concrete_states, A.delta_t, property_checker)
+            concrete_states, A.delta_t)
 
     # ##!!##logger.debug('output concrete states\n{}'.format(rchd_concrete_state_array))
 
@@ -51,7 +50,7 @@ def compute_concrete_plant_output(
     # destroying the assumed direct correspondance between
     # input array and output array
 
-    assert(rchd_concrete_state_array.n != concrete_states.n)
+    assert(rchd_concrete_state_array.n == concrete_states.n)
 
     # ##!!##logger.debug(U.decorate('simulating plant done'))
 
