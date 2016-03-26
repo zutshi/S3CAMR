@@ -15,6 +15,8 @@ import cellmanager as CM
 # multiply num samples with the
 MORE_FACTOR = 10
 TEST_FACTOR = 10
+MAX_TRAIN = 100
+MAX_TEST = 100
 
 INF = float('inf')
 
@@ -25,7 +27,7 @@ def simulate_pwa(pwa_model, x_samples, N):
 
 
 def simulate(AA, s, sp, pwa_model, max_path_len, S0):
-    NUM_SIMS = 500
+    NUM_SIMS = 100
     # sample only initial abstract state
     x0_samples = (sp.sampler.sample_multiple(S0, AA, sp, NUM_SIMS)).x_array
     #print x0_samples
@@ -33,11 +35,13 @@ def simulate(AA, s, sp, pwa_model, max_path_len, S0):
     #X0 = sp.init_cons
     #x0_samples = sample.sample_ival_constraints(X0, n=1000)
 
+    print 'path length: {}'.format(max_path_len)
     traces = [i for i in simulate_pwa(pwa_model, x0_samples, N=max_path_len)]
     return traces
 
 
-def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, opts):
+def refine_dft_model_based(
+        AA, error_paths, pi_seq_list, sp, sys_sim, opts, prop):
     '''does not handle pi_seq_list yet'''
 
     # traversed_abs_state_set
@@ -46,12 +50,15 @@ def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, opts):
     S0 = {path[0] for path in error_paths}
 
     max_path_len = max([len(path) for path in error_paths])
-    print max_path_len
-    max_path_len = int(np.ceil(AA.T/AA.delta_t))
-    print max_path_len
+    print 'max_path_len:', max_path_len
+    # depth = max_path_len - 1, because path_len = num_states along
+    # path. This is 1 less than SAL depth and simulation length
+    depth = max(int(np.ceil(AA.T/AA.delta_t)), max_path_len - 1)
+    print 'depth :',  depth
 
     pwa_model = build_pwa_dft_model(
-            AA, tas, sp, sys_sim, opts.max_model_error, opts.model_err)
+            AA, tas, sp, opts.max_model_error,
+            opts.model_err)
     if __debug__:
         s = {
             'init': {path[0] for path in error_paths},
@@ -82,7 +89,7 @@ def refine_dft_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, opts):
 #             np.array([INF, INF]))
 
     sal_bmc.init(AA.num_dims.x, pwa_model, sp.init_cons, prop, 'vdp_dft', 'dft')
-    sal_bmc.check(max_path_len)
+    sal_bmc.check(depth)
     #bmc.check(depth=2)
     #if bmc.sat:
     #    return bmc.soln
@@ -137,7 +144,7 @@ def getxy_ignoramous(cell, N, sim, t0=0):
     return x_array, np.vstack(Yl)
 
 
-def build_pwa_dft_model(AA, abs_states, sp, sys_sim, tol, include_err):
+def build_pwa_dft_model(AA, abs_states, sp, tol, include_err):
     dt = AA.plant_abs.delta_t
     step_sim = simsys.get_step_simulator(sp.controller_sim, sp.plant_sim, dt)
 
@@ -153,6 +160,8 @@ def build_pwa_dft_model(AA, abs_states, sp, sys_sim, tol, include_err):
 #         raise NotImplementedError
 
     for abs_state in abs_states:
+        if __debug__:
+            print 'modeling abs_state: {}'.format(abs_state)
         for sub_model in affine_models(
                 abs_state, AA,
                 step_sim, tol, sp, include_err):
@@ -206,9 +215,9 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
 def affine_models(abs_state, AA, step_sim, tol, sp, include_err):
     cell = CM.Cell(abs_state.plant_state.cell_id, AA.plant_abs.eps)
     # number of training samples
-    ntrain = AA.num_samples * MORE_FACTOR
+    ntrain = min(AA.num_samples * MORE_FACTOR, MAX_TRAIN)
     # number of test samples
-    ntest = ntrain * TEST_FACTOR
+    ntest = min(ntrain * TEST_FACTOR, MAX_TEST)
 
 #     test_samples = sp.sampler.sample(abs_state, AA, sp, 5)
 #     d = abs_state.plant_state.d
@@ -247,29 +256,31 @@ def cell_affine_models(cell, step_sim, ntrain, ntest, tol, include_err):
     sub_models = []
 
     X, Y = getxy_ignoramous(cell, ntrain, step_sim)
-    am = RegressionModel(X, Y)
+    rm = RegressionModel(X, Y)
     X, Y = getxy_ignoramous(cell, ntest, step_sim)
-    e_pc = am.error_pc(X, Y) # error %
+    e_pc = rm.error_pc(X, Y) # error %
     if __debug__:
         print e_pc
     error = np.linalg.norm(e_pc, 2)
 
-    # split states if tol is not satisfied
+    # split states in all dims if tol is not satisfied
+    # TODO: Split only respective dims.
     if error > tol:
         err.warn('splitting on e%:{}, |e%|:{}'.format(e_pc, error))
         for split_cell in cell.split():
             sub_models_ = cell_affine_models(
-                    split_cell, step_sim, ntrain, ntest, tol)
+                    split_cell, step_sim, ntrain, ntest, tol, include_err)
             sub_models.extend(sub_models_)
         return sub_models
     else:
-        A, b = am.Ab
+        A, b = rm.Ab
         C, d = cell.ival_cons().poly()
-        sub_model = (pwa.sub_model_helper(
-                A, b, C, d, e=am.error(X, Y)) if include_err
+        sub_model = (
+                pwa.sub_model_helper(A, b, C, d, e=rm.error(X, Y)) if include_err
                 else pwa.sub_model_helper(A, b, C, d)
                     )
-        print '----------------Finalized------------------'
+        if __debug__:
+            print '----------------Finalized------------------'
     return [sub_model]
 
 
