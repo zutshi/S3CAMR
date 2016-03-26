@@ -6,8 +6,9 @@ import numpy as np
 import logging
 
 import state
+import cellmanager as CM
+
 from utils import print
-import err
 
 logger = logging.getLogger(__name__)
 
@@ -122,7 +123,7 @@ class IntervalSampler(Sampler):
 
         if A.num_dims.pi != 0:
             pi_cells = system_params.pi_ref.obs_i_cells(abstract_state.plant_state)
-            pi_cons_list = [A.plant_abs.get_ival_cons_cell(pi_cell, pi_ref.eps) for pi_cell in pi_cells]
+            pi_cons_list = [CM.get_ival_cons_cell(pi_cell, pi_ref.eps) for pi_cell in pi_cells]
             num_pi_cells = len(pi_cells)
             pi_sample_per_state = num_pi_cells
         else:
@@ -130,7 +131,7 @@ class IntervalSampler(Sampler):
 
         if A.num_dims.ci != 0:
             ci_cells = system_params.ci_ref.obs_i_cells(abstract_state.plant_state)
-            ci_cons_list = [A.controller_abs.get_ival_cons_cell(ci_cell, ci_ref.eps) for ci_cell in ci_cells]
+            ci_cons_list = [CM.get_ival_cons_cell(ci_cell, ci_ref.eps) for ci_cell in ci_cells]
             num_ci_cells = len(ci_cells)
             ci_sample_per_state = num_ci_cells
         else:
