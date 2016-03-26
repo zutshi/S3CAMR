@@ -18,6 +18,11 @@ class SALBMCError(Exception):
 # Must separate the arguements. i.e., -v 3 should be given as ['-v', '3']
 # This can be avoided by using shell=True, but that is a security risk
 def sal_run_cmd(sal_path, depth, module_name, prop_name, verbosity=3, iterative=False):
+    #TODO: SAL_BUG
+    err.warn('adding 1 to the overall depth')
+    # To offset uinexplained SAL behavior
+    depth += 1
+
     cmd = [
         sal_path,
         '-v', str(verbosity),
