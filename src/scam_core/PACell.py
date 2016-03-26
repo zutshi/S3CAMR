@@ -90,8 +90,8 @@ class PlantAbstraction:
         smt_cons = self.solver.ic2smt(ic, x)
         return smt_cons
 
-    def get_ival_cons_cell(self, cell, eps):
-        return CM.ival_constraints(cell, eps)
+#     def get_ival_cons_cell(self, cell, eps):
+#         return CM.ival_constraints(cell, eps)
 
     def get_ival_cons_abs_state(self, abs_state):
         return CM.ival_constraints(abs_state.cell_id, self.eps)
