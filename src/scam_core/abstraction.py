@@ -445,7 +445,9 @@ class TopLevelAbs:
             #pi_seq_list[idx] = pi_seq + list(np.random.uniform(pi_cons.l, pi_cons.h, (r, c_pi)))
             pi_seq_list[idx] = pi_seq + [pi_cons] * missing_pi_len
 
-        print('path states, min_len:{}, max_len:{}'.format(min_len, max_len))
+
+        if __debug__:
+            print('path states, min_len:{}, max_len:{}'.format(min_len, max_len))
 
         # ##!!##logger.debug('init_list:{}\n'.format(init_list))
         # ##!!##logger.debug('ci_seq_list:{}\n'.format(ci_seq_list))
