@@ -195,11 +195,15 @@ def random_test(
 
         # print(concrete_states)
 
-        rchd_concrete_state_array, property_violated_flag = system_params.plant_sim.simulate(
+        # enforce property checking even if it has not been requested
+        # by the user
+        pc = PropertyChecker(system_params.final_cons)
+        rchd_concrete_state_array, property_violated_flag = (
+            system_params.plant_sim.simulate_with_property_checker(
                 concrete_states,
                 A.delta_t,
-                PropertyChecker(system_params.final_cons)
-                )
+                pc
+                ))
 
         for kdx, rchd_state in enumerate(rchd_concrete_state_array.iterable()):
             trace = trace_list[kdx]
