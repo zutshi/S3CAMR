@@ -27,8 +27,9 @@ import loadsystem
 import wmanager
 from plot import plotting
 import random_testing as RT
+import properties
 
-#import utils as U
+import utils as U
 from utils import print
 
 #matplotlib.use('GTK3Agg')
@@ -110,7 +111,7 @@ def simulate(sys, prop, opts):
     concrete_states = sample.sample_init_UR(sys, prop, num_samples)
     trace_list = []
 
-    sys_sim = simsys.get_system_simulator(sys)
+    sys_sim = simsys.get_system_simulator(sys, prop)
     for i in tqdm.trange(num_samples):
         trace = simsys.simulate(sys_sim, concrete_states[i], prop.T)
         trace_list.append(trace)
@@ -289,7 +290,7 @@ def falsify(sys, prop, opts, current_abs, sampler):
          or opts.refine == 'model_dmt'
          or opts.refine == 'model_dct'):
         sys_sim = simsys.get_system_simulator(sys)
-        falsify_using_model(*args, sys_sim=sys_sim)
+        falsify_using_model(*args, sys_sim=sys_sim, prop=prop)
     else:
         raise err.Fatal('internal')
 
@@ -404,7 +405,8 @@ def falsify_using_model(
         pi_ref,
         ci_ref,
         opts,
-        sys_sim):
+        sys_sim,
+        prop):
 
     # TODO: temp function ss.init()
 
@@ -428,9 +430,8 @@ def falsify_using_model(
         )
 
     SS.discover(current_abs, system_params)
-    #POFF
-#     if plot:
-#         plt.show()
+
+    opts.plotting.show()
 
     if not system_params.final_state_set:
         print('did not find any abstract counter example!', file=SYS.stderr)
@@ -447,22 +448,24 @@ def falsify_using_model(
                                                 pi,
                                                 ci,
                                                 opts.max_paths)
+    print('Refining...')
     if opts.refine == 'model_dft':
         import modelrefine as MR
         MR.refine_dft_model_based(current_abs,
-                              error_paths,
-                              pi_seq_list,
-                              system_params,
-                              sys_sim,
-                              opts)
+                                  error_paths,
+                                  pi_seq_list,
+                                  system_params,
+                                  sys_sim,
+                                  opts,
+                                  prop)
     elif opts.refine == 'model_dmt':
         import modelrefine as MR
         MR.refine_dmt_model_based(current_abs,
-                              error_paths,
-                              pi_seq_list,
-                              system_params,
-                              sys_sim,
-                              opts)
+                                  error_paths,
+                                  pi_seq_list,
+                                  system_params,
+                                  sys_sim,
+                                  opts)
     elif opts.refine == 'model_dct':
         import modelrefine as MR
         raise NotImplementedError
@@ -749,6 +752,13 @@ def main():
     parser.add_argument('--max-model-error', type=float, default=float('inf'),
                         help='split cells till model error (over a single step) <= max-error')
 
+    parser.add_argument('--plot-opts', type=str, default=(),
+                        nargs='+', help='additional lib specific plotting opts')
+
+    parser.add_argument('--prop-check', action='store_true',
+                        help='Check violations by analyze the entire '
+                        'trace, instead of relying only on x(t_end).')
+
 #    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     #print(args)
@@ -804,14 +814,19 @@ def main():
     opts.graph_lib = args.graph_lib
     opts.max_paths = args.max_paths
     opts.max_model_error = args.max_model_error
-    opts.plotting = plotting.factory(args.plot_lib)
+    opts.plotting = plotting.factory(args.plot_lib, *args.plot_opts)
     opts.plots = args.plots
     opts.model_err = args.model_err
 
     sys, prop = loadsystem.parse(filepath, args.pvt_init_data)
+    if args.prop_check:
+        opts.property_checker = properties.PropertyChecker(prop.final_cons)
+    else:
+        opts.property_checker = properties.PropertyCheckerNeverDetects()
+
     # TAG:MSH
     matlab_engine = args.meng
-    sys.init_sims(opts.plotting, psim_args=matlab_engine)
+    sys.init_sims(opts.plotting, opts.property_checker, psim_args=matlab_engine)
 
     sanity_check_input(sys, prop, opts)
     run_secam(sys, prop, opts)
