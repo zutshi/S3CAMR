@@ -27,3 +27,15 @@ class PropertyChecker():
         y : state vector
         """
         return y in self.final_cons
+
+
+class PropertyCheckerNeverDetects():
+
+    def __init__(self):
+        return
+
+    def check_array(self, T, Y):
+        return False
+
+    def check(self, t, y):
+        return False
