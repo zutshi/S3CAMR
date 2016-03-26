@@ -271,8 +271,7 @@ class PlantAbstraction:
                 A,
                 system_params.plant_sim,
                 state,
-                total_num_samples,
-                property_checker)
+                total_num_samples)
         #print(rchd_concrete_state_array)
         #exit()
 
