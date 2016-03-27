@@ -2,7 +2,9 @@ import numpy as np
 import os
 
 import saltrans as slt_dft
+import saltrans_rel as slt_rel
 import saltrans_dmt as slt_dmt
+from ..bmc_spec import BMCSpec
 import fileops as fops
 import utils as U
 import err
@@ -36,8 +38,7 @@ def sal_run_cmd(sal_path, depth, module_name, prop_name, verbosity=3, iterative=
     return cmd
 
 
-
-class BMC(object):
+class BMC(BMCSpec):
     def __init__(self, nd, pwa_model, init_state, safety_prop,
                  module_name, model_type):
         if model_type == 'dft':
@@ -49,12 +50,29 @@ class BMC(object):
                     dts, nd, pwa_model, init_state, safety_prop, module_name)
         elif model_type == 'ct':
             raise NotImplementedError
+        elif model_type == 'rel':
+            self.sal_trans_sys = BMC.sal_module_rel(
+                    nd, pwa_model, init_state, safety_prop, module_name)
         else:
             raise SALBMCError('unknown model type')
 
         self.prop_name = 'safety'
         self.module_name = module_name
         return
+
+    @staticmethod
+    def sal_module_rel(nd, pwa_model, init_set, safety_prop, module_name):
+        sal_trans_sys = slt_rel.SALTransSysRel(module_name, nd, init_set, safety_prop)
+
+        sal_trans_sys.add_locations(pwa_model.relation_ids)
+        for idx, sub_model in enumerate(pwa_model):
+            l1 = sal_trans_sys.get_loc_id(sub_model.p1.pid)
+            l2 = sal_trans_sys.get_loc_id(sub_model.p2.pid)
+            g = slt_rel.Guard(l1, sub_model.p1.C, sub_model.p1.d)
+            r = slt_rel.Reset(l2, sub_model.m.A, sub_model.m.b, sub_model.m.error)
+            t = slt_rel.Transition('T_{}'.format(idx), g, r)
+            sal_trans_sys.add_transition(t)
+        return sal_trans_sys
 
     @staticmethod
     def sal_module_dmt(dts, nd, pwa_models, init_set, safety_prop, module_name):
@@ -83,6 +101,8 @@ class BMC(object):
         return sal_trans_sys
 
     def check(self, depth):
+        self.dump()
+
         try:
             sal_path_ = os.environ[SAL_PATH] + SAL_INF_BMC
         except KeyError:

@@ -287,6 +287,7 @@ def falsify(sys, prop, opts, current_abs, sampler):
     elif opts.refine == 'trace':
         refine_trace(*args)
     elif (opts.refine == 'model_dft'
+         or opts.refine == 'model_rel'
          or opts.refine == 'model_dmt'
          or opts.refine == 'model_dct'):
         sys_sim = simsys.get_system_simulator(sys)
@@ -469,6 +470,15 @@ def falsify_using_model(
     elif opts.refine == 'model_dct':
         import modelrefine as MR
         raise NotImplementedError
+    elif opts.refine == 'model_rel':
+        import modelrefine as MR
+        MR.refine_rel_model_based(current_abs,
+                                  error_paths,
+                                  pi_seq_list,
+                                  system_params,
+                                  sys_sim,
+                                  opts,
+                                  prop)
     else:
         assert(False)
 
@@ -676,7 +686,8 @@ def main():
     LIST_OF_SYEMX_ENGINES = ['klee', 'pathcrawler']
     LIST_OF_CONTROLLER_REPRS = ['smt2', 'trace']
     LIST_OF_TRACE_STRUCTS = ['list', 'tree']
-    LIST_OF_REFINEMENTS = ['init', 'trace', 'model_dft', 'model_dmt', 'model_dct']
+    LIST_OF_REFINEMENTS = ['init', 'trace', 'model_dft', 'model_dmt',
+                           'model_dct', 'model_rel']
     LIST_OF_GRAPH_LIBS = ['nx', 'gt', 'g']
     LIST_OF_PLOT_LIBS = ['mp', 'pg']
 

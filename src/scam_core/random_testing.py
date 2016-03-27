@@ -238,12 +238,5 @@ def random_test(
     return map(trace_list.__getitem__, res)
 
 
-def check_sat_any(x_array, cons):
-    return cons.any_sat(x_array)
-
-
 def compute_concrete_controller_output(*args):
-    def inf_list(x):
-        while True:
-            yield x
-    return inf_list(0), inf_list(0)
+    return U.inf_list(0), U.inf_list(0)
