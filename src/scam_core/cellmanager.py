@@ -62,8 +62,23 @@ def cell_from_concrete(X, eps):
     return tuple(cell_id)
 
 
-# Cell is defined as left closed and right open: [ )
 def ival_constraints(cell, eps):
+    """ival_constraints
+
+    Parameters
+    ----------
+    cell : cell id tuple
+    eps : grid eps
+
+    Returns
+    -------
+
+    Notes
+    ------
+    Cell is defined as left closed and right open: [ )
+    This is achieved by subtracting a small % of eps from the cell's
+    'right' boundary (ic.h)
+    """
     tol = (1e-5)*np.array(eps) # 0.001% of eps
     cell_coordinates = np.array(cell) * eps
     ival_l = cell_coordinates
@@ -71,20 +86,29 @@ def ival_constraints(cell, eps):
     return cons.IntervalCons(ival_l, ival_h)
 
 
-def get_children(parent_cell_id, lvl=1):
-    if lvl != 1:
-        raise NotImplementedError
+def children_of(cell):
+    """children_of
+    Notes
+    ------
+    Gets the cells which will be contained in the passed in cell if
+    the grid was refined s.t. new grid_eps = old grid_ps/2
+    Equivalent to splitting the cell in every dimension.
+    """
     #print(parent_cell_id)
-    l = [[2*coord, 2*coord+1] for coord in parent_cell_id]
-    #print(list(itertools.product(*l)))
+    l = [[2*coord, 2*coord+1] for coord in cell]
     return list(itertools.product(*l))
 
-#TODO: Direct Format manipulation of abstract state
-def get_parent_hash(abs_state, lvl=1):
-    cell_id = abs_state.cell_id
+
+def parent_of(cell):
+    """parent of
+    Notes
+    ------
+    Gets the cell which will be contain the passed in cell before the
+    grid was refined, s.t. old grid_eps = 2*current grid_eps
+    """
     # as i is an int, i/2 is equivalent to int(floor(i/2.0))
     # return tuple(int(floor(i/2.0)) for i in cell_id) # for clarity
-    return tuple(i/2 for i in cell_id) # same as above
+    return tuple(i/2 for i in cell) # same as above
 
 
 class Cell(object):
