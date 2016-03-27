@@ -724,7 +724,7 @@ def main():
     parser.add_argument('--refine', type=str, default='init',
                         choices=LIST_OF_REFINEMENTS, help='Refinement method')
 
-    parser.add_argument('--model-err', action='store_true',
+    parser.add_argument('--incl-error', action='store_true',
                         help='Include errors in model for bmc')
 
     parser.add_argument('-o', '--output', type=str, default='vio.log',
@@ -816,7 +816,7 @@ def main():
     opts.max_model_error = args.max_model_error
     opts.plotting = plotting.factory(args.plot_lib, *args.plot_opts)
     opts.plots = args.plots
-    opts.model_err = args.model_err
+    opts.model_err = args.incl_error
 
     sys, prop = loadsystem.parse(filepath, args.pvt_init_data)
     if args.prop_check:

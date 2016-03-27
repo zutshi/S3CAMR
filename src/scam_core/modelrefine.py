@@ -160,8 +160,7 @@ def build_pwa_dft_model(AA, abs_states, sp, tol, include_err):
 #         raise NotImplementedError
 
     for abs_state in abs_states:
-        if __debug__:
-            print 'modeling abs_state: {}'.format(abs_state)
+        print 'modeling abs_state: {}'.format(abs_state)
         for sub_model in affine_models(
                 abs_state, AA,
                 step_sim, tol, sp, include_err):
@@ -260,19 +259,21 @@ def cell_affine_models(cell, step_sim, ntrain, ntest, tol, include_err):
     X, Y = getxy_ignoramous(cell, ntest, step_sim)
     e_pc = rm.error_pc(X, Y) # error %
     if __debug__:
-        print e_pc
-    error = np.linalg.norm(e_pc, 2)
+        print 'error%:', e_pc
+    #error = np.linalg.norm(e_pc, 2)
+    # error exceeds tol in error_dims
+    error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
 
-    # split states in all dims if tol is not satisfied
-    # TODO: Split only respective dims.
-    if error > tol:
-        err.warn('splitting on e%:{}, |e%|:{}'.format(e_pc, error))
-        for split_cell in cell.split():
+    if len(error_dims) > 0:
+        err.warn('splitting on e%:{}, |e%|:{}'.format(
+            e_pc, np.linalg.norm(e_pc, 2)))
+        for split_cell in cell.split(axes=error_dims):
             sub_models_ = cell_affine_models(
                     split_cell, step_sim, ntrain, ntest, tol, include_err)
             sub_models.extend(sub_models_)
         return sub_models
     else:
+        #print 'error%:', rm.error_pc(X, Y)
         A, b = rm.Ab
         C, d = cell.ival_constraints.poly()
         sub_model = (
