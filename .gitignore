@@ -25,3 +25,6 @@ log.secam
 S3CAMSMT
 *.pwa
 trials
+*.log
+set_src.sh
+*sal_bug*
