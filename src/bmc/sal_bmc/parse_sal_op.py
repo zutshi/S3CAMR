@@ -5,6 +5,7 @@ import argparse
 from fractions import Fraction as FR
 
 import fileops as fops
+import err
 
 # global tokens
 SEMI = pp.Literal(";").suppress()
@@ -51,7 +52,7 @@ def extract_label(s):
     return s[1]
 
 
-def parse_trace(trace_data):
+def parse_ce(trace_data):
     # lexer rules
     SEP = pp.Keyword('------------------------').suppress()
     STEP = pp.Keyword('Step').suppress()
@@ -87,6 +88,26 @@ def parse_trace(trace_data):
     return parsed
 
 
+#TODO: make a class for parsed_trace
+def cleanup_parsed_trace(parsed_trace):
+    return '\n'.join(parsed_trace)
+
+
+def parse_trace(trace_data):
+    """pre_process
+    Quick check if SAL has failed to find any counter example.
+    """
+    yices_failed = 'The context is unsat. No model.'
+    sal_failed = 'no counterexample between depths:'
+
+    if yices_failed in trace_data and sal_failed in trace_data:
+        return None
+    elif yices_failed in trace_data or sal_failed in trace_data:
+        raise err.Fatal('unexpected trace data')
+    else:
+        return cleanup_parsed_trace(parse_ce(trace_data))
+
+
 def main():
     usage = '%(prog)s <filename>'
     parser = argparse.ArgumentParser(description='demo pwa', usage=usage)
@@ -94,8 +115,10 @@ def main():
     args = parser.parse_args()
     parsed_trace = parse_trace(fops.get_data(args.trace_file))
 
-    for i in parsed_trace:
-        print i
+    if parsed_trace is None:
+        print 'No CE found!'
+    else:
+        cleanup_parsed_trace(parsed_trace)
 
 if __name__ == '__main__':
     main()

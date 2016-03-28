@@ -1,10 +1,11 @@
-import numpy as np
 import os
 
 import saltrans as slt_dft
 import saltrans_rel as slt_rel
 import saltrans_dmt as slt_dmt
 from ..bmc_spec import BMCSpec
+import parse_sal_op as pso
+
 import fileops as fops
 import utils as U
 import err
@@ -38,8 +39,9 @@ def sal_run_cmd(sal_path, depth, module_name, prop_name, yices=2, verbosity=3, i
 
     if iterative:
         cmd.append('-it')
-    if __debug__:
-        print cmd
+
+    print ' '.join(cmd)
+
     return cmd
 
 
@@ -129,7 +131,7 @@ class BMC(BMCSpec):
                     verbosity=verbosity)
 
         try:
-            print U.strict_call_get_op(sal_cmd)
+            sal_op = U.strict_call_get_op(sal_cmd)
         except U.CallError as e:
             if yices2_not_found in e.message:
                 print 'SAL can not find yices2. Trying with yices...'
@@ -140,15 +142,16 @@ class BMC(BMCSpec):
                             self.prop_name,
                             yices=1,
                             verbosity=verbosity)
-                U.strict_call(['echo'] + sal_cmd)
-                print U.strict_call_get_op(sal_cmd)
-                print 'done'
+                sal_op = U.strict_call_get_op(sal_cmd)
             else:
                 raise err.Fatal('unknown SAL error!')
 
-        exit()
-        print '#'*100
-        exit()
+        print sal_op
+        trace = pso.parse_trace(sal_op)
+        if trace is None:
+            print 'BMC failed to find a CE'
+        else:
+            print trace
 
     def dump(self):
         sal_file = self.module_name + '.sal'
