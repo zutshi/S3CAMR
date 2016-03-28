@@ -154,7 +154,7 @@ class BMC(BMCSpec):
             return InvarStatus.Safe
         else:
             print self.trace
-            return InvarStatus.UnSafe
+            return InvarStatus.Unsafe
 
     def dump(self):
         sal_file = self.module_name + '.sal'
