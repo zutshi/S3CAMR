@@ -21,8 +21,10 @@ import cellmanager as CM
 # multiply num samples with the
 MORE_FACTOR = 10
 TEST_FACTOR = 10
+
 MAX_TRAIN = 100
 MAX_TEST = 100
+
 MIN_TRAIN = 20
 MIN_TEST = MIN_TRAIN
 
@@ -47,8 +49,11 @@ def simulate(AA, s, sp, pwa_model, max_path_len, S0):
     traces = [i for i in simulate_pwa(pwa_model, x0_samples, N=max_path_len)]
     return traces
 
-def simnplot():
-    return
+
+def sim_n_plot(error_paths, pwa_model, AA, sp, opts):
+    max_path_len = max([len(path) for path in error_paths])
+    # intial abs state set
+    S0 = {path[0] for path in error_paths}
     s = {
         'init': {path[0] for path in error_paths},
         'final': {path[-1] for path in error_paths},
@@ -73,14 +78,12 @@ def refine_dft_model_based(
 
     # traversed_abs_state_set
     tas = {state for path in error_paths for state in path}
-    # intial abs state set
-    S0 = {path[0] for path in error_paths}
 
     pwa_model = build_pwa_model(
             AA, tas, sp, opts.max_model_error,
             opts.model_err, 'dft')
     if __debug__:
-        simnplot()
+        sim_n_plot(error_paths, pwa_model, AA, sp, opts)
     check4CE(pwa_model, error_paths, 'dft', AA, sp)
 
 
@@ -115,9 +118,6 @@ def refine_rel_model_based(
         for a1, a2 in U.pairwise(path):
             abs_relations[a1].add(a2)
 
-    # intial abs state set
-    S0 = {path[0] for path in error_paths}
-
     flat_relations = []
     for abs_state, rch_states in abs_relations.iteritems():
         flat_relation = list(itertools.product([abs_state], rch_states))
@@ -128,7 +128,7 @@ def refine_rel_model_based(
             opts.model_err, 'rel')
 
     if __debug__:
-        simnplot()
+        sim_n_plot(error_paths, pwa_model, AA, sp, opts)
     check4CE(pwa_model, error_paths, 'rel', AA, sp)
 
 
@@ -203,7 +203,7 @@ def getxy_rel_ignoramous(cell1, cell2, force, N, sim, t0=0):
             break
         else:
             if __debug__:
-                print('re-sampling')
+                print('re-sampling, count:', sat_count)
             continue
     print('found samples: ', sat_count)
     return np.vstack(xl), np.vstack(yl)
@@ -325,7 +325,7 @@ def cell_rel_affine_models(cell1, cell2, force, step_sim, ntrain, ntest, tol, in
     if len(X) == 0:
         return [None]
     rm = RegressionModel(X, Y)
-    X, Y = getxy_rel_ignoramous(cell1, cell2, force, ntest, step_sim)
+    X, Y = getxy_rel_ignoramous(cell1, cell2, True, ntest, step_sim)
     e_pc = rm.error_pc(X, Y) # error %
     if __debug__:
         print('error%:', e_pc)
