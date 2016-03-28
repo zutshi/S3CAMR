@@ -188,14 +188,13 @@ class Plotting(PlottingBase):
 
     def plot_trace_list(self, trace_list, x_vs_y=None):
         """plot all state vars """
-
-        if x_vs_y is None:
+        if not x_vs_y:
             nd = trace_list[0].x_array.shape[1]
-            xvsy = [('t', 'x{}'.format(i)) for i in range(nd)]
+            x_vs_y = [('t', 'x{}'.format(i)) for i in range(nd)]
         if self.fast_plot:
-            self.plot_trace_list_xvsy_sc(trace_list, xvsy)
+            self.plot_trace_list_xvsy_sc(trace_list, x_vs_y)
         else:
-            self.plot_trace_list_xvsy_dc(trace_list, xvsy)
+            self.plot_trace_list_xvsy_dc(trace_list, x_vs_y)
 
     def plot_trace_list_xvsy_sc(self, trace_list, x_vs_y):
         """plot_trace_list: Same Color but faster?
