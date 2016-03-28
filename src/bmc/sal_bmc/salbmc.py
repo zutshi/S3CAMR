@@ -4,7 +4,7 @@ import saltrans as slt_dft
 import saltrans_rel as slt_rel
 import saltrans_dmt as slt_dmt
 from ..bmc_spec import BMCSpec
-import parse_sal_op as pso
+import sal_op_parser
 
 import fileops as fops
 import utils as U
@@ -147,7 +147,7 @@ class BMC(BMCSpec):
                 raise err.Fatal('unknown SAL error!')
 
         print sal_op
-        trace = pso.parse_trace(sal_op)
+        trace = sal_op_parser.parse_trace(sal_op)
         if trace is None:
             print 'BMC failed to find a CE'
         else:
