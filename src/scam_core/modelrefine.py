@@ -22,10 +22,10 @@ import cellmanager as CM
 MORE_FACTOR = 10
 TEST_FACTOR = 10
 
-MAX_TRAIN = 100
-MAX_TEST = 100
+MAX_TRAIN = 200
+MAX_TEST = 200
 
-MIN_TRAIN = 20
+MIN_TRAIN = 10
 MIN_TEST = MIN_TRAIN
 
 INF = float('inf')
@@ -190,8 +190,12 @@ def getxy_rel_ignoramous(cell1, cell2, force, N, sim, t0=0):
     xl = []
     yl = []
     sat_count = 0
+#     print(cell1.ival_constraints)
+#     print(cell2.ival_constraints)
     while True:
         x_array, y_array = getxy_ignoramous(cell1, N, sim, t0=0)
+#         print(x_array)
+#         print(y_array)
         # satisfying indexes
         sat_array = cell2.ival_constraints.sat(y_array)
         sat_count += np.sum(sat_array)
