@@ -35,7 +35,7 @@ rational = signed_integer + pp.Literal('/') + integer
 rational.setParseAction(Rational)
 #signed_integer.setParseAction(SignedInteger)
 
-rational_integer = rational | signed_integer
+value = rational | signed_integer | ident
 
 
 def Assignment(s):
@@ -73,7 +73,7 @@ def parse_ce(trace_data):
     bapc = (pp.Keyword('ba-pc!1') + EQUAL + integer).suppress()
     step_hdr = STEP + integer + COLON
 
-    assignment = ident + EQUAL + rational_integer
+    assignment = ident + EQUAL + value
     assignment.setParseAction(Assignment)
     label = LABEL.suppress() + ident
     ti = SEP + pp.SkipTo(label, False) + label + pp.SkipTo(SEP, True)
@@ -118,7 +118,7 @@ def main():
     if parsed_trace is None:
         print 'No CE found!'
     else:
-        cleanup_parsed_trace(parsed_trace)
+        print parsed_trace
 
 if __name__ == '__main__':
     main()
