@@ -38,6 +38,8 @@ def sal_run_cmd(sal_path, depth, module_name, prop_name, yices=2, verbosity=3, i
 
     if iterative:
         cmd.append('-it')
+    if __debug__:
+        print cmd
     return cmd
 
 
@@ -123,14 +125,11 @@ class BMC(BMCSpec):
                     depth,
                     self.module_name,
                     self.prop_name,
-                    yices=1,
+                    yices=2,
                     verbosity=verbosity)
 
-        if __debug__:
-            print sal_cmd
-        U.strict_call(['echo'] + sal_cmd)
         try:
-            U.strict_call_get_op(sal_cmd)
+            print U.strict_call_get_op(sal_cmd)
         except U.CallError as e:
             if yices2_not_found in e.message:
                 print 'SAL can not find yices2. Trying with yices...'
@@ -142,15 +141,13 @@ class BMC(BMCSpec):
                             yices=1,
                             verbosity=verbosity)
                 U.strict_call(['echo'] + sal_cmd)
-                U.strict_call_get_op(sal_cmd)
+                print U.strict_call_get_op(sal_cmd)
                 print 'done'
             else:
                 raise err.Fatal('unknown SAL error!')
 
         exit()
-
         print '#'*100
-        print op
         exit()
 
     def dump(self):
