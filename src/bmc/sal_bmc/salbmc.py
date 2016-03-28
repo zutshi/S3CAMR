@@ -104,6 +104,8 @@ class BMC(BMCSpec):
         return sal_trans_sys
 
     def check(self, depth):
+        yices2_not_found = 'yices2: not found'
+
         self.dump()
 
         try:
@@ -115,17 +117,41 @@ class BMC(BMCSpec):
 
         sal_path = fops.sanitize_path(sal_path_)
         verbosity = 3
+
         sal_cmd = sal_run_cmd(
                     sal_path,
                     depth,
                     self.module_name,
                     self.prop_name,
-                    yices=2,
+                    yices=1,
                     verbosity=verbosity)
+
         if __debug__:
             print sal_cmd
         U.strict_call(['echo'] + sal_cmd)
-        U.strict_call(sal_cmd)
+        try:
+            U.strict_call_get_op(sal_cmd)
+        except U.CallError as e:
+            if yices2_not_found in e.message:
+                print 'SAL can not find yices2. Trying with yices...'
+                sal_cmd = sal_run_cmd(
+                            sal_path,
+                            depth,
+                            self.module_name,
+                            self.prop_name,
+                            yices=1,
+                            verbosity=verbosity)
+                U.strict_call(['echo'] + sal_cmd)
+                U.strict_call_get_op(sal_cmd)
+                print 'done'
+            else:
+                raise err.Fatal('unknown SAL error!')
+
+        exit()
+
+        print '#'*100
+        print op
+        exit()
 
     def dump(self):
         sal_file = self.module_name + '.sal'
