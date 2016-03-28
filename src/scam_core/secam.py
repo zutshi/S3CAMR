@@ -111,7 +111,7 @@ def simulate(sys, prop, opts):
     concrete_states = sample.sample_init_UR(sys, prop, num_samples)
     trace_list = []
 
-    sys_sim = simsys.get_system_simulator(sys, prop)
+    sys_sim = simsys.get_system_simulator(sys)
     for i in tqdm.trange(num_samples):
         trace = simsys.simulate(sys_sim, concrete_states[i], prop.T)
         trace_list.append(trace)
@@ -286,10 +286,10 @@ def falsify(sys, prop, opts, current_abs, sampler):
         refine_init(*args)
     elif opts.refine == 'trace':
         refine_trace(*args)
-    elif (opts.refine == 'model_dft'
-         or opts.refine == 'model_rel'
-         or opts.refine == 'model_dmt'
-         or opts.refine == 'model_dct'):
+    elif (opts.refine == 'model-dft'
+         or opts.refine == 'model-rel'
+         or opts.refine == 'model-dmt'
+         or opts.refine == 'model-dct'):
         sys_sim = simsys.get_system_simulator(sys)
         falsify_using_model(*args, sys_sim=sys_sim, prop=prop)
     else:
@@ -450,7 +450,7 @@ def falsify_using_model(
                                                 ci,
                                                 opts.max_paths)
     print('Refining...')
-    if opts.refine == 'model_dft':
+    if opts.refine == 'model-dft':
         import modelrefine as MR
         MR.refine_dft_model_based(current_abs,
                                   error_paths,
@@ -459,7 +459,7 @@ def falsify_using_model(
                                   sys_sim,
                                   opts,
                                   prop)
-    elif opts.refine == 'model_dmt':
+    elif opts.refine == 'model-dmt':
         import modelrefine as MR
         MR.refine_dmt_model_based(current_abs,
                                   error_paths,
@@ -467,10 +467,10 @@ def falsify_using_model(
                                   system_params,
                                   sys_sim,
                                   opts)
-    elif opts.refine == 'model_dct':
+    elif opts.refine == 'model-dct':
         import modelrefine as MR
         raise NotImplementedError
-    elif opts.refine == 'model_rel':
+    elif opts.refine == 'model-rel':
         import modelrefine as MR
         MR.refine_rel_model_based(current_abs,
                                   error_paths,
@@ -686,8 +686,8 @@ def main():
     LIST_OF_SYEMX_ENGINES = ['klee', 'pathcrawler']
     LIST_OF_CONTROLLER_REPRS = ['smt2', 'trace']
     LIST_OF_TRACE_STRUCTS = ['list', 'tree']
-    LIST_OF_REFINEMENTS = ['init', 'trace', 'model_dft', 'model_dmt',
-                           'model_dct', 'model_rel']
+    LIST_OF_REFINEMENTS = ['init', 'trace', 'model-dft', 'model-dmt',
+                           'model-dct', 'model-rel']
     LIST_OF_GRAPH_LIBS = ['nx', 'gt', 'g']
     LIST_OF_PLOT_LIBS = ['mp', 'pg']
 
