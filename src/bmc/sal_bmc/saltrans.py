@@ -43,20 +43,30 @@ class SALTransSys(object):
     @property
     def sal_file(self):
         s = tw.dedent('''
-        {}
-        OUTPUT{}
-        INITIALIZATION{}
+        {c}
+        {tp}
+        {pm}
+        {ld}
+        {od}
+        INITIALIZATION{init}
         TRANSITION
         [
-        {}
+        {trans}
         []
-        {}
+        {atrans}
         ]
         END;
         system: MODULE = PLANT;
-        {}
-        ''').format(self.hdr, self.decls, self.init_set, self.trans,
-                    self.always_true_transition, self.safety_prop)
+        {prop}
+        ''').format(c=self.context,
+                    tp=self.type_decls,
+                    pm=self.plant_module,
+                    ld=self.local_decls,
+                    od=self.op_decls,
+                    init=self.init_set,
+                    trans=self.trans,
+                    atrans=self.always_true_transition,
+                    prop=self.safety_prop)
         return s
 
     @property
@@ -69,21 +79,35 @@ class SALTransSys(object):
         return s
 
     @property
-    def hdr(self):
+    def context(self):
         s = tw.dedent('''
         {}: CONTEXT =
         BEGIN
-
-        PLANT: MODULE =
-        BEGIN''').format(self.module_name)
+        ''').format(self.module_name)
         return s
 
     @property
-    def decls(self):
+    def type_decls(self):
+        # There are no type decls
+        return ''
+
+    @property
+    def plant_module(self):
+        s = tw.dedent('''
+        PLANT: MODULE =
+        BEGIN''')
+        return s
+
+    @property
+    def op_decls(self):
         nd = self.num_dim
         v = self.v
         s = ['\n\t{v}{i}:REAL' .format(v=v, i=i) for i in range(nd)]
-        return ','.join(s)
+        return 'OUTPUT\n' + ','.join(s)
+
+    @property
+    def local_decls(self):
+        return ''
 
     @property
     def init_set(self):

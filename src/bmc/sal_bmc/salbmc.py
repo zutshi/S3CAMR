@@ -1,8 +1,11 @@
-import numpy as np
 import os
 
 import saltrans as slt_dft
+import saltrans_rel as slt_rel
 import saltrans_dmt as slt_dmt
+from ..bmc_spec import BMCSpec
+import sal_op_parser
+
 import fileops as fops
 import utils as U
 import err
@@ -17,7 +20,7 @@ class SALBMCError(Exception):
 
 # Must separate the arguements. i.e., -v 3 should be given as ['-v', '3']
 # This can be avoided by using shell=True, but that is a security risk
-def sal_run_cmd(sal_path, depth, module_name, prop_name, verbosity=3, iterative=False):
+def sal_run_cmd(sal_path, depth, module_name, prop_name, yices=2, verbosity=3, iterative=False):
     #TODO: SAL_BUG
     err.warn('adding 1 to the overall depth')
     # To offset uinexplained SAL behavior
@@ -27,17 +30,22 @@ def sal_run_cmd(sal_path, depth, module_name, prop_name, verbosity=3, iterative=
         sal_path,
         '-v', str(verbosity),
         '-d', str(depth),
-        '-s', 'yices2',
         '{}.sal'.format(module_name),
         prop_name
     ]
+
+    if yices == 2:
+        cmd.extend(['-s', 'yices2'])
+
     if iterative:
         cmd.append('-it')
+
+    print ' '.join(cmd)
+
     return cmd
 
 
-
-class BMC(object):
+class BMC(BMCSpec):
     def __init__(self, nd, pwa_model, init_state, safety_prop,
                  module_name, model_type):
         if model_type == 'dft':
@@ -49,12 +57,29 @@ class BMC(object):
                     dts, nd, pwa_model, init_state, safety_prop, module_name)
         elif model_type == 'ct':
             raise NotImplementedError
+        elif model_type == 'rel':
+            self.sal_trans_sys = BMC.sal_module_rel(
+                    nd, pwa_model, init_state, safety_prop, module_name)
         else:
             raise SALBMCError('unknown model type')
 
         self.prop_name = 'safety'
         self.module_name = module_name
         return
+
+    @staticmethod
+    def sal_module_rel(nd, pwa_model, init_set, safety_prop, module_name):
+        sal_trans_sys = slt_rel.SALTransSysRel(module_name, nd, init_set, safety_prop)
+
+        sal_trans_sys.add_locations(pwa_model.relation_ids)
+        for idx, sub_model in enumerate(pwa_model):
+            l1 = sal_trans_sys.get_loc_id(sub_model.p1.pid)
+            l2 = sal_trans_sys.get_loc_id(sub_model.p2.pid)
+            g = slt_rel.Guard(l1, sub_model.p1.C, sub_model.p1.d)
+            r = slt_rel.Reset(l2, sub_model.m.A, sub_model.m.b, sub_model.m.error)
+            t = slt_rel.Transition('T_{}'.format(idx), g, r)
+            sal_trans_sys.add_transition(t)
+        return sal_trans_sys
 
     @staticmethod
     def sal_module_dmt(dts, nd, pwa_models, init_set, safety_prop, module_name):
@@ -83,6 +108,10 @@ class BMC(object):
         return sal_trans_sys
 
     def check(self, depth):
+        yices2_not_found = 'yices2: not found'
+
+        self.dump()
+
         try:
             sal_path_ = os.environ[SAL_PATH] + SAL_INF_BMC
         except KeyError:
@@ -92,16 +121,37 @@ class BMC(object):
 
         sal_path = fops.sanitize_path(sal_path_)
         verbosity = 3
+
         sal_cmd = sal_run_cmd(
                     sal_path,
                     depth,
                     self.module_name,
                     self.prop_name,
-                    verbosity)
-        if __debug__:
-            print sal_cmd
-        U.strict_call(['echo'] + sal_cmd)
-        U.strict_call(sal_cmd)
+                    yices=2,
+                    verbosity=verbosity)
+
+        try:
+            sal_op = U.strict_call_get_op(sal_cmd)
+        except U.CallError as e:
+            if yices2_not_found in e.message:
+                print 'SAL can not find yices2. Trying with yices...'
+                sal_cmd = sal_run_cmd(
+                            sal_path,
+                            depth,
+                            self.module_name,
+                            self.prop_name,
+                            yices=1,
+                            verbosity=verbosity)
+                sal_op = U.strict_call_get_op(sal_cmd)
+            else:
+                raise err.Fatal('unknown SAL error!')
+
+        print sal_op
+        trace = sal_op_parser.parse_trace(sal_op)
+        if trace is None:
+            print 'BMC failed to find a CE'
+        else:
+            print trace
 
     def dump(self):
         sal_file = self.module_name + '.sal'

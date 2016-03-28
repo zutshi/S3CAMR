@@ -1,23 +1,20 @@
-from sal_bmc import salbmc
 
 
-def factory(bmc_engine='sal'):
+# TODO: Freeze the arg list if they are deemed the same for every bmc
+# engine
+
+# def factory(bmc_engine_id,
+#             num_state_dims,
+#             pwa_model,
+#             init_state,
+#             safety_prop,
+#             sys_name,
+#             model_type):
+def factory(bmc_engine, *args):
     if bmc_engine == 'sal':
-        #import salbmc as sbmc
-        return SALBMC(salbmc)
+        import sal_bmc.salbmc
+        return sal_bmc.salbmc.BMC(*args)
+    elif bmc_engine == 's3camsmt':
+        raise NotImplementedError
     else:
         raise NotImplementedError
-
-
-class SALBMC(object):
-    def __init__(self, sbmc):
-        self.sbmc = sbmc
-
-    def init(self, nd, pwa_model, init_state, safety_prop, sys_name, model_type):
-        self.sbmc = self.sbmc.BMC(nd, pwa_model, init_state, safety_prop, sys_name, model_type)
-        return
-
-    def check(self, depth):
-        self.sbmc.dump()
-        self.sbmc.check(depth=depth)
-        return

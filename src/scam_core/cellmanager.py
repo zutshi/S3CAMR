@@ -164,5 +164,11 @@ class Cell(object):
     def sample_UR(self, N):
         return self.ival_constraints.sample_UR(N)
 
+    def __hash__(self):
+        return hash((self.cell, tuple(self.eps)))
+
+    def __eq__(self, c):
+        return self.cell == c.cell and tuple(self.eps) == tuple(c.eps)
+
     def __str__(self):
         return str(self.cell)

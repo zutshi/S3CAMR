@@ -2,6 +2,7 @@ from sklearn import linear_model as skl_lm
 import numpy as np
 
 import constraints as cons
+import err
 
 
 # TODO: UNUSED
@@ -14,11 +15,19 @@ def factory(model_type):
         raise NotImplementedError
 
 
+def warn_if_small_data_set(x):
+    if len(x) <= 2:
+        err.warn_severe('Less than 2 training samples!: {}'.format(x))
+    elif len(x) <= 10:
+        err.warn('Less than 10 training samples!: {}'.format(x))
+
+
 class RegressionModel(object):
     def __init__(self, x, y):
-        clf_ = skl_lm.LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=True)
-        self.clf_ = clf_
-        clf_.fit(x, y)
+        warn_if_small_data_set(x)
+        #self.clf_ = skl_lm.RidgeCV(alphas=[1.0, 1.0], fit_intercept=True)
+        self.clf_ = skl_lm.LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=True)
+        self.clf_.fit(x, y)
         #if __debug__:
         #    print clf_.coef_, clf_.intercept_
 
