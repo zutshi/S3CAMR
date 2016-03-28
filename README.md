@@ -116,8 +116,8 @@ S3CAMR is random in nature. It's output can be made reproducible by using the sa
     **Details**: S3CAMR uses Matplotlib as one of the optional plotting lib. It also uses graph-tool as an optional graph lib. Matplotlib by default (atleast on Ubuntu 12.04-14.04) uses Qt4Agg as its backend which uses GTK by default. graph-tool on the other hand uses GTK3 as its backend. As both GTK2 and GTK3 are not compatible we switch Matplotlib's backend to GTK3Agg (plotMP.py).
     
     **Solutions**: 
-        - If not using graph-tool, simply uncomment the line `matplotlib.use('GTK3Agg')` in plotMP.py
-        - Otherwise, either switch Matplotlib's backend to something else than GTK2/3 or install GTK3.
+    - If not using graph-tool, simply uncomment the line `matplotlib.use('GTK3Agg')` in plotMP.py
+    - Otherwise, either switch Matplotlib's backend to something else than GTK2/3 or install GTK3.
 
             sudo apt-get install python-gobject python-gi
             sudo apt-get install libgtk-3-dev
