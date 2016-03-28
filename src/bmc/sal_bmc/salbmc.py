@@ -3,7 +3,7 @@ import os
 import saltrans as slt_dft
 import saltrans_rel as slt_rel
 import saltrans_dmt as slt_dmt
-from ..bmc_spec import BMCSpec
+from ..bmc_spec import BMCSpec, InvarStatus
 import sal_op_parser
 
 import fileops as fops
@@ -65,6 +65,7 @@ class BMC(BMCSpec):
 
         self.prop_name = 'safety'
         self.module_name = module_name
+        self.trace = None
         return
 
     @staticmethod
@@ -147,13 +148,19 @@ class BMC(BMCSpec):
                 raise err.Fatal('unknown SAL error!')
 
         print sal_op
-        trace = sal_op_parser.parse_trace(sal_op)
-        if trace is None:
+        self.trace = sal_op_parser.parse_trace(sal_op)
+        if self.trace is None:
             print 'BMC failed to find a CE'
+            return InvarStatus.Safe
         else:
-            print trace
+            print self.trace
+            return InvarStatus.UnSafe
 
     def dump(self):
         sal_file = self.module_name + '.sal'
         fops.write_data(sal_file, str(self.sal_trans_sys))
         return
+
+    def get_last_trace(self):
+        """Returns the last trace found or None if no trace exists."""
+        return self.trace
