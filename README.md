@@ -103,6 +103,23 @@ Run 10 simulations
     ```
 
 **Reproducible output using seeds:**
-S3CAM/R are random in nature. Their output can be made reproducible by using the same seed passed using the switch.
+S3CAMR is random in nature. It's output can be made reproducible by using the same seed passed using the switch.
 
     --seed <integer>
+
+##Common Issues
+
+- PyGObject related isses
+
+    **Reason**: Missing GTK3 libraries
+    
+    **Details**: S3CAMR uses Matplotlib as one of the optional plotting lib. It also uses graph-tool as an optional graph lib. Matplotlib by default (atleast on Ubuntu 12.04-14.04) uses Qt4Agg as its backend which uses GTK by default. graph-tool on the other hand uses GTK3 as its backend. As both GTK2 and GTK3 are not compatible we switch Matplotlib's backend to GTK3Agg (plotMP.py).
+    
+    **Fix**: Either switch Matplotlib's backend to something else than GTK2/3 or install GTK3.
+
+        sudo apt-get install python-gobject python-gi
+        sudo apt-get install libgtk-3-dev
+    
+    **Refer**: 
+    -   https://git.skewed.de/count0/graph-tool/issues/98
+    -   http://matplotlib.org/faq/usage_faq.html
