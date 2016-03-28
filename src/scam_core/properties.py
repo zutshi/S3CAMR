@@ -28,6 +28,9 @@ class PropertyChecker():
         """
         return y in self.final_cons
 
+    def __str__(self):
+        return str(self.final_cons)
+
 
 class PropertyCheckerNeverDetects():
 
