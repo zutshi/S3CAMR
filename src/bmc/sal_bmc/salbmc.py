@@ -19,7 +19,7 @@ class SALBMCError(Exception):
 
 # Must separate the arguements. i.e., -v 3 should be given as ['-v', '3']
 # This can be avoided by using shell=True, but that is a security risk
-def sal_run_cmd(sal_path, depth, module_name, prop_name, verbosity=3, iterative=False):
+def sal_run_cmd(sal_path, depth, module_name, prop_name, yices=2, verbosity=3, iterative=False):
     #TODO: SAL_BUG
     err.warn('adding 1 to the overall depth')
     # To offset uinexplained SAL behavior
@@ -29,10 +29,13 @@ def sal_run_cmd(sal_path, depth, module_name, prop_name, verbosity=3, iterative=
         sal_path,
         '-v', str(verbosity),
         '-d', str(depth),
-        '-s', 'yices2',
         '{}.sal'.format(module_name),
         prop_name
     ]
+
+    if yices == 2:
+        cmd.extend(['-s', 'yices2'])
+
     if iterative:
         cmd.append('-it')
     return cmd
@@ -117,7 +120,8 @@ class BMC(BMCSpec):
                     depth,
                     self.module_name,
                     self.prop_name,
-                    verbosity)
+                    yices=2,
+                    verbosity=verbosity)
         if __debug__:
             print sal_cmd
         U.strict_call(['echo'] + sal_cmd)
