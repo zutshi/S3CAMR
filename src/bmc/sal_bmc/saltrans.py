@@ -7,7 +7,7 @@ Creates a SAL transition system: DFT
 import textwrap as tw
 from math import isinf
 
-from ..helpers.expr2str import linexpr2str, float2str
+from ..helpers.expr2str import linexpr2str
 
 
 class SALTransError(Exception):
@@ -199,9 +199,12 @@ class Guard(object):
         # num_constraints , num_dimensions
         nc, nd = self.C.shape
 
-        cons = ('{Cxi} <= {di}'.format(
-            Cxi=linexpr2str(self.C[i, :], ('x'+str(j) for j in range(nd))),
-            di=float2str(self.d[i])) for i in range(nc))
+        xs = ['x'+str(j) for j in range(nd)]
+        cons = (linexpr2str(xs, self.C[i, :], -self.d[i]) + '<= 0'
+                for i in range(nc))
+#         cons = ('{Cxi} <= {di}'.format(
+#             Cxi=linexpr2str(self.C[i, :], ('x'+str(j) for j in range(nd))),
+#             di=float2str(self.d[i])) for i in range(nc))
         return ' AND '.join(cons)
         #return ' AND '.join('{}*x{} + {} <= 0'.format(self.C[i, j], j, -self.d[j]) for i in range(nc) for j in range(nd))
 
@@ -236,39 +239,49 @@ class Reset(object):
         s = []
         ndo, ndi = self.A.shape
 
-        xi_s = "x{}'"
-        #Axi_s = '{c}*x{j}'
+        #xi_s = "x{}'"
+        xi_s = ["x{}'".format(i) for i in range(ndo)]
+        xs = ['x'+str(j) for j in range(ndi)]
 
         if self.e is None:
-            s = ['{xi_} = {Axi} + {bi}'.format(
-                xi_=xi_s.format(i),
-                Axi=linexpr2str(
-                    self.A[i, :], ('x'+str(j) for j in range(ndi))
-                    ),
-                bi=float2str(self.b[i])
-                ) for i in range(ndo)
-                ]
-            #Axi=' + '.join(Axi_s.format(c=float2str(self.A[i, j]), j=j) for j in range(ndi)),
-            #bi=float2str(self.b[i])) for i in range(ndo)]
+            s = (xi_s[i] + '=' + linexpr2str(xs, self.A[i, :], self.b[i])
+                 for i in range(ndo))
             return ';\n'.join(s)
+#             s = ['{xi_} = {Axi} + {bi}'.format(
+#                 xi_=xi_s.format(i),
+#                 Axi=linexpr2str(
+#                     self.A[i, :], ('x'+str(j) for j in range(ndi))
+#                     ),
+#                 bi=float2str(self.b[i])
+#                 ) for i in range(ndo)
+#                 ]
 
         else:
             delta_h = self.b + self.e.h
             delta_l = self.b + self.e.l
 
-            s = ['{xi_} IN {{ r : REAL| '
-                 'r >= {Axi} + {delta_li} AND '
-                 'r <= {Axi} + {delta_hi} }}'
+            s = ('{xi_} IN {{ r : REAL| '
+                 'r >= {Axi_plus_delta_li} AND '
+                 'r <= {Axi_plus_delta_hi} }}'
                  .format(
-                    xi_=xi_s.format(i),
-                    Axi=linexpr2str(
-                        self.A[i, :], ('x'+str(j) for j in range(ndi))
-                        ),
-                    delta_li=float2str(delta_l[i]),
-                    delta_hi=float2str(delta_h[i])
-                    ) for i in range(ndo)
-                 ]
-            #Axi=' + '.join(Axi_s.format(c=float2str(self.A[i, j]), j=j) for j in range(ndi)),
+                     xi_=xi_s[i],
+                     Axi_plus_delta_li=linexpr2str(xs, self.A[i, :], delta_l[i]),
+                     Axi_plus_delta_hi=linexpr2str(xs, self.A[i, :], delta_h[i])
+                     ) for i in range(ndo)
+                 )
+
+#             s = ['{xi_} IN {{ r : REAL| '
+#                  'r >= {Axi} + {delta_li} AND '
+#                  'r <= {Axi} + {delta_hi} }}'
+#                  .format(
+#                     xi_=xi_s.format(i),
+#                     Axi=linexpr2str(
+#                         self.A[i, :], ('x'+str(j) for j in range(ndi))
+#                         ),
+#                     delta_li=float2str(delta_l[i]),
+#                     delta_hi=float2str(delta_h[i])
+#                     ) for i in range(ndo)
+#                  ]
             return ';\n'.join(s)
 
 
@@ -281,8 +294,6 @@ class Reset(object):
 #             eqn_str = '{} = {} + {}'.format(x__str, Ax_str, b_str)
 #             s.append(eqn_str)
 #         return ';\n'.join(s)
-
-
 
 
 ###############################################

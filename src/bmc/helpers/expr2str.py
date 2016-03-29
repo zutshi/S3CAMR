@@ -1,4 +1,4 @@
-
+import itertools as it
 # full precision
 PREC = '0.4'
 
@@ -50,13 +50,14 @@ def cx2str(c, x):
     return cxstr
 
 
-def linexpr2str(coeffs, xs):
+def linexpr2str(xs, coeffs, b):
     """linexpr2str
-
+    coeffs .* xs + b
     Parameters
     ----------
-    coeffs : c0, c1, c2, ...
     xs : x0, x1, x2, ...
+    coeffs : c0, c1, c2, ...
+    b : float
 
     Returns
     -------
@@ -64,6 +65,8 @@ def linexpr2str(coeffs, xs):
 
     Notes
     ------
-    Cleans up the expression whenver ci = 0 or +-1
+    Cleans up the expression whenever ci = 0 or +-1
     """
-    return ' + '.join((filter(None, (cx2str(c, x) for c, x in zip(coeffs, xs)))))
+    b1 = (b, str(1.0))
+    cx = it.chain(it.izip(coeffs, xs), [b1])
+    return ' + '.join((filter(None, (cx2str(c, x) for c, x in cx))))
