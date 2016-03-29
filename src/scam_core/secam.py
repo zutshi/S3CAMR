@@ -744,7 +744,7 @@ def main():
     parser.add_argument('-g', '--graph-lib', type=str, default='nx',
                         choices=LIST_OF_GRAPH_LIBS, help='graph library')
 
-    parser.add_argument('-p', '--plot-lib', type=str, default=None,
+    parser.add_argument('-p', '--plot-lib', type=str, default='mp',
                         choices=LIST_OF_PLOT_LIBS, help='plot library')
 
     parser.add_argument('--plots', type=plotting.plot_opts_parse, default='',
