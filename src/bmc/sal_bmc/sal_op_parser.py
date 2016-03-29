@@ -61,7 +61,7 @@ def parse_ce(trace_data):
             pp.Keyword('Path') +
             pp.Keyword('========================')).suppress()
     # ignore the version information before the HDR_
-    HDR = pp.SkipTo(HDR_, True)
+    HDR = pp.SkipTo(HDR_, True).suppress()
     FOOTER = pp.Keyword('total execution time:')
     EOF = pp.StringEnd()
     LABEL = pp.Keyword('label')
@@ -69,8 +69,8 @@ def parse_ce(trace_data):
     # Grammar
     #LABEL = pp.Keyword('label').suppress()
     sva = pp.Keyword('--- System Variables (assignments) ---').suppress()
-    # XXX: not very clear what this denotes
-    bapc = (pp.Keyword('ba-pc!1') + EQUAL + integer).suppress()
+    # XXX: SAL's default monitor?
+    #bapc = (pp.Keyword('ba-pc!1') + EQUAL + integer).suppress()
     step_hdr = STEP + integer + COLON
 
     assignment = ident + EQUAL + value
@@ -78,7 +78,8 @@ def parse_ce(trace_data):
     label = LABEL.suppress() + ident
     ti = SEP + pp.SkipTo(label, False) + label + pp.SkipTo(SEP, True)
     ti.setParseAction(extract_label)
-    step = step_hdr + sva + bapc + pp.OneOrMore(assignment) + pp.Optional(ti)
+    #step = step_hdr + sva + bapc + pp.OneOrMore(assignment) + pp.Optional(ti)
+    step = step_hdr + sva + pp.OneOrMore(assignment) + pp.Optional(ti)
     step.setParseAction(Step)
 
     #step.setParseAction(Step)

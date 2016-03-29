@@ -21,11 +21,6 @@ class SALBMCError(Exception):
 # Must separate the arguements. i.e., -v 3 should be given as ['-v', '3']
 # This can be avoided by using shell=True, but that is a security risk
 def sal_run_cmd(sal_path, depth, module_name, prop_name, yices=2, verbosity=3, iterative=False):
-    #TODO: SAL_BUG
-    err.warn('adding 1 to the overall depth')
-    # To offset uinexplained SAL behavior
-    depth += 1
-
     cmd = [
         sal_path,
         '-v', str(verbosity),
@@ -153,7 +148,11 @@ class BMC(BMCSpec):
             print 'BMC failed to find a CE'
             return InvarStatus.Safe
         else:
+            print '#'*40
+            print '# Cleaned up trace'
+            print '#'*40
             print self.trace
+            print '#'*40
             return InvarStatus.Unsafe
 
     def dump(self):

@@ -40,6 +40,12 @@ class SALTransSys(object):
     def __str__(self):
         return self.sal_file
 
+    # XXX
+    # This is a bit strange, Some of the declarations like OUTPUT and
+    # INITIALIZATION are present but others like LOCAL are absent. The
+    # one whcich are mandatory (in the present context) are present
+    # and the ones which are optional like LOCAL are specified by the
+    # variables. This can be fixed later by making this a class.
     @property
     def sal_file(self):
         s = tw.dedent('''
@@ -47,8 +53,10 @@ class SALTransSys(object):
         {tp}
         {pm}
         {ld}
+        OUTPUT
         {od}
-        INITIALIZATION{init}
+        INITIALIZATION
+        {init}
         TRANSITION
         [
         {trans}
@@ -56,8 +64,10 @@ class SALTransSys(object):
         {atrans}
         ]
         END;
-        system: MODULE = PLANT;
+        {monitor}
+        system: MODULE = PLANT || MONITOR;
         {prop}
+        END
         ''').format(c=self.context,
                     tp=self.type_decls,
                     pm=self.plant_module,
@@ -66,6 +76,7 @@ class SALTransSys(object):
                     init=self.init_set,
                     trans=self.trans,
                     atrans=self.always_true_transition,
+                    monitor=self.monitor_module,
                     prop=self.safety_prop)
         return s
 
@@ -103,7 +114,7 @@ class SALTransSys(object):
         nd = self.num_dim
         v = self.v
         s = ['\n\t{v}{i}:REAL' .format(v=v, i=i) for i in range(nd)]
-        return 'OUTPUT\n' + ','.join(s)
+        return ','.join(s)
 
     @property
     def local_decls(self):
@@ -126,9 +137,17 @@ class SALTransSys(object):
 
     @property
     def safety_prop(self):
+        s = tw.dedent('''
+        {prop_name} : THEOREM
+        system |- G(NOT unsafe);
+        ''').format(prop_name=self.prop_name)
+        return s
+
+    @property
+    def monitor_module(self):
         prop = self.prop
         v = self.v
-        expr = '{v}{i} {gle} {c}'
+        expr = "{v}{i}' {gle} {c}"
 
         ls = [
                 expr.format(v=v, i=i, gle='>=', c=prop.l[i]) for i in range(prop.dim)
@@ -141,9 +160,20 @@ class SALTransSys(object):
         prop_str = ' AND '.join(ls + hs)
 
         s = tw.dedent('''
-        {prop_name} : THEOREM
-        system |- NOT F({prop});
-        END''').format(prop_name=self.prop_name, prop=prop_str)
+        MONITOR: MODULE =
+        BEGIN
+        OUTPUT
+                unsafe : BOOLEAN
+        INPUT
+        {}
+        INITIALIZATION
+                unsafe = FALSE
+        TRANSITION
+        [
+        TRUE -->
+        unsafe' IN {{r : BOOLEAN | r <=> ({})}}
+        ]
+        END;''').format(self.op_decls, prop_str)
         return s
 
 
@@ -251,3 +281,32 @@ class Reset(object):
 #             eqn_str = '{} = {} + {}'.format(x__str, Ax_str, b_str)
 #             s.append(eqn_str)
 #         return ';\n'.join(s)
+
+
+
+
+###############################################
+# ############# CEMETEREY
+###############################################
+
+#     @property
+#     def safety_prop(self):
+#         prop = self.prop
+#         v = self.v
+#         expr = '{v}{i} {gle} {c}'
+
+#         ls = [
+#                 expr.format(v=v, i=i, gle='>=', c=prop.l[i]) for i in range(prop.dim)
+#                 if not isinf(prop.l[i])
+#              ]
+#         hs = [
+#                 expr.format(v=v, i=i, gle='<=', c=prop.h[i]) for i in range(prop.dim)
+#                 if not isinf(prop.h[i])
+#              ]
+#         prop_str = ' AND '.join(ls + hs)
+
+#         s = tw.dedent('''
+#         {prop_name} : THEOREM
+#         system |- NOT F({prop});
+#         END''').format(prop_name=self.prop_name, prop=prop_str)
+#         return s
