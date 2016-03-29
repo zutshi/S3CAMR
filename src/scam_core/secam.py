@@ -291,7 +291,7 @@ def falsify(sys, prop, opts, current_abs, sampler):
          or opts.refine == 'model-dmt'
          or opts.refine == 'model-dct'):
         sys_sim = simsys.get_system_simulator(sys)
-        falsify_using_model(*args, sys_sim=sys_sim, prop=prop)
+        falsify_using_model(*args, sys_sim=sys_sim, sys=sys, prop=prop)
     else:
         raise err.Fatal('internal')
 
@@ -407,6 +407,7 @@ def falsify_using_model(
         ci_ref,
         opts,
         sys_sim,
+        sys,
         prop):
 
     # TODO: temp function ss.init()
@@ -458,6 +459,7 @@ def falsify_using_model(
                                   system_params,
                                   sys_sim,
                                   opts,
+                                  sys,
                                   prop)
     elif opts.refine == 'model-dmt':
         import modelrefine as MR
@@ -466,7 +468,9 @@ def falsify_using_model(
                                   pi_seq_list,
                                   system_params,
                                   sys_sim,
-                                  opts)
+                                  opts,
+                                  sys,
+                                  prop)
     elif opts.refine == 'model-dct':
         import modelrefine as MR
         raise NotImplementedError
@@ -478,6 +482,7 @@ def falsify_using_model(
                                   system_params,
                                   sys_sim,
                                   opts,
+                                  sys,
                                   prop)
     else:
         assert(False)

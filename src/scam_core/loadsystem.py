@@ -33,10 +33,12 @@ class MissingSystemDefError(Exception):
 
 # For efficiency, Consider named tuples instead? or something else?
 class System(object):
-    def __init__(self, controller_path, num_dims, plant_config_dict,
-                 delta_t, controller_path_dir_path, controller_object_str,
-                 path, plant_pvt_init_data, min_smt_sample_dist,
-                 ci_grid_eps, pi_grid_eps):
+    def __init__(self, sys_name, controller_path, num_dims,
+                 plant_config_dict, delta_t, controller_path_dir_path,
+                 controller_object_str, path, plant_pvt_init_data,
+                 min_smt_sample_dist, ci_grid_eps, pi_grid_eps):
+
+        self.sys_name = sys_name
         self.controller_path = controller_path
         self.controller_object_str = controller_object_str
         self.num_dims = num_dims
@@ -113,6 +115,10 @@ class Options(object):
 def parse(file_path, plant_pvt_init_data):
     test_des_file = file_path
     path = fp.get_abs_base_path(file_path)
+    sys_name = fp.split_filename_ext(
+                fp.get_file_name_from_path(
+                    file_path)
+                )[0]
 
     test_dir = fp.get_abs_base_path(test_des_file)
     SYS.path.append(test_dir)
@@ -248,7 +254,7 @@ def parse(file_path, plant_pvt_init_data):
     except AttributeError as e:
         raise MissingSystemDefError(e)
 
-    sys = System(controller_path, num_dims, plant_config_dict,
+    sys = System(sys_name, controller_path, num_dims, plant_config_dict,
                  delta_t, controller_path_dir_path,
                  controller_object_str, path, plant_pvt_init_data,
                  min_smt_sample_dist, ci_grid_eps,
