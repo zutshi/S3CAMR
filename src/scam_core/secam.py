@@ -329,7 +329,7 @@ def refine_trace(
         )
 
     SS.discover(current_abs, system_params)
-    
+
     #POFF
 #     if plot:
 #         plt.autoscale()
@@ -775,13 +775,13 @@ def main():
     parser.add_argument('--prop-check', action='store_true',
                         help='Check violations by analyze the entire '
                         'trace, instead of relying only on x(t_end).')
-    
+
     parser.add_argument('--bmc-engine', type=str,
                         choices=["sal","s3camsmt"],
                         default="s3camsmt",
                         help='Choose the bmc engine')
 
-    
+
 #    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     #print(args)
@@ -840,6 +840,7 @@ def main():
     opts.plotting = plotting.factory(args.plot, *args.plot_opts)
     opts.plots = args.plots
     opts.model_err = args.incl_error
+    opts.bmc_engine = args.bmc_engine
 
     sys, prop = loadsystem.parse(filepath, args.pvt_init_data)
     if args.prop_check:
@@ -847,9 +848,6 @@ def main():
     else:
         opts.property_checker = properties.PropertyCheckerNeverDetects()
 
-    if args.bmc_engine is not None:
-        opts.bmc_engine = args.bmc_engine
-        
     # TAG:MSH
     matlab_engine = args.meng
     sys.init_sims(opts.plotting, opts.property_checker, psim_args=matlab_engine)

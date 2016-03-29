@@ -13,6 +13,7 @@ from utils import print
 #import constraints as C
 import err
 from bmc import bmc
+from bmc.bmc_spec import InvarStatus
 from modeling.affinemodel import RegressionModel
 import cellmanager as CM
 
@@ -30,6 +31,7 @@ MIN_TEST = MIN_TRAIN
 MAX_ITER = 25
 
 INF = float('inf')
+
 
 def simulate_pwa(pwa_model, x_samples, N):
     #ps = pwa_sim.PWA_SIM(pwa_model)
@@ -106,11 +108,14 @@ def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sp, bmc_engine='s
             model_type)
 
     status = sal_bmc.check(depth)
-    if None != status:
-        from bmc_spec import InvarStatus
-        if status == InvarStatus.Safe: print("Safe")
-        if status == InvarStatus.Unsafe: print("Unsafe")
-        if status == InvarStatus.Unknown: print("Unknown")
+    if status == InvarStatus.Safe:
+        print('safe')
+    elif status == InvarStatus.Unsafe:
+        print('Unsafe')
+    elif status == InvarStatus.Safe:
+        print('safe')
+    else:
+        raise err.Fatal('Internal')
 
     print('exiting')
     exit()
@@ -160,7 +165,8 @@ def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, bmc_engine
     ------
     does not handle pi_seq_list yet
     """
-
+    # Unmantained old code. Update before using
+    raise NotImplementedError
     # traversed_abs_state_set
     tas = {state for path in error_paths for state in path}
 

@@ -12,6 +12,8 @@ class InvarStatus:
 
 
 class BMCSpec():
+    """BMCSpec
+    Defines the spec for a BMC engine"""
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
