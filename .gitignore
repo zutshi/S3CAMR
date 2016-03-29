@@ -26,5 +26,7 @@ S3CAMSMT
 *.pwa
 trials
 *.log
+*log*
 set_src.sh
 *sal_bug*
+*.prof
