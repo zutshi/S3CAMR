@@ -744,7 +744,8 @@ def main():
     parser.add_argument('-g', '--graph-lib', type=str, default='nx',
                         choices=LIST_OF_GRAPH_LIBS, help='graph library')
 
-    parser.add_argument('-p', '--plot-lib', type=str, default='mp',
+    parser.add_argument('-p', '--plot', type=str, nargs='?',
+                        default=None, const='mp',
                         choices=LIST_OF_PLOT_LIBS, help='plot library')
 
     parser.add_argument('--plots', type=plotting.plot_opts_parse, default='',
@@ -825,7 +826,7 @@ def main():
     opts.graph_lib = args.graph_lib
     opts.max_paths = args.max_paths
     opts.max_model_error = args.max_model_error
-    opts.plotting = plotting.factory(args.plot_lib, *args.plot_opts)
+    opts.plotting = plotting.factory(args.plot, *args.plot_opts)
     opts.plots = args.plots
     opts.model_err = args.incl_error
 
