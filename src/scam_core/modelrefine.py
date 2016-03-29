@@ -365,14 +365,24 @@ def cell_rel_affine_models(cell1, cell2, force, step_sim, ntrain, ntest, tol, in
 
     X, Y = getxy_rel_ignoramous(cell1, cell2, force, ntrain, step_sim)
     # No samples found => no model
-    if len(X) == 0:
+    training_samples_found = len(X) != 0
+    if not training_samples_found:
         return [None]
     rm = RegressionModel(X, Y)
     X, Y = getxy_rel_ignoramous(cell1, cell2, True, ntest, step_sim)
-    e_pc = rm.error_pc(X, Y) # error %
+    testing_samples_found = len(X) != 0
+    # If valid samples are found, compute e_pc (error %) and dims
+    # where error % >= given tol
+    if testing_samples_found:
+        e_pc = rm.error_pc(X, Y)
+        error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
+    # Otherwise, forget it!
+    else:
+        e_pc = None
+        error_dims = []
+
     if __debug__:
         print('error%:', e_pc)
-    error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
 
     if len(error_dims) > 0:
         err.warn('splitting on e%:{}, |e%|:{}'.format(
@@ -387,7 +397,7 @@ def cell_rel_affine_models(cell1, cell2, force, step_sim, ntrain, ntest, tol, in
         C1, d1 = cell1.ival_constraints.poly()
         C2, d2 = cell2.ival_constraints.poly()
 
-        e = rm.error(X, Y) if include_err else None
+        e = rm.error(X, Y) if (include_err and testing_samples_found) else None
 
         dmap = rel.DiscreteAffineMap(A, b, e)
         part1 = rel.Partition(C1, d1, cell1)
