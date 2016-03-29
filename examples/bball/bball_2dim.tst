@@ -10,7 +10,7 @@ num_samples = 1
 T = 20.0
 
 plant_description = 'python'
-plant_path = 'bball.py'
+plant_path = 'bball_2dim.py'
 
 #############################################
 ############## Don't care params ############
