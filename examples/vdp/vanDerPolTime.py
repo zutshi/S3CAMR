@@ -53,6 +53,7 @@ class SIM(object):
         # ret_Y = Y
         ret_D = dummy_D
         ret_P = dummy_P
+        #print ret_X
 
         if PLOT:
             plt.plot(plot_data[1][:, 0], plot_data[1][:, 1])
@@ -72,7 +73,7 @@ def solout_fun(property_checker, plot_data):
 
         if property_checker.check(t, Y):
             #violating_state[0] = (np.copy(t), np.copy(Y))
-            # print 'violation found:', violating_state[0]
+            #print 'violation found:'
             # return -1 to stop integration
             return -1
         else:
@@ -84,7 +85,8 @@ def solout_fun(property_checker, plot_data):
 def dyn(t, X, u):
     # Bad things happen when you modify the passed in X.
     # So, make a copy!
-    X = X.copy()
-    X[0], X[1] = (X[1], 5.0 * (1 - X[0] ** 2) * X[1] - X[0])
-    X[2] = 1
-    return X
+    Y = X.copy()
+    Y[0] = X[1]
+    Y[1] = 5.0 * (1 - X[0] ** 2) * X[1] - X[0]
+    Y[2] = 1
+    return Y

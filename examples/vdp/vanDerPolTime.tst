@@ -11,14 +11,20 @@ prop3 = [[-1.0, -6.5, 2.5], [-0.7, -5.6, 4.5]]
 T = 5.0
 
 error_set = prop1
+# EMSOFT params
 grid_eps = [.51, .51, .51]
-num_samples = 100
-# delta_t = 0.5 used in EMSOFT
+# num_samples = 10
+# delta_t = 0.5
+
+# Fruther experimentation required
+num_samples = 50
+delta_t = 2
 
 # works with refine init at times, and gives somewhat
 # acceptable results with dft, but none with rel. Need to experiment
 # more
-delta_t = 2
+# delta_t = 5
+# num_samples = 100
 
 # Not tried yet
 # error_set = prop2

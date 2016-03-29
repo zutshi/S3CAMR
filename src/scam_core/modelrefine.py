@@ -27,7 +27,7 @@ MAX_TEST = 200
 
 MIN_TRAIN = 50
 MIN_TEST = MIN_TRAIN
-MAX_ITER = 5
+MAX_ITER = 25
 
 INF = float('inf')
 
@@ -195,8 +195,6 @@ def getxy_rel_ignoramous_force_min_samples(cell1, cell2, force, N, sim, t0=0):
     xl = []
     yl = []
     sat_count = 0
-#     print(cell1.ival_constraints)
-#     print(cell2.ival_constraints)
     if __debug__:
         obs_cells = set()
     while True:
@@ -234,8 +232,16 @@ def getxy_rel_ignoramous(cell1, cell2, force, N, sim, t0=0):
     yl = []
     sat_count = 0
     iter_count = itertools.count()
+    print(cell1.ival_constraints)
+    print(cell2.ival_constraints)
+    if __debug__:
+        obs_cells = set()
     while next(iter_count) <= MAX_ITER:
         x_array, y_array = getxy_ignoramous(cell1, N, sim, t0=0)
+        if __debug__:
+            for i in y_array:
+                obs_cells.add(CM.cell_from_concrete(i, cell1.eps))
+            print('reachable cells:', obs_cells)
         # satisfying indexes
         sat_array = cell2.ival_constraints.sat(y_array)
         sat_count += np.sum(sat_array)

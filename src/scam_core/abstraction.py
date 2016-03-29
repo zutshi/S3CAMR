@@ -286,7 +286,7 @@ class TopLevelAbs:
 
     def get_reachable_states_conc(self, abs_state, system_params):
         abs2rchd_abs_state_set = set()
-
+        #print(abs_state.ps.cell_id)
         # TODO: RECTIFY the below GIANT MESS
         # Sending in self and the total abstract_state to plant and controller
         # abstraction!!

@@ -266,7 +266,7 @@ class PlantAbstraction:
         total_num_samples = state.n
 
         #property_checker = lambda t, Y: Y in system_params.final_cons
-        property_checker = PropertyChecker(system_params.final_cons)
+        #property_checker = PropertyChecker(system_params.final_cons)
         rchd_concrete_state_array = cp.compute_concrete_plant_output(
                 A,
                 system_params.plant_sim,
@@ -293,13 +293,19 @@ class PlantAbstraction:
             pi_cell = self.cell_id_from_concrete(pi, pi_ref.eps)
             ci_cell = self.cell_id_from_concrete(ci, ci_ref.eps)
 
+#             print('{} -> {} -> {}'.format(
+#                 rchd_concrete_state.x,
+#                 rchd_abs_state.plant_state.cell_id,
+#                 CM.ival_constraints(rchd_abs_state.plant_state.cell_id, self.eps))
+#                     )
+
             if rchd_concrete_state.x in system_params.final_cons:
-                if not system_params.is_final(A, rchd_abs_state):
-                    print(rchd_concrete_state)
-                    print(self.get_ival_cons_abs_state(rchd_abs_state.ps))
-                    print(rchd_concrete_state.x)
-                    print(system_params.final_cons)
-                    raise err.Fatal('cant happen!')
+                assert system_params.is_final(A, rchd_abs_state)
+#                     print(rchd_concrete_state)
+#                     print(self.get_ival_cons_abs_state(rchd_abs_state.ps))
+#                     print(rchd_concrete_state.x)
+#                     print(system_params.final_cons)
+#                     raise err.Fatal('cant happen!')
 
             if rchd_abs_state is not None:
                 abs2rchd_abs_state_ci_pi_list.append((rchd_abs_state, ci_cell, pi_cell))
