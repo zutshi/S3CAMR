@@ -25,8 +25,9 @@ TEST_FACTOR = 10
 MAX_TRAIN = 200
 MAX_TEST = 200
 
-MIN_TRAIN = 10
+MIN_TRAIN = 50
 MIN_TEST = MIN_TRAIN
+MAX_ITER = 5
 
 INF = float('inf')
 
@@ -51,6 +52,9 @@ def simulate(AA, s, sp, pwa_model, max_path_len, S0):
 
 
 def sim_n_plot(error_paths, pwa_model, AA, sp, opts):
+    if AA.num_dims.x != 2:
+        err.warn('only 2-D plotting implemented, ignoring...')
+        return
     max_path_len = max([len(path) for path in error_paths])
     # intial abs state set
     S0 = {path[0] for path in error_paths}
@@ -73,7 +77,7 @@ def sim_n_plot(error_paths, pwa_model, AA, sp, opts):
 
 
 def refine_dft_model_based(
-        AA, error_paths, pi_seq_list, sp, sys_sim, opts, prop):
+        AA, error_paths, pi_seq_list, sp, sys_sim, opts, sys, prop):
     '''does not handle pi_seq_list yet'''
 
     # traversed_abs_state_set
@@ -84,10 +88,10 @@ def refine_dft_model_based(
             opts.model_err, 'dft')
     if __debug__:
         sim_n_plot(error_paths, pwa_model, AA, sp, opts)
-    check4CE(pwa_model, error_paths, 'dft', AA, sp)
+    check4CE(pwa_model, error_paths, sys.sys_name, 'dft', AA, sp)
 
 
-def check4CE(pwa_model, error_paths, model_type, AA, sp):
+def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sp):
     max_path_len = max([len(path) for path in error_paths])
     print('max_path_len:', max_path_len)
     # depth = max_path_len - 1, because path_len = num_states along
@@ -99,7 +103,8 @@ def check4CE(pwa_model, error_paths, model_type, AA, sp):
     sal_bmc = bmc.factory(
             'sal',
             AA.num_dims.x, pwa_model, sp.init_cons, safety_prop,
-            'vdp_dft', model_type)
+            '{}_{}'.format(sys_name, model_type),
+            model_type)
 
     sal_bmc.check(depth)
     print('exiting')
@@ -107,7 +112,7 @@ def check4CE(pwa_model, error_paths, model_type, AA, sp):
 
 
 def refine_rel_model_based(
-        AA, error_paths, pi_seq_list, sp, sys_sim, opts, prop):
+        AA, error_paths, pi_seq_list, sp, sys_sim, opts, sys, prop):
     '''does not handle pi_seq_list yet'''
 
     # abs_state relations: maps an abs_state to other abs_states
@@ -129,7 +134,7 @@ def refine_rel_model_based(
 
     if __debug__:
         sim_n_plot(error_paths, pwa_model, AA, sp, opts)
-    check4CE(pwa_model, error_paths, 'rel', AA, sp)
+    check4CE(pwa_model, error_paths, sys.sys_name, 'rel', AA, sp)
 
 
 def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim):
@@ -179,7 +184,7 @@ def getxy_ignoramous(cell, N, sim, t0=0):
     return x_array, np.vstack(Yl)
 
 
-def getxy_rel_ignoramous(cell1, cell2, force, N, sim, t0=0):
+def getxy_rel_ignoramous_force_min_samples(cell1, cell2, force, N, sim, t0=0):
     """getxy_rel_ignoramous
 
     Parameters
@@ -192,10 +197,15 @@ def getxy_rel_ignoramous(cell1, cell2, force, N, sim, t0=0):
     sat_count = 0
 #     print(cell1.ival_constraints)
 #     print(cell2.ival_constraints)
+    if __debug__:
+        obs_cells = set()
     while True:
         x_array, y_array = getxy_ignoramous(cell1, N, sim, t0=0)
-#         print(x_array)
-#         print(y_array)
+        if __debug__:
+            for i in y_array:
+                obs_cells.add(CM.cell_from_concrete(i, cell1.eps))
+            print('reachable cells:', obs_cells)
+
         # satisfying indexes
         sat_array = cell2.ival_constraints.sat(y_array)
         sat_count += np.sum(sat_array)
@@ -205,10 +215,39 @@ def getxy_rel_ignoramous(cell1, cell2, force, N, sim, t0=0):
         # satisfying samples are found
         if (sat_count >= MIN_TRAIN) or (not force):
             break
-        else:
-            if __debug__:
-                print('re-sampling, count:', sat_count)
-            continue
+        if __debug__:
+            print('re-sampling, count:', sat_count)
+
+    print('found samples: ', sat_count)
+    return np.vstack(xl), np.vstack(yl)
+
+
+def getxy_rel_ignoramous(cell1, cell2, force, N, sim, t0=0):
+    """getxy_rel_ignoramous
+
+    Parameters
+    ----------
+    force : force to return non-zero samples. Will loop for infinitiy
+            if none exists.
+    """
+    xl = []
+    yl = []
+    sat_count = 0
+    iter_count = itertools.count()
+    while next(iter_count) <= MAX_ITER:
+        x_array, y_array = getxy_ignoramous(cell1, N, sim, t0=0)
+        # satisfying indexes
+        sat_array = cell2.ival_constraints.sat(y_array)
+        sat_count += np.sum(sat_array)
+        xl.append(x_array[sat_array])
+        yl.append(y_array[sat_array])
+        if sat_count >= MIN_TRAIN:
+            break
+        # If no sample is found and force is True, must keep sampling till
+        # satisfying samples are found
+    if __debug__:
+        if sat_count < MIN_TRAIN:
+            err.warn('Fewer than MIN_TRAIN samples found!')
     print('found samples: ', sat_count)
     return np.vstack(xl), np.vstack(yl)
 
