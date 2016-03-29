@@ -10,24 +10,27 @@ initial_set = [[0.]*nd,
                [0.1]*8 + [0]*21]
 
 # generic set
-error_set = [[-0]*nd, [0]*nd]
+error_set = [[-inf]*nd, [inf]*nd]
 
 # -0.1 <= x5 <= 0.25 /\ 7 <= t <= 9
 error_set[0][5], error_set[1][5] = -0.1, 0.25
 error_set[0][28], error_set[1][28] = 7, 9
+#error_set[0][28], error_set[1][28] = 7.231, 8.853
 
 
 
-grid_eps = [0.04, 0.04 
-delta_t = 0.1
-num_samples = 5
+grid_eps = [2.1]*nd
+grid_eps[-1] = 0.01
+
+delta_t = 5
+num_samples = 10
 
 
 T = 10.0
 #T = 30.0
 
 
-MAX_ITER = 4
+MAX_ITER = 2
 
 
 plant_description = 'python'

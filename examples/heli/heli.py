@@ -6,6 +6,10 @@
 import numpy as np
 from scipy.integrate import ode
 
+import pylab as plt
+
+PLOT = False
+
 
 class SIM(object):
 
@@ -27,9 +31,9 @@ class SIM(object):
                 )  # (1)
 
     def sim(self, TT, X0, D, P, U, I, property_checker):
-        property_violated_flag = False
-        #num_dim_x = len(X0)
-        #plot_data = [np.empty(0, dtype=float), np.empty((0, num_dim_x), dtype=float)]
+        num_dim_x = len(X0)
+        plot_data = ([np.empty(0, dtype=float), np.empty((0, num_dim_x), dtype=float)]
+                     if PLOT else None)
 
         #if property_checker is not None:
         #    max_step = 1e-2
@@ -40,17 +44,16 @@ class SIM(object):
         Tf = TT[1]
         T = Tf - Ti
 
-        if property_checker:
-            violating_state = [()]
-            #solver.set_solout(solout_fun(property_checker, violating_state, plot_data))  # (2)
+#         if property_checker:
+#             violating_state = [()]
+        solver = self.solver
+        solver.set_solout(solout_fun(property_checker, plot_data))  # (2)
 
-        self.solver.set_initial_value(X0, t=0.0)
-        self.solver.set_f_params(U)
+        solver.set_initial_value(X0, t=0.0)
+        solver.set_f_params(U)
         X_ = self.solver.integrate(T)
 
-        if property_checker is not None:
-            if property_checker(Tf, X_):
-                property_violated_flag = True
+        property_violated_flag = property_checker.check(Tf, X_)
 
         dummy_D = np.zeros(D.shape)
         dummy_P = np.zeros(P.shape)
@@ -61,7 +64,8 @@ class SIM(object):
         ret_P = dummy_P
 
         #plt.plot(plot_data[0] + Ti, plot_data[1][:, 0])
-        #plt.plot(plot_data[1][:, 0], plot_data[1][:, 1])
+        if PLOT:
+            plt.plot(plot_data[1][:, 28], plot_data[1][:, 5])
         ##plt.plot(plot_data[0] + Ti, np.tile(U, plot_data[0].shape))
 
         return (ret_t, ret_X, ret_D, ret_P), property_violated_flag
@@ -335,22 +339,21 @@ def dyn(t, X, u):
     return Y
 
 
-def solout_fun(property_checker, violating_state, plot_data):
+def solout_fun(property_checker, plot_data):
 
     def solout(t, Y):
-
-        plot_data[0] = np.concatenate((plot_data[0], np.array([t])))
-        plot_data[1] = np.concatenate((plot_data[1], np.array([Y])))
+        if PLOT:
+            plot_data[0] = np.concatenate((plot_data[0], np.array([t])))
+            plot_data[1] = np.concatenate((plot_data[1], np.array([Y])))
 
         # print Y
         # print t, Y
-
-#        if property_checker(t, Y):
-#            pvf_local[0] = True
-#            violating_state[0] = (np.copy(t), np.copy(Y))
-#
-#            # print 'violation found:', violating_state[0]
-
-        return 0
+        if property_checker.check(t, Y):
+            #violating_state[0] = (np.copy(t), np.copy(Y))
+            print 'violation found:'#, violating_state[0]
+            # return -1 to stop integration
+            return -1
+        else:
+            return 0
 
     return solout
