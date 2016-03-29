@@ -146,7 +146,7 @@ class BMC(BMCSpec):
         self.trace = sal_op_parser.parse_trace(sal_op)
         if self.trace is None:
             print 'BMC failed to find a CE'
-            return InvarStatus.Safe
+            return InvarStatus.Unknown
         else:
             print '#'*40
             print '# Cleaned up trace'

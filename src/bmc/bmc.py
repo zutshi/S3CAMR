@@ -1,5 +1,3 @@
-
-
 # TODO: Freeze the arg list if they are deemed the same for every bmc
 # engine
 
@@ -15,6 +13,11 @@ def factory(bmc_engine, *args):
         import sal_bmc.salbmc
         return sal_bmc.salbmc.BMC(*args)
     elif bmc_engine == 's3camsmt':
-        raise NotImplementedError
+        try:
+            from s3camsmt.bmc.bmc_pwa import BMC_PWA
+        except:
+            import logging
+            logging.error("Module %s not found, check the classpath" % s3camsmt.bmc.bmc_pwa)
+        return BMC_PWA(*args)
     else:
         raise NotImplementedError

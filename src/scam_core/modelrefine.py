@@ -31,7 +31,6 @@ MAX_ITER = 5
 
 INF = float('inf')
 
-
 def simulate_pwa(pwa_model, x_samples, N):
     #ps = pwa_sim.PWA_SIM(pwa_model)
     return [pwa_sim.simulate(pwa_model, x0, N) for x0 in x_samples]
@@ -88,10 +87,10 @@ def refine_dft_model_based(
             opts.model_err, 'dft')
     if __debug__:
         sim_n_plot(error_paths, pwa_model, AA, sp, opts)
-    check4CE(pwa_model, error_paths, sys.sys_name, 'dft', AA, sp)
+    check4CE(pwa_model, error_paths, sys.sys_name, 'dft', AA, sp, opts.bmc_engine)
 
 
-def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sp):
+def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sp, bmc_engine='sal'):
     max_path_len = max([len(path) for path in error_paths])
     print('max_path_len:', max_path_len)
     # depth = max_path_len - 1, because path_len = num_states along
@@ -101,12 +100,18 @@ def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sp):
 
     safety_prop = sp.final_cons
     sal_bmc = bmc.factory(
-            'sal',
+            bmc_engine,
             AA.num_dims.x, pwa_model, sp.init_cons, safety_prop,
             '{}_{}'.format(sys_name, model_type),
             model_type)
 
-    sal_bmc.check(depth)
+    status = sal_bmc.check(depth)
+    if None != status:
+        from bmc_spec import InvarStatus
+        if status == InvarStatus.Safe: print("Safe")
+        if status == InvarStatus.Unsafe: print("Unsafe")
+        if status == InvarStatus.Unknown: print("Unknown")
+
     print('exiting')
     exit()
 
@@ -134,10 +139,10 @@ def refine_rel_model_based(
 
     if __debug__:
         sim_n_plot(error_paths, pwa_model, AA, sp, opts)
-    check4CE(pwa_model, error_paths, sys.sys_name, 'rel', AA, sp)
+    check4CE(pwa_model, error_paths, sys.sys_name, 'rel', AA, sp, opts.bmc_engine)
 
 
-def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim):
+def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, bmc_engine):
     """refine using discrete time models
 
     Parameters
@@ -161,7 +166,7 @@ def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim):
 
     pwa_models = build_pwa_dt_model(AA, tas, sp, sys_sim)
 
-    sal_bmc = bmc.factory('sal')
+    sal_bmc = bmc.factory(bmc_engine)
     prop = sp.final_cons
 
     sal_bmc.init(AA.num_dims.x, pwa_models, sp.init_cons, prop, 'vdp_dmt', 'dmt')
