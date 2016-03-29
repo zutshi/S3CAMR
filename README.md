@@ -4,7 +4,7 @@ Simulate and Scatter + Relationalization
 S3CAMR is an improvement to S3CAM where refinement is carried symbolically.
 Instead of using iterative refinement, we first build a piece-wise affine (PWA)
 model. This discrete model is then queried for violation, which if found is
-checked in the original continous model.
+checked in the original continuous model.
 
 ##Current Status: [Partial Implementation]
 - SAL + YICES are required as they are the only working BMC engine.
@@ -30,8 +30,8 @@ External Dependencies can be installed as required. Refer to the below section.
 - Graph Library (two options)
     1. Networkx
         - Slower
-        - Gets installed usign make
-    2. ghraph-tool-2.13
+        - Gets installed using make
+    2. graph-tool-2.13
         - Faster
         - Warning: Takes a few hours to compile (and painful to install)
         - Partial integration. Instead of K-shortest paths, All-shortest paths are being computed!
@@ -72,7 +72,7 @@ Run 10 simulations
 
 **Plotting: only supported for random simulations**
 
-- Plot all state variabless against time using either Matplotlib(mp) or PyQTGraph(pg)
+- Plot all state variables against time using either Matplotlib(mp) or PyQTGraph(pg)
     ```
     --p [mp, pg]
     ```
@@ -107,17 +107,23 @@ S3CAMR is random in nature. It's output can be made reproducible by using the sa
 
     --seed <integer>
 
+**Example with all switches**
+
+    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --prop-check --refine model-dft --max-model-error 10 --incl-error -p --seed 0
+
+Explanation: Run optimized scamr (no debug prints, no assertion checks) `-O`. Falsify Van der Pol example using scatter-and-simulate algorithm `-cn`, but use a discrete fixed time model for refinement `--refine model-dft`. The model must not have L2-norm error of more than 10 `--max-model-error 10`, if it does, split cells till the condition is satisfied. Include any error `--incl-error` as x' = Ax +-error in the BMC encoding. Plot the results using the default library. Determinize the pseudorandom generator by fixing the seed `--seed 0`.
+
 ##Common Issues
 
-- PyGObject related isses
+- PyGObject related issues
 
     **Reason**: Missing GTK3 libraries
     
-    **Details**: S3CAMR uses Matplotlib as one of the optional plotting lib. It also uses graph-tool as an optional graph lib. Matplotlib by default (atleast on Ubuntu 12.04-14.04) uses Qt4Agg as its backend which uses GTK by default. graph-tool on the other hand uses GTK3 as its backend. As both GTK2 and GTK3 are not compatible we switch Matplotlib's backend to GTK3Agg (plotMP.py).
+    **Details**: S3CAMR uses Matplotlib as one of the optional plotting lib. It also uses graph-tool as an optional graph lib. Matplotlib by default (at least on Ubuntu 12.04-14.04) uses Qt4Agg as its backend which uses GTK by default. graph-tool on the other hand uses GTK3 as its backend. As both GTK2 and GTK3 are not compatible we switch Matplotlib's backend to GTK3Agg (plotMP.py).
     
     **Solutions**: 
     - If not using graph-tool, simply uncomment the line `matplotlib.use('GTK3Agg')` in plotMP.py
-    - Otherwise, either switch Matplotlib's backend to something else than GTK2/3 or install GTK3.
+    - Otherwise, either switch Matplotlib's backend to something else than GTK2/3 or install GTK3 [suggestions for Ubuntu only!].
 
             sudo apt-get install python-gobject python-gi
             sudo apt-get install libgtk-3-dev
