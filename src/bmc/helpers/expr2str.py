@@ -1,6 +1,6 @@
 import itertools as it
 # full precision
-PREC = '0.4'
+PREC = '0.5'
 
 
 def float2str(n):
