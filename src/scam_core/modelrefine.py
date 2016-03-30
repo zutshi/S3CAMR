@@ -53,9 +53,6 @@ def simulate(AA, s, sp, pwa_model, max_path_len, S0):
 
 
 def sim_n_plot(error_paths, pwa_model, AA, sp, opts):
-    if AA.num_dims.x != 2:
-        err.warn('only 2-D plotting implemented, ignoring...')
-        return
     max_path_len = max([len(path) for path in error_paths])
     # intial abs state set
     S0 = {path[0] for path in error_paths}
@@ -109,11 +106,11 @@ def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sp, bmc_engine='s
 
     status = sal_bmc.check(depth)
     if status == InvarStatus.Safe:
-        print('safe')
+        print('Safe')
     elif status == InvarStatus.Unsafe:
         print('Unsafe')
-    elif status == InvarStatus.Safe:
-        print('safe')
+    elif status == InvarStatus.Unknown:
+        print('Unknown')
     else:
         raise err.Fatal('Internal')
 

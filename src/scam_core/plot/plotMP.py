@@ -9,6 +9,7 @@ import matplotlib.patches as patches
 import numpy as np
 
 from plotting_abstract import PlottingBase
+import err
 
 plot_figure_for_paper = False
 
@@ -49,8 +50,15 @@ class Plotting(PlottingBase):
                 self.plot_rect(r, color_map[atype])
 
     def plot_rect(self, r, edgecolor='k'):
+        if len(r[0]) > 2:
+            err.warn('dim>2, projecting before plottting the rectangle on the first 2 dims.')
+            c = r[0][0:2]
+            rng = r[1][0:2]
+        else:
+            c = r[0]
+            rng = r[1]
         self.ax.add_patch(
-            patches.Rectangle(r[0], *r[1], fill=False, edgecolor=edgecolor)
+            patches.Rectangle(c, *rng, fill=False, edgecolor=edgecolor)
             #patches.Rectangle((0.1, 0.1), 0.5, 0.5, fill=False)
         )
 
