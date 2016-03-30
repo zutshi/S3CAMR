@@ -60,8 +60,7 @@ class SALTransSys(object):
         TRANSITION
         [
         {trans}
-        []
-        {atrans}
+        {atran}
         ]
         END;
         {monitor}
@@ -75,19 +74,14 @@ class SALTransSys(object):
                     od=self.op_decls,
                     init=self.init_set,
                     trans=self.trans,
-                    atrans=self.always_true_transition,
+                    atran=self.always_true_transition,
                     monitor=self.monitor_module,
                     prop=self.safety_prop)
         return s
 
     @property
     def always_true_transition(self):
-        s = tw.dedent('''
-        NOP:
-        TRUE -->
-        x0' = x0;
-        x1' = x1''')
-        return s
+        return '\n[] NOP: TRUE -->\n'
 
     @property
     def context(self):
