@@ -654,6 +654,7 @@ def refine_init(
     print('Failed: MAX iterations {} exceeded'.format(MAX_ITER), file=SYS.stderr)
     # raise an exception maybe?
 
+
 def dump_trace(trace_list):
     print('dumping trace[0]')
     trace_list[0].dump_matlab()
@@ -664,6 +665,11 @@ def run_secam(sys, prop, opts):
     #plot = opts.plot
 
     if MODE == 'simulate':
+        if not isinstance(
+                opts.property_checker,
+                properties.PropertyChecker):
+            raise err.Fatal('property checker must be enabled when '
+                            'random testing!')
         start_time = time.time()
         trace_list = simulate(sys, prop, opts)
         #if plot:
