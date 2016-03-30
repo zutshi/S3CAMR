@@ -5,9 +5,11 @@
 
 """Uses Assimulo solvers"""
 
+import numpy as np
 from assimulo.problem import Explicit_Problem
 from assimulo.solvers.sundials import CVode
 from assimulo.solvers import LSODAR
+from assimulo.solvers import RungeKutta34
 import pylab as plt
 
 PLT = False
@@ -19,6 +21,11 @@ class SIM(object):
         self.model = create_model()
 
     def sim(self, TT, X0, D, P, U, I, property_checker):
+        tol = 1e-2
+        if ((abs(X0[1]) <= tol and abs(X0[3]) <= tol) or X0[1] < 0):
+            X0[1] = 0
+            X0[3] = 0
+            return (TT[0], X0, D, P), False
         #print X0
         #Simulation
         ncp = 200     #Number of communication points
@@ -27,17 +34,21 @@ class SIM(object):
         #Print event information
         #sim.print_event_data()
 
-        property_violated_flag = property_checker.check_array(t, y)
+        # t is a list for some reasons. Maybe there is a better way to
+        # fix this.
+        t = np.array(t)
+        # violating values
+        (t_, y_), property_violated = property_checker.first_sat_value_or_end(t, y)
 
+        # if xv and tv are empty, no violation were found
+
+        ret_t, ret_X = t_, y_
         ret_D = D
         ret_P = P
-        ret_t = t[-1]
-        ret_X = y[-1]
         if PLT:
-            plt.figure(10)
             plt.plot(y[:, 0], y[:, 1], 'b-', linewidth=2)
         #plt.plot(t, y[:, 1], 'r-', linewidth=2)
-        return (ret_t, ret_X, ret_D, ret_P), property_violated_flag
+        return (ret_t, ret_X, ret_D, ret_P), property_violated
 
 
 def create_model():
@@ -49,10 +60,10 @@ def create_model():
         g = 1
 
         Y = X.copy()
-        Y[0] = X[2]
-        Y[1] = X[3]
-        Y[2] = 0
-        Y[3] = -g
+        Y[0] = X[2]     #x_dot
+        Y[1] = X[3]     #y_dot
+        Y[2] = 0        #vx_dot
+        Y[3] = -g       #vy_dot
         return Y
 
     def state_events(t, X, sw):
@@ -60,7 +71,7 @@ def create_model():
         This is our function that keep track of our events, when the sign
         of any of the events has changed, we have an event.
         """
-        return [X[1]]
+        return [X[1]] # y == 0
 
     def handle_event(solver, event_info):
         """
@@ -94,15 +105,17 @@ def create_model():
     #Create an Assimulo solver (CVode)
     sim = CVode(mod)
     #sim = LSODAR(mod)
+    #sim = RungeKutta34(mod)
     #sim.options['verbosity'] = 20 #LOUD
-    sim.options['verbosity'] = 40 #WHISPER
+    sim.verbosity = 40 #WHISPER
+    #sim.display_progress = True
     #sim.options['minh'] = 1e-4
     #sim.options['rtol'] = 1e-3
 
-    #Specifies options
-    sim.discr = 'Adams'     #Sets the discretization method
-    sim.iter = 'FixedPoint' #Sets the iteration method
-    sim.rtol = 1.e-8        #Sets the relative tolerance
-    sim.atol = 1.e-6        #Sets the absolute tolerance
+#     #Specifies options
+#     sim.discr = 'Adams'     #Sets the discretization method
+#     sim.iter = 'FixedPoint' #Sets the iteration method
+#     sim.rtol = 1.e-8        #Sets the relative tolerance
+#     sim.atol = 1.e-6        #Sets the absolute tolerance
 
     return sim

@@ -10,13 +10,15 @@ initial_set = [[-0.1, 3.0, 5.0, -5.0],
 
 error_set = [[330.0, 1.0, -inf, -inf],
              [330.1, 1.1, inf, inf]]
+# error_set = [[330.0, -inf, -inf, -inf],
+#              [inf, inf, inf, inf]]
 
-T = 12.0
+T = 40.0
 
 # Abstraction params
-grid_eps = [1.0]*4
+grid_eps = [5.0]*4
 delta_t = 10.0
-num_samples = 1
+num_samples = 50
 
 
 MAX_ITER = 4
