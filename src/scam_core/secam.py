@@ -453,14 +453,24 @@ def falsify_using_model(
     print('Refining...')
     if opts.refine == 'model-dft':
         import modelrefine as MR
-        MR.refine_dft_model_based(current_abs,
-                                  error_paths,
-                                  pi_seq_list,
-                                  system_params,
-                                  sys_sim,
-                                  opts,
-                                  sys,
-                                  prop)
+        if current_abs.num_dims.pi == 0:
+            MR.refine_dft_model_based(current_abs,
+                                      error_paths,
+                                      pi_seq_list,
+                                      system_params,
+                                      sys_sim,
+                                      opts,
+                                      sys,
+                                      prop)
+        else:
+            MR.refine_dftX_model_based(current_abs,
+                                       error_paths,
+                                       pi_seq_list,
+                                       system_params,
+                                       sys_sim,
+                                       opts,
+                                       sys,
+                                       prop)
     elif opts.refine == 'model-dmt':
         import modelrefine as MR
         MR.refine_dmt_model_based(current_abs,
