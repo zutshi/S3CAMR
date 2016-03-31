@@ -8,14 +8,18 @@ import simulatesystem as simsys
 from modeling.pwa import pwa
 from modeling.pwa import simulator as pwa_sim
 from modeling.pwa import relational as rel
+
 import utils as U
 from utils import print
-#import constraints as C
 import err
+from constraints import IntervalCons, top2ic
+
 from bmc import bmc
 from bmc.bmc_spec import InvarStatus
 from modeling.affinemodel import RegressionModel
 import cellmanager as CM
+
+import functools
 
 #np.set_printoptions(suppress=True, precision=2)
 
@@ -31,6 +35,76 @@ MIN_TEST = MIN_TRAIN
 MAX_ITER = 25
 
 INF = float('inf')
+
+
+def abs_state2cell(abs_state, eps):
+    return CM.Cell(abs_state.plant_state.cell_id, eps)
+
+
+def ic2cell(ic, eps):
+    cells = CM.ic2cell(ic, eps)
+    assert(len(cells) == 1)
+    return cells[0]
+    #return CM.Cell(CM.cell_from_concrete(pi, eps), eps)
+
+
+class Q(object):
+    def __init__(self, xcell, wcell):
+        """__init__
+
+        Parameters
+        ----------
+        abs_state : abstract states
+        w_cells : cells associated with the abstract state defining
+        range of inputs
+        """
+
+        assert(isinstance(xcell, CM.Cell))
+        assert(isinstance(wcell, CM.Cell))
+
+        self.xcell = xcell
+        self.wcell = wcell
+        self.xwcell = CM.Cell.concatenate(xcell, wcell)
+        self.sample_UR_x = self.xcell.sample_UR
+        self.sample_UR_w = self.wcell.sample_UR
+        self._ival_constraints = None
+        return
+
+    def split(self, *args):
+        xwsplits = self.xwcell.split(*args)
+        l = []
+        for xwcell in xwsplits:
+            for xcell, wcell in xwcell.un_concatenate(self.xcell.dim):
+                l.append(Q(xcell, wcell))
+        return l
+
+    @property
+    def xdim(self):
+        return self.xcell.dim
+
+    @property
+    def wdim(self):
+        return self.wcell.dim
+
+    @property
+    def ival_constraints(self):
+        return self.xwcell.ival_constraints
+
+    def getxy_ignoramous(self, N, sim, t0=0):
+        """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
+        """
+        d, pvt, s = [np.array([])]*3
+        ci = np.array([])
+        t0 = 0
+        Yl = []
+
+        x_array = self.sample_UR_x(N)
+        pi_array = self.sample_UR_w(N)
+        for x, pi in zip(x_array, pi_array):
+            (t_, x_, s_, d_, pvt_, u_) = sim(t0, x, s, d, pvt, ci, pi)
+            Yl.append(x_)
+
+        return np.hstack((x_array, pi_array)), np.vstack(Yl)
 
 
 def simulate_pwa(pwa_model, x_samples, N):
@@ -74,9 +148,40 @@ def sim_n_plot(error_paths, pwa_model, AA, sp, opts):
     opts.plotting.show()
 
 
+# TODO: Merge with refine_dft
+def refine_dftX_model_based(
+        AA, error_paths, pi_seqs, sp, sys_sim, opts, sys, prop):
+
+    #abs_state_pi_map = {}
+    # traversed_abs_state_set
+    #for path in error_paths:
+    #for state in path
+    pi_eps = sp.pi_ref.eps
+    # collect all pi which were encountered with the abs_state
+    abs_state_pi = defaultdict(set)
+    for path, pi_seq in zip(error_paths, pi_seqs):
+        for abs_state, pi in zip(path[:-1], pi_seq):
+            abs_state_pi[abs_state].add(pi)
+
+    Qs = []
+    for abs_state, pi_ic_list in abs_state_pi.iteritems():
+        xcell = abs_state2cell(abs_state, AA.plant_abs.eps)
+        for pi_ic in pi_ic_list:
+            wcell = ic2cell(pi_ic, pi_eps)
+            Qs.append(Q(xcell, wcell))
+
+    pwa_model = build_pwa_model(
+            AA, Qs, sp, opts.max_model_error,
+            opts.model_err, 'dftX')
+    if __debug__:
+        pass
+        # Need to define a new function to simulate inputs
+        #sim_n_plot(error_paths, pwa_model, AA, sp, opts)
+    check4CE(pwa_model, error_paths, sys.sys_name, 'dftX', AA, sp, opts.bmc_engine)
+
+
 def refine_dft_model_based(
-        AA, error_paths, pi_seq_list, sp, sys_sim, opts, sys, prop):
-    '''does not handle pi_seq_list yet'''
+        AA, error_paths, pi_seqs, sp, sys_sim, opts, sys, prop):
 
     # traversed_abs_state_set
     tas = {state for path in error_paths for state in path}
@@ -89,7 +194,7 @@ def refine_dft_model_based(
     check4CE(pwa_model, error_paths, sys.sys_name, 'dft', AA, sp, opts.bmc_engine)
 
 
-def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sp, bmc_engine='sal'):
+def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sp, bmc_engine):
     max_path_len = max([len(path) for path in error_paths])
     print('max_path_len:', max_path_len)
     # depth = max_path_len - 1, because path_len = num_states along
@@ -97,10 +202,23 @@ def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sp, bmc_engine='s
     depth = max(int(np.ceil(AA.T/AA.delta_t)), max_path_len - 1)
     print('depth :',  depth)
 
-    safety_prop = sp.final_cons
+    # Extend both init set and final set to include inputs if any
+    dummy_cons = top2ic(AA.num_dims.pi) # T <=> [-inf, inf]
+    safety_prop = IntervalCons.concatenate(sp.final_cons, dummy_cons)
+    init_cons = (sp.init_cons if AA.num_dims.pi == 0
+                 else IntervalCons.concatenate(
+                     sp.init_cons,
+                     sp.pi_ref.i_cons))
+
+    xs = ['x'+str(i) for i in range(AA.num_dims.x)]
+    ws = ['w'+str(i) for i in range(AA.num_dims.pi)]
+    # Order is important
+    vs = xs + ws
+
     sal_bmc = bmc.factory(
             bmc_engine,
-            AA.num_dims.x, pwa_model, sp.init_cons, safety_prop,
+            vs,
+            pwa_model, init_cons, safety_prop,
             '{}_{}'.format(sys_name, model_type),
             model_type)
 
@@ -266,20 +384,25 @@ def getxy_rel_ignoramous(cell1, cell2, force, N, sim, t0=0):
     return np.vstack(xl), np.vstack(yl)
 
 
-def build_pwa_model(AA, abs_obj, sp, tol, include_err, model_type):
+def build_pwa_model(AA, abs_objs, sp, tol, include_err, model_type):
     """build_pwa_model
     Builds both dft and rel models
 
     Parameters
     ----------
     AA : AA
-    abs_obj : Either abs_states (for dft models) or relations
+    abs_objs : Either abs_states (for dft models) or relations
               [tuple(abs_state_src, abs_state_target)] for rel model
     sp : system params
     tol : modeling error tolerance
     include_err : include error in determining next state
                   x' = x +- errror
     """
+    # number of training samples
+    ntrain = min(AA.num_samples * MORE_FACTOR, MAX_TRAIN)
+    # number of test samples
+    ntest = min(ntrain * TEST_FACTOR, MAX_TEST)
+
     dt = AA.plant_abs.delta_t
     step_sim = simsys.get_step_simulator(sp.controller_sim, sp.plant_sim, dt)
 
@@ -287,11 +410,12 @@ def build_pwa_model(AA, abs_obj, sp, tol, include_err, model_type):
     modelers = {
             'dft': (pwa.PWA, abs_state_affine_models),
             'rel': (rel.PWARelational, abs_rel_affine_models),
+            'dftX': (pwa.PWA, functools.partial(q_affine_models, ntrain, ntest, sp.pi_ref.i_cons))
             }
     M, model = modelers[model_type]
     pwa_model = M()
 
-    for a in abs_obj:
+    for a in abs_objs:
         print('modeling: {}'.format(a))
         for sub_model in model(a, AA, step_sim, tol, sp, include_err):
             if sub_model is not None:
@@ -407,7 +531,7 @@ def cell_rel_affine_models(cell1, cell2, force, step_sim, ntrain, ntest, tol, in
             sub_models.extend(sub_models_)
         return sub_models
     else:
-        A, b = rm.Ab
+        A, b = rm.A, rm.b
         C1, d1 = cell1.ival_constraints.poly()
         C2, d2 = cell2.ival_constraints.poly()
 
@@ -417,6 +541,89 @@ def cell_rel_affine_models(cell1, cell2, force, step_sim, ntrain, ntest, tol, in
         part1 = rel.Partition(C1, d1, cell1)
         part2 = rel.Partition(C2, d2, cell2)
         sub_model = rel.Relation(part1, part2, dmap)
+        if __debug__:
+            print('----------------Finalized------------------')
+    return [sub_model]
+
+
+# TODO: Fix the excess arguement issue
+def q_affine_models(ntrain, ntest, wic, q, dummy1, step_sim, tol, dummy2, include_err):
+    """cell_affine_models
+
+    Parameters
+    ----------
+    cell : cell
+    step_sim : 1 time step (delta_t) simulator
+    tol : each abs state is split further into num_splits cells
+    in order to meet: modeling error < tol (module ntests samples)
+
+    Returns
+    -------
+    pwa.SubModel()
+
+    Notes
+    ------
+    """
+    # XXX: Generate different samples for each time step or reuse?
+    # Not clear!
+    sub_models = []
+
+    X, Y = q.getxy_ignoramous(ntrain, step_sim)
+    rm = RegressionModel(X, Y)
+    X, Y = q.getxy_ignoramous(ntest, step_sim)
+    e_pc = rm.error_pc(X, Y) # error %
+    if __debug__:
+        print('error%:', e_pc)
+    #error = np.linalg.norm(e_pc, 2)
+    # error exceeds tol in error_dims
+    error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
+
+    if len(error_dims) > 0:
+        err.warn('splitting on e%:{}, |e%|:{}'.format(
+            e_pc, np.linalg.norm(e_pc, 2)))
+        for split_q in q.split(axes=error_dims):
+            sub_models_ = q_affine_models(
+                    ntrain, ntest, wic,
+                    split_q, dummy1, step_sim, tol, dummy2, include_err)
+            sub_models.extend(sub_models_)
+        return sub_models
+    else:
+        #print('error%:', rm.error_pc(X, Y))
+        # Matrices are extended to include w/pi
+        # A = [AB]
+        #     [00]
+        # AB denotes matrix concatenation.
+        # Hence a reset: x' =  Ax + Bw + b
+        # can be mimicked as below
+        #
+        # [x']   = [a00 a01 a02...b00 b01...] * [x] + b + [e0]
+        # [w']     [     ...  0 ...         ]   [w]       [e1]
+        #
+        # This makes x' \in Ax + Bw + b + [el, eh], and
+        # makes w' \in [el, eh]
+        # We use this to incorporate error and reset w to new values,
+        # which in the case of ZOH are just the ranges of w (or pi).
+
+        A = np.vstack((rm.A, np.zeros((q.wdim, q.xdim + q.wdim))))
+        b = np.hstack((rm.b, np.zeros(q.wdim)))
+        C, d = q.ival_constraints.poly()
+        try:
+            assert(A.shape[0] == b.shape[0])    # num lhs (states) is the same
+            assert(A.shape[1] == C.shape[1])    # num vars (states + ip) are the same
+            assert(C.shape[0] == d.shape[0])    # num constraints are the same
+        except AssertionError as e:
+            print('\n', A, '\n', b)
+            print('\n', C, '\n', d)
+            print(A.shape[0], b.shape[0], C.shape[1], d.shape[0])
+            raise e
+
+        xic = (rm.error(X, Y) if include_err
+               else IntervalCons([0.0]*q.xdim, [0.0]*q.xdim))
+
+        e = IntervalCons.concatenate(xic, wic)
+        dmap = pwa.DiscreteAffineMap(A, b, e)
+        part = pwa.Partition(C, d, q)
+        sub_model = pwa.SubModel(part, dmap)
         if __debug__:
             print('----------------Finalized------------------')
     return [sub_model]
@@ -462,7 +669,7 @@ def cell_affine_models(cell, step_sim, ntrain, ntest, tol, include_err):
     if __debug__:
         print('error%:', e_pc)
     #error = np.linalg.norm(e_pc, 2)
-    # error exceeds tol in error_dims
+    # indices where error exceeds tol
     error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
 
     if len(error_dims) > 0:
@@ -475,9 +682,12 @@ def cell_affine_models(cell, step_sim, ntrain, ntest, tol, include_err):
         return sub_models
     else:
         #print('error%:', rm.error_pc(X, Y))
-        A, b = rm.Ab
+        A, b = rm.A, rm.b
         C, d = cell.ival_constraints.poly()
-        e = rm.error(X, Y) if include_err else None
+        # TODO: guess the dimensions. Fix it
+        ndim = X.shape[1]
+        e = (rm.error(X, Y) if include_err
+             else IntervalCons([0.0]*ndim, [0.0]*ndim))
         dmap = pwa.DiscreteAffineMap(A, b, e)
         part = pwa.Partition(C, d, cell)
         sub_model = pwa.SubModel(part, dmap)
