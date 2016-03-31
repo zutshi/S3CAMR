@@ -17,4 +17,4 @@ def factory(bmc_engine, *args):
         from S3CAMSMT.s3camsmt.bmc.bmc_pwa import BMC_PWA
         return BMC_PWA(*args)
     else:
-        raise NotImplementedError
+        raise NotImplementedError('Req. bmc engine: {}'.format(bmc_engine))
