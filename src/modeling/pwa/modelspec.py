@@ -123,9 +123,9 @@ class Partition(object):
 
 
 class DiscreteAffineMap(object):
-    def __init__(self, A, b, e=None):
+    def __init__(self, A, b, e):
         '''
-        x' = Ax + b
+        x' = Ax + b +- error
         '''
         self.A = A
         self.b = b
@@ -134,8 +134,6 @@ class DiscreteAffineMap(object):
 
     @property
     def error(self):
-        #if self._error is None:
-        #    raise AttributeError('error has not been set yet!')
         return self._error
 
     @error.setter
