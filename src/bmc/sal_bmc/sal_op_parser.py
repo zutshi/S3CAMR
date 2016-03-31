@@ -7,6 +7,8 @@ from fractions import Fraction as FR
 import fileops as fops
 import err
 
+from ..bmc_spec import TraceSimple
+
 # global tokens
 SEMI = pp.Literal(";").suppress()
 COLON = pp.Literal(":").suppress()
@@ -25,6 +27,9 @@ def Rational(s):
     return str(f)
 
 
+def Float(s):
+    return ''.join(s)
+
 integer = pp.Word(pp.nums)
 signed_integer = pp.Optional(PLUS | MINUS) + integer
 alpha = pp.alphas
@@ -34,18 +39,41 @@ rational = signed_integer + pp.Literal('/') + integer
 
 rational.setParseAction(Rational)
 #signed_integer.setParseAction(SignedInteger)
+floats = signed_integer + pp.Literal('.') + integer
+floats.setParseAction(Float)
 
 value = rational | signed_integer | ident
 
 
-def Assignment(s):
-    return ' '.join(s)
+class Assignment(object):
+    def __init__(self, s):
+        self.s = ' '.join(s)
+        self.lhs = s[0]
+        try:
+            self.rhs = float(s[2])
+        except ValueError:
+            self.rhs = s[2]
+
+    def __str__(self):
+        return self.s
 
 
-def Step(s):
-    #step_num = s[0]
-    s = '({})'.format(', '.join(s[1:]))
-    return s
+class Step(object):
+    def __init__(self, s):
+        self.s = s
+        self.num = s[0]
+        self.assignments = s[1:-1]
+        # transition id string
+        self.tid = s[-1]
+
+    def __str__(self):
+        return '({})'.format(', '.join(str(i) for i in self.s[1:]))
+
+
+def Trace(s):
+    trace = s[:-1]
+    exec_time = s[-1]
+    return TraceSimple(trace)
 
 
 def extract_label(s):
@@ -62,7 +90,8 @@ def parse_ce(trace_data):
             pp.Keyword('========================')).suppress()
     # ignore the version information before the HDR_
     HDR = pp.SkipTo(HDR_, True).suppress()
-    FOOTER = pp.Keyword('total execution time:')
+    FOOTER = pp.Keyword('total execution time:') + floats + pp.Keyword('secs')
+    FOOTER.setParseAction(''.join)
     EOF = pp.StringEnd()
     LABEL = pp.Keyword('label')
 
@@ -79,19 +108,19 @@ def parse_ce(trace_data):
     ti = SEP + pp.SkipTo(label, False) + label + pp.SkipTo(SEP, True)
     ti.setParseAction(extract_label)
     #step = step_hdr + sva + bapc + pp.OneOrMore(assignment) + pp.Optional(ti)
-    step = step_hdr + sva + pp.OneOrMore(assignment) + pp.Optional(ti)
+    step = step_hdr + sva + pp.OneOrMore(assignment) + pp.Optional(ti, default='')
     step.setParseAction(Step)
 
     #step.setParseAction(Step)
-    trace = HDR + pp.OneOrMore(step) + pp.Optional(FOOTER) + pp.SkipTo(EOF, True)
+    trace = (HDR + pp.OneOrMore(step) +
+             pp.Optional(FOOTER, default='')
+             )
+#                 ) +
+#             pp.SkipTo(EOF, True))
+    trace.setParseAction(Trace)
 
     parsed = trace.parseString(trace_data, parseAll=True)
-    return parsed
-
-
-#TODO: make a class for parsed_trace
-def cleanup_parsed_trace(parsed_trace):
-    return '\n'.join(parsed_trace)
+    return parsed[0]
 
 
 def parse_trace(trace_data):
@@ -106,7 +135,7 @@ def parse_trace(trace_data):
     elif yices_failed in trace_data or sal_failed in trace_data:
         raise err.Fatal('unexpected trace data')
     else:
-        return cleanup_parsed_trace(parse_ce(trace_data))
+        return parse_ce(trace_data)
 
 
 def main():
@@ -120,6 +149,8 @@ def main():
         print 'No CE found!'
     else:
         print parsed_trace
+        for ass in parsed_trace.to_assignments():
+            print ass
 
 if __name__ == '__main__':
     main()
