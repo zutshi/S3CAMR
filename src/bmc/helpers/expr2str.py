@@ -67,6 +67,6 @@ def linexpr2str(xs, coeffs, b):
     ------
     Cleans up the expression whenever ci = 0 or +-1
     """
-    b1 = (b, str(1.0))
+    b1 = (b, '1')
     cx = it.chain(it.izip(coeffs, xs), [b1])
     return ' + '.join((filter(None, (cx2str(c, x) for c, x in cx))))
