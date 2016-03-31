@@ -1,14 +1,56 @@
 from __future__ import print_function
 
+import sys as SYS
+
 import numpy as np
+import tqdm
 
 import err
 import utils as U
 from utils import print
 
+import sample
 import traces
 import state as st
 from properties import PropertyChecker
+import simulatesystem as simsys
+
+
+def concretize_bmc_trace(sys, x_array, pi_seqs):
+    sim = simsys.get_system_simulator(sys)
+    assignmentstrace[0]
+    sim(x, s, d, pvt, t0, tf, ci_array, pi_array)
+
+
+# TODO: make a module of its own once we add more general property using
+# monitors...
+def check_prop_violation(trace, prop):
+    idx = prop.final_cons.contains(trace.x_array)
+    return trace.x_array[idx], trace.t_array[idx]
+
+
+def simulate(sys, prop, opts):
+    num_samples = opts.num_sim_samples
+    num_violations = 0
+
+    concrete_states = sample.sample_init_UR(sys, prop, num_samples)
+    trace_list = []
+
+    sys_sim = simsys.get_system_simulator(sys)
+    for i in tqdm.trange(num_samples):
+        trace = simsys.simulate(sys_sim, concrete_states[i], prop.T)
+        trace_list.append(trace)
+        sat_x, sat_t = check_prop_violation(trace, prop)
+        if sat_x.size != 0:
+            num_violations += 1
+            print('x0={} -> x={}, t={}...num_vio_counter={}'.format(
+                trace.x_array[0, :],
+                sat_x[0, :],    # the first violating state
+                sat_t[0],       # corresponding time instant
+                num_violations), file=SYS.stderr)
+
+    print('number of violations: {}'.format(num_violations))
+    return trace_list
 
 
 def random_test(
