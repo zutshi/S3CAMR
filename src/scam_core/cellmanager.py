@@ -1,6 +1,6 @@
 import numpy as np
 import constraints as cons
-import itertools
+import itertools as it
 
 
 # TODO: change cons to cons_object which has cons in addition to all states
@@ -51,6 +51,13 @@ def get_cells_from_ival_constraints(ic, eps):
     return cells
 
 
+# convert interval cons to Cells
+# returns a generator
+# Add as a constructor for Cell class
+def ic2cell(ic, eps):
+    return [Cell(cell_id, eps) for cell_id in get_cells_from_ival_constraints(ic, eps)]
+
+
 def cell_from_concrete(X, eps):
     if any(np.isinf(c) for c in X):
         return None
@@ -96,7 +103,7 @@ def children_of(cell):
     """
     #print(parent_cell_id)
     l = [[2*coord, 2*coord+1] for coord in cell]
-    return list(itertools.product(*l))
+    return list(it.product(*l))
 
 
 def parent_of(cell):
@@ -123,6 +130,8 @@ class Cell(object):
         """
         self.cell = cell
         self.eps = eps
+        assert(isinstance(cell, tuple))
+        assert(isinstance(eps, np.ndarray))
         return
 
 #     def split(self, axes=None):
@@ -146,20 +155,45 @@ class Cell(object):
         -------
         child cells
         """
-        if axes is None:
-            return [Cell(i, self.eps/2) for i in get_children(self.cell)]
+        if not axes:
+            return [Cell(i, self.eps/2) for i in children_of(self.cell)]
         else:
             cell = self.cell
             l = [[i] for i in cell]
             for i in axes:
                 l[i] = [2*cell[i], 2*cell[i]+1]
-            cells = list(itertools.product(*l))
+            cells = list(it.product(*l))
             e_ = self.eps/2
             return [Cell(c, e_) for c in cells]
+
+    def un_concatenate(self, n):
+        """un_concatenate
+        un_concatenates 2 concatenated cells
+
+        Parameters
+        ----------
+        n: num dims in the 1st cell
+        """
+        eps1, eps2 = self.eps()
+        c1, c2 = self.cell[0:n], self.cell[n:]
+        return Cell(c1, eps1), Cell(c2, eps2)
+
+    @staticmethod
+    def concatenate(C1, C2):
+        """concatenate
+        concatenates two cells
+        """
+        eps = np.concatenate((C1.eps, C2.eps))
+        c = tuple(it.chain(C1.cell, C2.cell))
+        return Cell(c, eps)
 
     @property
     def ival_constraints(self):
         return ival_constraints(self.cell, self.eps)
+
+    @property
+    def dim(self):
+        return len(self.cell)
 
     def sample_UR(self, N):
         return self.ival_constraints.sample_UR(N)
