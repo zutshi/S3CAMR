@@ -41,20 +41,37 @@ def sal_run_cmd(sal_path, depth, module_name, prop_name, yices=2, verbosity=3, i
 
 
 class BMC(BMCSpec):
-    def __init__(self, nd, pwa_model, init_state, safety_prop,
+    def __init__(self, vs, pwa_model, init_state, safety_prop,
                  module_name, model_type):
-        if model_type == 'dft':
+        """__init__
+
+        Parameters
+        ----------
+        vs : list of variables. Order is important.
+        pwa_model : 
+        init_state : 
+        safety_prop : 
+        module_name : 
+        model_type : 
+
+        Returns
+        -------
+
+        Notes
+        ------
+        """
+        if model_type == 'dft' or model_type == 'dftX':
             self.sal_trans_sys = BMC.sal_module_dft(
-                    nd, pwa_model, init_state, safety_prop, module_name)
+                    vs, pwa_model, init_state, safety_prop, module_name)
         elif model_type == 'dmt':
             dts = pwa_model.keys()
             self.sal_trans_sys = BMC.sal_module_dmt(
-                    dts, nd, pwa_model, init_state, safety_prop, module_name)
+                    dts, vs, pwa_model, init_state, safety_prop, module_name)
         elif model_type == 'ct':
             raise NotImplementedError
         elif model_type == 'rel':
             self.sal_trans_sys = BMC.sal_module_rel(
-                    nd, pwa_model, init_state, safety_prop, module_name)
+                    vs, pwa_model, init_state, safety_prop, module_name)
         else:
             raise SALBMCError('unknown model type')
 
@@ -64,8 +81,8 @@ class BMC(BMCSpec):
         return
 
     @staticmethod
-    def sal_module_rel(nd, pwa_model, init_set, safety_prop, module_name):
-        sal_trans_sys = slt_rel.SALTransSysRel(module_name, nd, init_set, safety_prop)
+    def sal_module_rel(vs, pwa_model, init_set, safety_prop, module_name):
+        sal_trans_sys = slt_rel.SALTransSysRel(module_name, vs, init_set, safety_prop)
 
         sal_trans_sys.add_locations(pwa_model.relation_ids)
         for idx, sub_model in enumerate(pwa_model):
@@ -78,8 +95,8 @@ class BMC(BMCSpec):
         return sal_trans_sys
 
     @staticmethod
-    def sal_module_dmt(dts, nd, pwa_models, init_set, safety_prop, module_name):
-        sal_trans_sys = slt_dmt.SALTransSysDMT(dts, module_name, nd, init_set, safety_prop)
+    def sal_module_dmt(dts, vs, pwa_models, init_set, safety_prop, module_name):
+        sal_trans_sys = slt_dmt.SALTransSysDMT(dts, module_name, vs, init_set, safety_prop)
         for dt, pwa_model in pwa_models.iteritems():
             # replace decimal point with _ else SAL will throw an
             # error due to incorrect identifier
@@ -93,12 +110,15 @@ class BMC(BMCSpec):
         return sal_trans_sys
 
     @staticmethod
-    def sal_module_dft(nd, pwa_model, init_set, safety_prop, module_name):
-        sal_trans_sys = slt_dft.SALTransSys(module_name, nd, init_set, safety_prop)
+    def sal_module_dft(vs, pwa_model, init_set, safety_prop, module_name):
+        sal_trans_sys = slt_dft.SALTransSys(module_name, vs, init_set, safety_prop)
 
         for idx, sub_model in enumerate(pwa_model):
             g = slt_dft.Guard(sub_model.p.C, sub_model.p.d)
+            g.vs = vs
             r = slt_dft.Reset(sub_model.m.A, sub_model.m.b, sub_model.m.error)
+            r.vs = vs
+            r.vs_ = vs
             t = slt_dft.Transition('C_{}'.format(idx), g, r)
             sal_trans_sys.add_transition(t)
         return sal_trans_sys
