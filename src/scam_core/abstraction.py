@@ -377,11 +377,11 @@ class TopLevelAbs:
             pi_ref.update_from_path(path, pi_seq_cells)
             # convert pi_cells to ival constraints
             #pi_seq = map(self.plant_abs.get_ival_cons_pi_cell, get_pi(path))
-            pi_seq = [CM.get_ival_cons_cell(pi_cell, pi_ref.eps) for pi_cell in pi_seq_cells]
+            pi_seq = [CM.ival_constraints(pi_cell, pi_ref.eps) for pi_cell in pi_seq_cells]
             if ci_ref is not None:
                 ci_seq_cells = get_ci(path)
                 ci_ref.update_from_path(path, ci_seq_cells)
-                ci_seq = [CM.get_ival_cons_cell(ci_cell, ci_ref.eps) for ci_cell in ci_seq_cells]
+                ci_seq = [CM.ival_constraints(ci_cell, ci_ref.eps) for ci_cell in ci_seq_cells]
             else:
                 ci_seq = get_ci(path)
 
