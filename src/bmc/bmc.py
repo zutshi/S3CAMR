@@ -14,6 +14,7 @@ def factory(bmc_engine, *args):
         import sal_bmc.salbmc
         return sal_bmc.salbmc.BMC(*args)
     elif bmc_engine == 's3camsmt':
+        raise Exception('1st arg: ndims has been replaced by var string list')
         from S3CAMSMT.s3camsmt.bmc.bmc_pwa import BMC_PWA
         return BMC_PWA(*args)
     else:
