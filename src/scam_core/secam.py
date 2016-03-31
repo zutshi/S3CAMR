@@ -14,7 +14,6 @@ import argparse
 #import argcomplete
 import time
 import sys as SYS
-import tqdm
 
 import abstraction
 import sample
@@ -92,40 +91,8 @@ class SystemParams:
         return
 
 
-
 def sanity_check_input(sys, prop, opts):
     return
-
-
-# TODO: make a module of its own once we add more general property using
-# monitors...
-def check_prop_violation(trace, prop):
-    idx = prop.final_cons.contains(trace.x_array)
-    return trace.x_array[idx], trace.t_array[idx]
-
-
-def simulate(sys, prop, opts):
-    num_samples = opts.num_sim_samples
-    num_violations = 0
-
-    concrete_states = sample.sample_init_UR(sys, prop, num_samples)
-    trace_list = []
-
-    sys_sim = simsys.get_system_simulator(sys)
-    for i in tqdm.trange(num_samples):
-        trace = simsys.simulate(sys_sim, concrete_states[i], prop.T)
-        trace_list.append(trace)
-        sat_x, sat_t = check_prop_violation(trace, prop)
-        if sat_x.size != 0:
-            num_violations += 1
-            print('x0={} -> x={}, t={}...num_vio_counter={}'.format(
-                trace.x_array[0, :],
-                sat_x[0, :],    # the first violating state
-                sat_t[0],       # corresponding time instant
-                num_violations), file=SYS.stderr)
-
-    print('number of violations: {}'.format(num_violations))
-    return trace_list
 
 
 def create_abstraction(sys, prop, opts):
@@ -681,7 +648,7 @@ def run_secam(sys, prop, opts):
             raise err.Fatal('property checker must be enabled when '
                             'random testing!')
         start_time = time.time()
-        trace_list = simulate(sys, prop, opts)
+        trace_list = RT.simulate(sys, prop, opts)
         #if plot:
         if opts.dump_trace:
             dump_trace(trace_list)
