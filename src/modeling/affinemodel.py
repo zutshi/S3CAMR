@@ -36,8 +36,12 @@ class RegressionModel(object):
         return self.clf_
 
     @property
-    def Ab(self):
-        return self.clf.coef_, self.clf.intercept_
+    def A(self):
+        return self.clf.coef_
+
+    @property
+    def b(self):
+        return self.clf.intercept_
 
     def predict(self, X):
         Y = self.clf.predict(X)
