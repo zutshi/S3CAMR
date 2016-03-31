@@ -14,6 +14,8 @@ from utils import print
 import err
 from constraints import IntervalCons, top2ic
 
+import random_test as rt
+
 from bmc import bmc
 from bmc.bmc_spec import InvarStatus
 from modeling.affinemodel import RegressionModel
@@ -177,7 +179,7 @@ def refine_dftX_model_based(
         pass
         # Need to define a new function to simulate inputs
         #sim_n_plot(error_paths, pwa_model, AA, sp, opts)
-    check4CE(pwa_model, error_paths, sys.sys_name, 'dftX', AA, sp, opts.bmc_engine)
+    check4CE(pwa_model, error_paths, sys.sys_name, 'dftX', AA, sys, sp, opts.bmc_engine)
 
 
 def refine_dft_model_based(
@@ -191,10 +193,10 @@ def refine_dft_model_based(
             opts.model_err, 'dft')
     if __debug__:
         sim_n_plot(error_paths, pwa_model, AA, sp, opts)
-    check4CE(pwa_model, error_paths, sys.sys_name, 'dft', AA, sp, opts.bmc_engine)
+    check4CE(pwa_model, error_paths, sys.sys_name, 'dft', AA, sys, sp, opts.bmc_engine)
 
 
-def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sp, bmc_engine):
+def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sys, sp, bmc_engine):
     max_path_len = max([len(path) for path in error_paths])
     print('max_path_len:', max_path_len)
     # depth = max_path_len - 1, because path_len = num_states along
@@ -223,17 +225,22 @@ def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sp, bmc_engine):
             model_type)
 
     status = sal_bmc.check(depth)
-    if status == InvarStatus.Safe:
-        print('Safe')
-    elif status == InvarStatus.Unsafe:
-        print('Unsafe')
+    #if status == InvarStatus.Safe:
+    #    print('Safe')
+    if status == InvarStatus.Unsafe:
+        print('Unsafe...trying to concretize...')
+        verify_bmc_trace(sys, sal_bmc.trace)
     elif status == InvarStatus.Unknown:
-        print('Unknown')
+        print('Unknown...exiting')
+        exit()
     else:
         raise err.Fatal('Internal')
 
-    print('exiting')
-    exit()
+
+def verify_bmc_trace(sys, trace):
+    """Get multiple traces and send them for random testing
+    """
+    rt.random_test(sys, trace)
 
 
 def refine_rel_model_based(
@@ -259,7 +266,7 @@ def refine_rel_model_based(
 
     if __debug__:
         sim_n_plot(error_paths, pwa_model, AA, sp, opts)
-    check4CE(pwa_model, error_paths, sys.sys_name, 'rel', AA, sp, opts.bmc_engine)
+    check4CE(pwa_model, error_paths, sys.sys_name, 'rel', AA, sys, sp, opts.bmc_engine)
 
 
 def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, bmc_engine):
