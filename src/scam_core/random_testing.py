@@ -1,7 +1,5 @@
 from __future__ import print_function
 
-import sys as SYS
-
 import numpy as np
 import tqdm
 
@@ -14,19 +12,166 @@ import traces
 import state as st
 from properties import PropertyChecker
 import simulatesystem as simsys
+import state
+import cellmanager as CM
 
 
-def concretize_bmc_trace(sys, x_array, pi_seqs):
-    sim = simsys.get_system_simulator(sys)
-    assignmentstrace[0]
-    sim(x, s, d, pvt, t0, tf, ci_array, pi_array)
+def concretize_bmc_trace(sys, prop, AA, sp, x0, pi_seq):
+    """
+    Tries to concretize a BMC trace
+
+    Parameters
+    ----------
+    AA :
+    sys :
+    prop :
+    x0 : list of concrete states
+    pi_seq : associated list of concrete pi sequences
+    Notes
+    ------
+    Uses 4 different ways to check
+    """
+    sys_sim = simsys.get_system_simulator(sys)
+    # 1)
+    # Check exact returned trace.
+    print('Checking trace returned by BMC...')
+    trace = trace_violates(sys_sim, sys, prop, x0, pi_seq)
+    if trace:
+        print('violation found')
+        print(trace)
+        exit()
+    else:
+        print('nothing found')
+    # 2)
+    # Check using random sims. Find the abstract state of the trace's
+    # X0, and send it to random_test() along with pi_seqs
+    print('concretizing using sampling X0...[fixed X0+pi_seq]')
+    if abstract_trace_violates(sys, sp, prop, AA, x0, pi_seq):
+        print('our job is done...')
+        exit()
+    else:
+        print('nothing found')
+
+
+    # 3)
+    # Check using random sims. Poll the BMC solver to provide more
+    # samples for the same discrete sequence.
+    print('concretizing using SMT sampling...[fixed discrete seq.]')
+    raise NotImplementedError
+
+    # 4)
+    # Try different discrete sequences
+    print('concretizing using different discrete sequences...[paths]')
+    raise NotImplementedError
+
+    print('bad luck!')
+    exit()
+
+
+def trace_violates(sys_sim, sys, prop, x, pi_seq):
+    num_segments = int(np.ceil(prop.T / sys.delta_t))
+    #num_segments = len(pi)
+    z = np.array(np.empty((1, 0)))
+    pvt = z
+    ci_array = np.empty((1, num_segments, 0))
+    s = z
+    u = z
+    t = np.array([[0]])
+    x = np.array([x])
+    d = np.array([prop.initial_discrete_state])
+    pi_array = np.array([pi_seq])
+    concrete_states = state.StateArray(
+            t, x, d,
+            pvt, s, u, pi_array, ci_array)
+
+#     print(concrete_states.n)
+#     print(concrete_states.t.shape)
+#     print(concrete_states.cont_states.shape)
+#     print(concrete_states.controller_extraneous_inputs.shape)
+#     print(concrete_states.controller_outputs.shape)
+#     print(concrete_states.discrete_states.shape)
+#     print(concrete_states.controller_states.shape)
+#     print(concrete_states.pvt_states.shape)
+#     print(concrete_states.plant_extraneous_inputs.shape)
+
+    trace = simsys.simulate(sys_sim, concrete_states[0], prop.T)
+    if check_prop_violation(trace, prop):
+        return trace
+    else:
+        return None
+
+
+def abstract_trace_violates(sys, sp, prop, AA, x, pi_seq):
+    if AA.num_dims.pi != 0:
+        pi_eps = sp.pi_ref.pi_eps
+        pi_seq = [
+                CM.ival_constraints(
+                    CM.cell_from_concrete(pi, pi_eps)
+                    ) for pi in pi_seq
+                    ]
+
+    z = np.array(np.empty(1))
+    pvt = z
+    ci_array = np.empty(1)
+    pi_array = np.empty(1)
+    s = z
+    u = z
+    t = np.array(0)
+    x = np.array(x)
+    d = np.array(prop.initial_discrete_state)
+
+    concrete_state = state.State(
+            t=t, x=x, d=d,
+            pvt=pvt, ci=ci_array, s=s, pi=pi_array, u=u)
+
+    initial_state_list = [AA.get_abs_state_from_concrete_state(concrete_state)]
+
+    print(
+            CM.Cell(
+                AA.get_abs_state_from_concrete_state(concrete_state).ps.cell_id,
+                AA.plant_abs.eps).ival_constraints
+            )
+
+    return random_test(
+        AA,
+        sp,
+        initial_state_list,
+        [],
+        [pi_seq],
+        prop.initial_discrete_state,
+        initial_controller_state=None,
+        sample_ci=False
+        )
 
 
 # TODO: make a module of its own once we add more general property using
 # monitors...
 def check_prop_violation(trace, prop):
+    """check_prop_violation
+
+    Parameters
+    ----------
+    trace :
+    prop :
+
+    Returns
+    -------
+
+    Notes
+    ------
+    """
+    # check using random sims
     idx = prop.final_cons.contains(trace.x_array)
-    return trace.x_array[idx], trace.t_array[idx]
+    sat_x, sat_t = trace.x_array[idx], trace.t_array[idx]
+    if sat_x.size != 0:
+        print('x0={} -> x={}, t={}'.format(
+            trace.x_array[0, :],
+            sat_x[0, :],    # the first violating state
+            sat_t[0],       # corresponding time instant
+            ))
+        return True
+    else:
+        return False
 
 
 def simulate(sys, prop, opts):
@@ -40,14 +185,9 @@ def simulate(sys, prop, opts):
     for i in tqdm.trange(num_samples):
         trace = simsys.simulate(sys_sim, concrete_states[i], prop.T)
         trace_list.append(trace)
-        sat_x, sat_t = check_prop_violation(trace, prop)
-        if sat_x.size != 0:
+        if check_prop_violation(trace, prop):
             num_violations += 1
-            print('x0={} -> x={}, t={}...num_vio_counter={}'.format(
-                trace.x_array[0, :],
-                sat_x[0, :],    # the first violating state
-                sat_t[0],       # corresponding time instant
-                num_violations), file=SYS.stderr)
+            print('violation counter: {}'.format(num_violations))
 
     print('number of violations: {}'.format(num_violations))
     return trace_list
@@ -59,14 +199,13 @@ def random_test(
         initial_state_list,
         ci_seq_list,
         pi_seq_list,
-        init_cons,
         init_d,
         initial_controller_state,
         sample_ci
         ):
 
     # ##!!##logger.debug('random testing...')
-
+    init_cons = system_params.init_cons
     A.prog_bar = False
 
     res = []
@@ -220,7 +359,7 @@ def random_test(
             s_array,
             num_samples,
             )
-
+        print(x_array)
         concrete_states = st.StateArray(  # t
                                         # cont_state_array
                                         # abs_state.discrete_state
