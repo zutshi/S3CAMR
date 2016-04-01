@@ -60,7 +60,7 @@ class BMC(BMCSpec):
         Notes
         ------
         """
-        if model_type == 'dft' or model_type == 'dftX':
+        if model_type == 'dft':
             self.sal_trans_sys = BMC.sal_module_dft(
                     vs, pwa_model, init_state, safety_prop, module_name)
         elif model_type == 'dmt':
