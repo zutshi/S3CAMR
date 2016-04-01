@@ -14,7 +14,7 @@ from utils import print
 import err
 from constraints import IntervalCons, top2ic
 
-import random_test as rt
+import random_testing as rt
 
 from bmc import bmc
 from bmc.bmc_spec import InvarStatus
@@ -179,7 +179,7 @@ def refine_dftX_model_based(
         pass
         # Need to define a new function to simulate inputs
         #sim_n_plot(error_paths, pwa_model, AA, sp, opts)
-    check4CE(pwa_model, error_paths, sys.sys_name, 'dftX', AA, sys, sp, opts.bmc_engine)
+    check4CE(pwa_model, error_paths, sys.sys_name, 'dftX', AA, sys, prop, sp, opts.bmc_engine)
 
 
 def refine_dft_model_based(
@@ -193,10 +193,10 @@ def refine_dft_model_based(
             opts.model_err, 'dft')
     if __debug__:
         sim_n_plot(error_paths, pwa_model, AA, sp, opts)
-    check4CE(pwa_model, error_paths, sys.sys_name, 'dft', AA, sys, sp, opts.bmc_engine)
+    check4CE(pwa_model, error_paths, sys.sys_name, 'dft', AA, sys, prop, sp, opts.bmc_engine)
 
 
-def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sys, sp, bmc_engine):
+def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sys, prop, sp, bmc_engine):
     max_path_len = max([len(path) for path in error_paths])
     print('max_path_len:', max_path_len)
     # depth = max_path_len - 1, because path_len = num_states along
@@ -229,7 +229,7 @@ def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sys, sp, bmc_engi
     #    print('Safe')
     if status == InvarStatus.Unsafe:
         print('Unsafe...trying to concretize...')
-        verify_bmc_trace(sys, sal_bmc.trace)
+        verify_bmc_trace(AA, sys, prop, sp, sal_bmc.trace, xs, ws)
     elif status == InvarStatus.Unknown:
         print('Unknown...exiting')
         exit()
@@ -237,10 +237,17 @@ def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sys, sp, bmc_engi
         raise err.Fatal('Internal')
 
 
-def verify_bmc_trace(sys, trace):
+def verify_bmc_trace(AA, sys, prop, sp, trace, xs, ws):
     """Get multiple traces and send them for random testing
     """
-    rt.random_test(sys, trace)
+    print(trace[0])
+    init_assignments = trace[0].assignments
+    x_array = np.array([init_assignments[x] for x in xs])
+    pi_seq = [[step.assignments[w] for w in ws] for step in trace[:-1]]
+    print(x_array)
+    print(pi_seq)
+    rt.concretize_bmc_trace(sys, prop, AA, sp, x_array, pi_seq)
+    return
 
 
 def refine_rel_model_based(
@@ -266,7 +273,7 @@ def refine_rel_model_based(
 
     if __debug__:
         sim_n_plot(error_paths, pwa_model, AA, sp, opts)
-    check4CE(pwa_model, error_paths, sys.sys_name, 'rel', AA, sys, sp, opts.bmc_engine)
+    check4CE(pwa_model, error_paths, sys.sys_name, 'rel', AA, sys, prop, sp, opts.bmc_engine)
 
 
 def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, bmc_engine):
