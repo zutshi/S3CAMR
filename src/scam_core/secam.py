@@ -336,7 +336,6 @@ def refine_trace(
             system_params,
             valid_promising_initial_state_list,
             ci_seq_list,
-            init_cons,
             initial_discrete_state,
             initial_controller_state,
             )
@@ -490,7 +489,6 @@ def falsify_using_model(
         valid_promising_initial_state_list,
         ci_seq_list,
         pi_seq_list,
-        init_cons,
         initial_discrete_state,
         initial_controller_state,
         sample_ci
@@ -604,7 +602,6 @@ def refine_init(
             valid_promising_initial_state_list,
             ci_seq_list,
             pi_seq_list,
-            init_cons,
             initial_discrete_state,
             initial_controller_state,
             sample_ci
