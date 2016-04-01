@@ -1,13 +1,7 @@
 import modelspec
 
 
-class PWA(modelspec.ModelGeneric):
-    pass
-
-
-def compute_part_id(guard):
-    return
-
+PWA = modelspec.ModelGeneric
 
 # def sub_model_helper(A, b, C, d, e=None):
 #     model = DiscreteMap(A, b, e)
