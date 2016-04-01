@@ -1,17 +1,7 @@
 import modelspec
 
 
-class PWARelational(modelspec.ModelGeneric):
-
-    def __init__(self, *args):
-        super(PWARelational, self).__init__(*args)
-        self.relation_ids = set()
-        return
-
-    def add(self, sub_model):
-        super(PWARelational, self).add(sub_model)
-        self.relation_ids.update((sub_model.p1.pid, sub_model.p2.pid))
-        return
+PWARelational = modelspec.ModelGeneric
 
 
 class Relation(modelspec.PartitionedDiscreteAffineModel):
@@ -24,7 +14,7 @@ class Relation(modelspec.PartitionedDiscreteAffineModel):
         self.p1 = p1
         self.p2 = p2
         self.m = m
-        # make p = p1, i.e., check sat against p1
+        # make p = p1, i.e., check sat against p1 and ID is p1's ID
         super(Relation, self).__init__(p1, m)
         return
 
