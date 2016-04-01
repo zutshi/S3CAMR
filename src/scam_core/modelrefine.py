@@ -62,15 +62,27 @@ class Q(object):
 #     def dim(self):
 #         return
 
-    @abc.abstractproperty
-    def ival_constraints(self):
-        return self.xwcell.ival_constraints
-
     @abc.abstractmethod
     def getxy_ignoramous(self, N, sim, t0=0):
         """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
         """
         return
+
+    @abc.abstractmethod
+    def modelQ(self, rm):
+        return
+
+    @abc.abstractmethod
+    def errorQ(self, include_err, X, Y, rm):
+        return
+
+    @abc.abstractmethod
+    def __hash__(self):
+        return hash((self.cell, tuple(self.eps)))
+
+    @abc.abstractmethod
+    def __eq__(self, c):
+        return self.cell == c.cell and tuple(self.eps) == tuple(c.eps)
 
 
 class Qxw(Q):
@@ -93,6 +105,9 @@ class Qxw(Q):
         self.sample_UR_x = self.xcell.sample_UR
         self.sample_UR_w = self.wcell.sample_UR
         self.wic = wic
+        self.xdim = xcell.dim
+        self.wdim = wcell.dim
+        self.ival_constraints = self.xwcell.ival_constraints
         return
 
     def split(self, *args):
@@ -102,18 +117,6 @@ class Qxw(Q):
             for xcell, wcell in xwcell.un_concatenate(self.xcell.dim):
                 l.append(Qxw(xcell, wcell))
         return l
-
-    @property
-    def xdim(self):
-        return self.xcell.dim
-
-    @property
-    def wdim(self):
-        return self.wcell.dim
-
-    @property
-    def ival_constraints(self):
-        return self.xwcell.ival_constraints
 
     def getxy_ignoramous(self, N, sim, t0=0):
         """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
@@ -172,6 +175,12 @@ class Qxw(Q):
         e = IntervalCons.concatenate(xic, self.wic)
         return e
 
+    def __hash__(self):
+        return hash(self.xwcell)
+
+    def __eq__(self, q):
+        return self.xwcell == q.xwcell
+
 
 class Qx(Q):
     def __init__(self, xcell):
@@ -184,18 +193,12 @@ class Qx(Q):
         assert(isinstance(xcell, CM.Cell))
 
         self.xcell = xcell
+        self.ival_constraints = xcell.ival_constraints
+        self.xdim = xcell.dim
         return
 
     def split(self, *args):
         return [Qx(c) for c in self.xcell.split(*args)]
-
-    @property
-    def xdim(self):
-        return self.xcell.dim
-
-    @property
-    def ival_constraints(self):
-        return self.xcell.ival_constraints
 
     def getxy_ignoramous(self, N, sim, t0=0):
         """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
@@ -222,6 +225,12 @@ class Qx(Q):
         e = (rm.error(X, Y) if include_err
              else IntervalCons([0.0]*self.xdim, [0.0]*self.xdim))
         return e
+
+    def __hash__(self):
+        return hash(self.xcell)
+
+    def __eq__(self, q):
+        return self.xcell == q.xcell
 
 
 def simulate_pwa(pwa_model, x_samples, N):
