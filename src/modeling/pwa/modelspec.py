@@ -9,36 +9,37 @@ class ModelError(Exception):
     pass
 
 
-class ModelSpec():
+class ModelSpec(object):
     __metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
+    def __init__(self):
+        return
+
+    @abc.abstractmethod
     def add(self, sub_model):
-        raise NotImplementedError
+        return
 
-#     @abc.abstractmethod
-#     def get_sub_model(self, part_id):
-#         raise NotImplementedError
-
-#     @abc.abstractmethod
-#     def find_sub_model(self, x):
-#         raise NotImplementedError
+    @abc.abstractmethod
+    def find_sub_model(self, x):
+        return
 
     @abc.abstractmethod
     def predict(self, x):
-        raise NotImplementedError
+        return
 
+    # Make the class iterable
     @abc.abstractmethod
     def __iter__(self):
-        raise NotImplementedError
+        return
 
     @abc.abstractmethod
     def __repr__(self):
-        raise NotImplementedError
+        return
 
     @abc.abstractmethod
     def __str__(self):
-        raise NotImplementedError
+        return
 
 
 class SubModelSpec():
@@ -46,61 +47,11 @@ class SubModelSpec():
 
     @abc.abstractmethod
     def sat(self, x):
-        raise NotImplementedError
+        return
 
     @abc.abstractmethod
     def predict(self, x):
-        raise NotImplementedError
-
-
-# TODO: Merge with the abstract base class
-
-class ModelGeneric(ModelSpec):
-    def __init__(self):
-        self.nlocs = 0
-        self.sub_models = {}
-        self.idx = 0
         return
-
-    def add(self, sub_model):
-        part_id = self.idx
-        self.sub_models[part_id] = sub_model
-        self.idx += 1
-        return
-
-    #def get_sub_model(self, part_id):
-    #    return self.sub_models[part_id]
-
-    # Make the class iterable
-    def __iter__(self):
-        return self.sub_models.itervalues()
-
-    #def next(self):
-    #    return self.sub_models.itervalues().next()
-
-    def __repr__(self):
-        return repr(self.sub_models)
-
-    def __str__(self):
-        s = [str(i) for i in self]
-        return '{1}{0}{1}'.format('='*20, '\n').join(s)
-
-    # returns the first sub_model whose parition the point x belongs
-    # to
-    # TODO: Brute force search, very inefficient
-    def find_sub_model(self, x):
-        for sub_model in self.sub_models.itervalues():
-            if sub_model.sat(x):
-                return sub_model
-        raise ModelError('no appropriate submodel found')
-
-    def predict(self, x):
-        try:
-            sub_model = self.find_sub_model(x)
-        except ModelError:
-            return x
-
-        return sub_model.predict(x)
 
 
 class Partition(object):
@@ -110,7 +61,7 @@ class Partition(object):
         '''
         self.C = C
         self.d = d
-        self.pid = part_id
+        self.ID = part_id
         return
 
     def __repr__(self):
@@ -157,6 +108,7 @@ class PartitionedDiscreteAffineModel(SubModelSpec):
         '''
         self.p = p
         self.m = m
+        self.ID = p.ID
         return
 
     def sat(self, x):
@@ -173,3 +125,49 @@ class PartitionedDiscreteAffineModel(SubModelSpec):
     def __str__(self):
         s = 'SubModel ->(\n{},\n{})'.format(self.p, self.m)
         return s
+
+
+class ModelGeneric(ModelSpec):
+    def __init__(self):
+        self.nlocs = 0
+        self.sub_models = {}
+        self.idx = 0
+        self.relation_ids = set()
+        return
+
+    def add(self, sub_model):
+        part_id = self.idx
+        self.sub_models[part_id] = sub_model
+        self.idx += 1
+        self.relation_ids.add((sub_model.ID))
+
+    #def get_sub_model(self, part_id):
+    #    return self.sub_models[part_id]
+
+    # returns the first sub_model whose parition the point x belongs
+    # to
+    # TODO: Brute force search, very inefficient
+    def find_sub_model(self, x):
+        for sub_model in self.sub_models.itervalues():
+            if sub_model.sat(x):
+                return sub_model
+        raise ModelError('no appropriate submodel found')
+
+    def predict(self, x):
+        try:
+            sub_model = self.find_sub_model(x)
+        except ModelError:
+            return x
+
+        return sub_model.predict(x)
+
+    # Make the class iterable
+    def __iter__(self):
+        return self.sub_models.itervalues()
+
+    def __repr__(self):
+        return repr(self.sub_models)
+
+    def __str__(self):
+        s = [str(i) for i in self]
+        return '{1}{0}{1}'.format('='*20, '\n').join(s)
