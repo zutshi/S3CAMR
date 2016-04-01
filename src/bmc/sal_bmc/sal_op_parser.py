@@ -30,6 +30,10 @@ def Rational(s):
 def Float(s):
     return ''.join(s)
 
+
+def SignedInteger(s):
+    return ''.join(s)
+
 integer = pp.Word(pp.nums)
 signed_integer = pp.Optional(PLUS | MINUS) + integer
 alpha = pp.alphas
@@ -38,7 +42,7 @@ ident = pp.Word(pp.alphanums+"_")
 rational = signed_integer + pp.Literal('/') + integer
 
 rational.setParseAction(Rational)
-#signed_integer.setParseAction(SignedInteger)
+signed_integer.setParseAction(SignedInteger)
 floats = signed_integer + pp.Literal('.') + integer
 floats.setParseAction(Float)
 
@@ -62,7 +66,8 @@ class Step(object):
     def __init__(self, s):
         self.s = s
         self.num = s[0]
-        self.assignments = s[1:-1]
+        assignments = s[1:-1]
+        self.assignments = {a.lhs: a.rhs for a in assignments}
         # transition id string
         self.tid = s[-1]
 
@@ -148,8 +153,8 @@ def main():
     if parsed_trace is None:
         print 'No CE found!'
     else:
-        print parsed_trace
-        for ass in parsed_trace.to_assignments():
+        #print parsed_trace
+        for ass in parsed_trace:
             print ass
 
 if __name__ == '__main__':
