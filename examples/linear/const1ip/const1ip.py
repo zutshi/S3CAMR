@@ -7,8 +7,6 @@ testing/benchmarking
 MUST define the global SYS_ID after loading the module
 """
 
-import random
-
 import numpy as np
 from scipy.integrate import ode
 
