@@ -51,11 +51,6 @@ class SALTransSysRel(saltrans.SALTransSys):
         return
 
     @property
-    def always_true_transition(self):
-        return (super(SALTransSysRel, self).always_true_transition +
-                ";\ncell' = cell")
-
-    @property
     def type_decls(self):
         tp = super(SALTransSysRel, self).type_decls
         s = tp + '\nCELL: TYPE = {' + ', '.join(self.locs.itervalues()) + '};'
