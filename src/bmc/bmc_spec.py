@@ -5,7 +5,7 @@ It defines the results (e.g. traces, status).
 """
 
 import abc
-
+import itertools as it
 
 class InvarStatus:
     Safe, Unsafe, Unknown = range(3)
@@ -37,14 +37,19 @@ class TraceSimple(object):
         return
 
     def __getitem__(self, idx):
-        return self.trace[idx].assignments
+        return self.trace[idx]
 
-    def to_assignments(self):
-        assignments = [
-                {ass.lhs: ass.rhs for ass in step.assignments}
-                for step in self.trace
-                ]
-        return assignments
+#     def to_assignments(self):
+#         assignments = [
+#                 {ass.lhs: ass.rhs for ass in step.assignments}
+#                 for step in self.trace
+#                 ]
+#         return assignments
+    def __iter__(self):
+        return (step for step in self.trace)
+
+    def __len__(self):
+        return len(self.trace)
 
     def __str__(self):
         return '\n'.join(str(step) for step in self.trace)
