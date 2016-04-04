@@ -26,6 +26,7 @@ class RegressionModel(object):
     def __init__(self, x, y):
         warn_if_small_data_set(x)
         #self.clf_ = skl_lm.RidgeCV(alphas=[1.0, 1.0], fit_intercept=True)
+        # Copy must be on...arrays are getting reused!
         self.clf_ = skl_lm.LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=True)
         self.clf_.fit(x, y)
         #if __debug__:
