@@ -1,4 +1,5 @@
 import os
+import collections
 
 import saltrans as slt_dft
 import saltrans_rel as slt_rel
@@ -81,18 +82,28 @@ class BMC(BMCSpec):
         return
 
     @staticmethod
-    def sal_module_rel(vs, pwa_model, init_set, safety_prop, module_name):
+    def sal_module_dft(vs, pwa_model, init_set, safety_prop, module_name):
         sal_trans_sys = slt_rel.SALTransSysRel(module_name, vs, init_set, safety_prop)
 
-        sal_trans_sys.add_locations(pwa_model.relation_ids)
+        for sub_model in pwa_model:
+            sal_trans_sys.add_location(sub_model.p.ID)
+        # sal_trans_sys.add_locations(pwa_model.relation_ids)
+
         for idx, sub_model in enumerate(pwa_model):
-            l1 = sal_trans_sys.get_loc_id(sub_model.p1.pid)
-            l2 = sal_trans_sys.get_loc_id(sub_model.p2.pid)
-            g = slt_rel.Guard(l1, sub_model.p1.C, sub_model.p1.d)
-            r = slt_rel.Reset(l2, sub_model.m.A, sub_model.m.b, sub_model.m.error)
+            p = sub_model.p
+            pnexts = sub_model.pnexts
+            l = sal_trans_sys.get_loc_id(p.ID)
+            lnext = [sal_trans_sys.get_loc_id(pnext.ID) for pnext in pnexts]
+
+            g = slt_rel.Guard(l, p.C, p.d)
+            g.vs = vs
+            r = slt_rel.Reset(lnext, sub_model.m.A, sub_model.m.b, sub_model.m.error)
+            r.vs = vs
+            r.vs_ = vs
             t = slt_rel.Transition('T_{}'.format(idx), g, r)
             sal_trans_sys.add_transition(t)
         return sal_trans_sys
+
 
     @staticmethod
     def sal_module_dmt(dts, vs, pwa_models, init_set, safety_prop, module_name):
@@ -107,20 +118,6 @@ class BMC(BMCSpec):
                 t = slt_dmt.Transition(
                         dt, dts, 'C_{}_{}'.format(idx, dt_str), g, r)
                 sal_trans_sys.add_transition(t)
-        return sal_trans_sys
-
-    @staticmethod
-    def sal_module_dft(vs, pwa_model, init_set, safety_prop, module_name):
-        sal_trans_sys = slt_dft.SALTransSys(module_name, vs, init_set, safety_prop)
-
-        for idx, sub_model in enumerate(pwa_model):
-            g = slt_dft.Guard(sub_model.p.C, sub_model.p.d)
-            g.vs = vs
-            r = slt_dft.Reset(sub_model.m.A, sub_model.m.b, sub_model.m.error)
-            r.vs = vs
-            r.vs_ = vs
-            t = slt_dft.Transition('C_{}'.format(idx), g, r)
-            sal_trans_sys.add_transition(t)
         return sal_trans_sys
 
     def check(self, depth):
