@@ -1,7 +1,6 @@
 from __future__ import print_function
-from collections import defaultdict
-import itertools
-import abc
+
+#from collections import defaultdict
 
 import numpy as np
 
@@ -9,35 +8,32 @@ import simulatesystem as simsys
 from modeling.pwa import pwa
 from modeling.pwa import simulator as pwa_sim
 from modeling.pwa import relational as rel
-
+import random_testing as rt
+from bmc import bmc
+from bmc.bmc_spec import InvarStatus
+from modeling.affinemodel import RegressionModel
+from cellmodels import Qxw, Qx
+import cellmanager as CM
 import utils as U
 from utils import print
 import err
 from constraints import IntervalCons, top2ic
 
-import random_testing as rt
-
-from bmc import bmc
-from bmc.bmc_spec import InvarStatus
-from modeling.affinemodel import RegressionModel
-import cellmanager as CM
-
-import functools
+from graphs.graph import factory as graph_factory
 
 #np.set_printoptions(suppress=True, precision=2)
 
 # multiply num samples with the
-MORE_FACTOR = 10
+MORE_FACTOR = 20
 TEST_FACTOR = 10
 
-MAX_TRAIN = 200
+MAX_TRAIN = 2000
+
 MAX_TEST = 200
 
-MIN_TRAIN = 50
-MIN_TEST = MIN_TRAIN
-MAX_ITER = 25
+K = 1
 
-INF = float('inf')
+NUM_SIMS = 100
 
 
 def abs_state2cell(abs_state, AA):
@@ -51,195 +47,12 @@ def ic2cell(ic, eps):
     #return CM.Cell(CM.cell_from_concrete(pi, eps), eps)
 
 
-class Q(object):
-    __metaclass__ = abc.ABCMeta
-
-    @abc.abstractmethod
-    def split(self, *args):
-        return
-
-#     @abc.abstractproperty
-#     def dim(self):
-#         return
-
-    @abc.abstractmethod
-    def getxy_ignoramous(self, N, sim, t0=0):
-        """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
-        """
-        return
-
-    @abc.abstractmethod
-    def modelQ(self, rm):
-        return
-
-    @abc.abstractmethod
-    def errorQ(self, include_err, X, Y, rm):
-        return
-
-    @abc.abstractmethod
-    def __hash__(self):
-        return hash((self.cell, tuple(self.eps)))
-
-    @abc.abstractmethod
-    def __eq__(self, c):
-        return self.cell == c.cell and tuple(self.eps) == tuple(c.eps)
-
-
-class Qxw(Q):
-    def __init__(self, xcell, wcell, wic):
-        """__init__
-
-        Parameters
-        ----------
-        abs_state : abstract states
-        w_cells : cells associated with the abstract state defining
-        range of inputs
-        """
-
-        assert(isinstance(xcell, CM.Cell))
-        assert(isinstance(wcell, CM.Cell))
-
-        self.xcell = xcell
-        self.wcell = wcell
-        self.xwcell = CM.Cell.concatenate(xcell, wcell)
-        self.sample_UR_x = self.xcell.sample_UR
-        self.sample_UR_w = self.wcell.sample_UR
-        self.wic = wic
-        self.xdim = xcell.dim
-        self.wdim = wcell.dim
-        self.ival_constraints = self.xwcell.ival_constraints
-        return
-
-    def split(self, *args):
-        xwsplits = self.xwcell.split(*args)
-        l = []
-        for xwcell in xwsplits:
-            for xcell, wcell in xwcell.un_concatenate(self.xcell.dim):
-                l.append(Qxw(xcell, wcell))
-        return l
-
-    def getxy_ignoramous(self, N, sim, t0=0):
-        """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
-        """
-        d, pvt, s = [np.array([])]*3
-        ci = np.array([])
-        t0 = 0
-        Yl = []
-
-        x_array = self.sample_UR_x(N)
-        pi_array = self.sample_UR_w(N)
-        for x, pi in zip(x_array, pi_array):
-            (t_, x_, s_, d_, pvt_, u_) = sim(t0, x, s, d, pvt, ci, pi)
-            Yl.append(x_)
-
-        return np.hstack((x_array, pi_array)), np.vstack(Yl)
-
-    def modelQ(self, rm):
-
-        #print('error%:', rm.error_pc(X, Y))
-        # Matrices are extended to include w/pi
-        # A = [AB]
-        #     [00]
-        # AB denotes matrix concatenation.
-        # Hence a reset: x' =  Ax + Bw + b
-        # can be mimicked as below
-        #
-        # [x']   = [a00 a01 a02...b00 b01...] * [x] + b + [e0]
-        # [w']     [     ...  0 ...         ]   [w]       [e1]
-        #
-        # This makes x' \in Ax + Bw + b + [el, eh], and
-        # makes w' \in [el, eh]
-        # We use this to incorporate error and reset w to new values,
-        # which in the case of ZOH are just the ranges of w (or pi).
-
-        q = self
-        A = np.vstack((rm.A, np.zeros((q.wdim, q.xdim + q.wdim))))
-        b = np.hstack((rm.b, np.zeros(q.wdim)))
-        C, d = q.ival_constraints.poly()
-        try:
-            assert(A.shape[0] == b.shape[0])    # num lhs (states) is the same
-            assert(A.shape[1] == C.shape[1])    # num vars (states + ip) are the same
-            assert(C.shape[0] == d.shape[0])    # num constraints are the same
-        except AssertionError as e:
-            print('\n', A, '\n', b)
-            print('\n', C, '\n', d)
-            print(A.shape[0], b.shape[0], C.shape[1], d.shape[0])
-            raise e
-        return A, b, C, d
-
-    def errorQ(self, include_err, X, Y, rm):
-        q = self
-        xic = (rm.error(X, Y) if include_err
-               else IntervalCons([0.0]*q.xdim, [0.0]*q.xdim))
-
-        e = IntervalCons.concatenate(xic, self.wic)
-        return e
-
-    def __hash__(self):
-        return hash(self.xwcell)
-
-    def __eq__(self, q):
-        return self.xwcell == q.xwcell
-
-
-class Qx(Q):
-    def __init__(self, xcell):
-        """__init__
-
-        Parameters
-        ----------
-        """
-
-        assert(isinstance(xcell, CM.Cell))
-
-        self.xcell = xcell
-        self.ival_constraints = xcell.ival_constraints
-        self.xdim = xcell.dim
-        return
-
-    def split(self, *args):
-        return [Qx(c) for c in self.xcell.split(*args)]
-
-    def getxy_ignoramous(self, N, sim, t0=0):
-        """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
-        """
-        d, pvt, s = [np.array([])]*3
-        ci, pi = [np.array([])]*2
-        t0 = 0
-        Yl = []
-
-        x_array = self.xcell.sample_UR(N)
-        for x in x_array:
-            (t_, x_, s_, d_, pvt_, u_) = sim(t0, x, s, d, pvt, ci, pi)
-            Yl.append(x_)
-
-        return x_array, np.vstack(Yl)
-
-    def modelQ(self, rm):
-        A, b = rm.A, rm.b
-        C, d = self.ival_constraints.poly()
-        return A, b, C, d
-
-    def errorQ(self, include_err, X, Y, rm):
-        # TODO: guess the dimensions. Fix it
-        e = (rm.error(X, Y) if include_err
-             else IntervalCons([0.0]*self.xdim, [0.0]*self.xdim))
-        return e
-
-    def __hash__(self):
-        return hash(self.xcell)
-
-    def __eq__(self, q):
-        return self.xcell == q.xcell
-
-
 def simulate_pwa(pwa_model, x_samples, N):
     #ps = pwa_sim.PWA_SIM(pwa_model)
     return [pwa_sim.simulate(pwa_model, x0, N) for x0 in x_samples]
 
 
 def simulate(AA, s, sp, pwa_model, max_path_len, S0):
-    NUM_SIMS = 100
     # sample only initial abstract state
     x0_samples = (sp.sampler.sample_multiple(S0, AA, sp, NUM_SIMS)).x_array
     #print(x0_samples)
@@ -252,8 +65,7 @@ def simulate(AA, s, sp, pwa_model, max_path_len, S0):
     return traces
 
 
-def sim_n_plot(error_paths, pwa_model, AA, sp, opts):
-    max_path_len = max([len(path) for path in error_paths])
+def sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts):
     # intial abs state set
     S0 = {path[0] for path in error_paths}
     s = {
@@ -262,7 +74,7 @@ def sim_n_plot(error_paths, pwa_model, AA, sp, opts):
         'regular': {state for path in error_paths for state in path[1:-1]}
         }
     print('simulating...')
-    pwa_traces = simulate(AA, s, sp, pwa_model, max_path_len, S0)
+    pwa_traces = simulate(AA, s, sp, pwa_model, depth, S0)
     print('done')
     opts.plotting.figure()
     print('plotting...')
@@ -274,49 +86,48 @@ def sim_n_plot(error_paths, pwa_model, AA, sp, opts):
     opts.plotting.show()
 
 
-def get_qs_from_error_paths(sp, AA, error_paths, pi_seqs):
-    if AA.num_dims.pi == 0:
-        # traversed_abs_state_set
-        tas = {state for path in error_paths for state in path}
-        qs = [Qx(abs_state2cell(a, AA)) for a in tas]
-    else:
-        pi_eps = sp.pi_ref.eps
-        # collect all pi which were encountered with the abs_state
-        abs_state_pi = defaultdict(set)
-        for path, pi_seq in zip(error_paths, pi_seqs):
-            for abs_state, pi in zip(path[:-1], pi_seq):
-                abs_state_pi[abs_state].add(pi)
+def get_qgraph(sp, AA, G, error_paths, pi_seqs):
 
-        qs = []
-        for abs_state, pi_ic_list in abs_state_pi.iteritems():
-            xcell = abs_state2cell(abs_state, AA)
-            for pi_ic in pi_ic_list:
-                wcell = ic2cell(pi_ic, pi_eps)
-                qs.append(Qxw(xcell, wcell, sp.pi_ref.i_cons))
-    return qs
+    for path, pi_seq in zip(error_paths, pi_seqs):
+        for (a1, a2), pi_ic in zip(U.pairwise(path), pi_seq):
+            x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
+            q1, q2 = Qx(x1cell), Qx(x2cell)
+            if AA.num_dims.pi:
+                wcell = ic2cell(pi_ic, sp.pi_ref.eps)
+            else:
+                wcell = None
+            G.add_edge(q1, q2, pi=wcell)
+    return G
 
 
 def refine_dft_model_based(
         AA, error_paths, pi_seqs, sp, sys_sim, opts, sys, prop):
 
-    qs = get_qs_from_error_paths(sp, AA, error_paths, pi_seqs)
+    # initialize Qxw class
+    if AA.num_dims.pi:
+        Qxw.init(sp.pi_ref.i_cons)
+
+    G = graph_factory(opts.graph_lib)
+
+    qg = get_qgraph(sp, AA, G, error_paths, pi_seqs)
     pwa_model = build_pwa_model(
-            AA, qs, sp, opts.max_model_error,
+            AA, qg, sp, opts.max_model_error,
             opts.model_err, 'dft')
-    if __debug__:
-        pass
-        # Need to define a new function to simulate inputs
-        #sim_n_plot(error_paths, pwa_model, AA, sp, opts)
-    check4CE(pwa_model, error_paths, sys.sys_name, 'dft', AA, sys, prop, sp, opts.bmc_engine)
 
-
-def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sys, prop, sp, bmc_engine):
     max_path_len = max([len(path) for path in error_paths])
     print('max_path_len:', max_path_len)
     # depth = max_path_len - 1, because path_len = num_states along
     # path. This is 1 less than SAL depth and simulation length
     depth = max(int(np.ceil(AA.T/AA.delta_t)), max_path_len - 1)
     print('depth :',  depth)
+
+    if __debug__:
+        # Need to define a new function to simulate inputs
+        sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts)
+    check4CE(pwa_model, depth, sys.sys_name, 'dft', AA, sys, prop, sp, opts.bmc_engine)
+
+
+def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, bmc_engine):
 
     # Extend both init set and final set to include inputs if any
     dummy_cons = top2ic(AA.num_dims.pi) # T <=> [-inf, inf]
@@ -364,32 +175,6 @@ def verify_bmc_trace(AA, sys, prop, sp, trace, xs, ws):
     return
 
 
-def refine_rel_model_based(
-        AA, error_paths, pi_seq_list, sp, sys_sim, opts, sys, prop):
-    '''does not handle pi_seq_list yet'''
-
-    # abs_state relations: maps an abs_state to other abs_states
-    # reachable in one time step
-    abs_relations = defaultdict(set)
-    for path in error_paths:
-        # abs_state_1 -> abs_state_2
-        for a1, a2 in U.pairwise(path):
-            abs_relations[a1].add(a2)
-
-    flat_relations = []
-    for abs_state, rch_states in abs_relations.iteritems():
-        flat_relation = list(itertools.product([abs_state], rch_states))
-        flat_relations.extend(flat_relation)
-
-    pwa_model = build_pwa_model(
-            AA, flat_relations, sp, opts.max_model_error,
-            opts.model_err, 'rel')
-
-    if __debug__:
-        sim_n_plot(error_paths, pwa_model, AA, sp, opts)
-    check4CE(pwa_model, error_paths, sys.sys_name, 'rel', AA, sys, prop, sp, opts.bmc_engine)
-
-
 def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, bmc_engine):
     """refine using discrete time models
 
@@ -422,81 +207,16 @@ def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, bmc_engine
     sal_bmc.check()
 
 
-def getxy_rel_ignoramous_force_min_samples(cell1, cell2, force, N, sim, t0=0):
-    """getxy_rel_ignoramous
-
-    Parameters
-    ----------
-    force : force to return non-zero samples. Will loop for infinitiy
-            if none exists.
-    """
-    xl = []
-    yl = []
-    sat_count = 0
-    if __debug__:
-        obs_cells = set()
-    while True:
-        x_array, y_array = getxy_ignoramous(cell1, N, sim, t0=0)
-        if __debug__:
-            for i in y_array:
-                obs_cells.add(CM.cell_from_concrete(i, cell1.eps))
-            print('reachable cells:', obs_cells)
-
-        # satisfying indexes
-        sat_array = cell2.ival_constraints.sat(y_array)
-        sat_count += np.sum(sat_array)
-        xl.append(x_array[sat_array])
-        yl.append(y_array[sat_array])
-        # If no sample is found and force is True, must keep sampling till
-        # satisfying samples are found
-        if (sat_count >= MIN_TRAIN) or (not force):
-            break
-        if __debug__:
-            print('re-sampling, count:', sat_count)
-
-    print('found samples: ', sat_count)
-    return np.vstack(xl), np.vstack(yl)
+# TODO: move it udner ./graph/
+def print_graph(g):
+    print('printing graph...')
+    print('='*40)
+    for e in g.iteredges():
+        print(e)
+    print('='*40)
 
 
-def getxy_rel_ignoramous(cell1, cell2, force, N, sim, t0=0):
-    """getxy_rel_ignoramous
-
-    Parameters
-    ----------
-    force : force to return non-zero samples. Will loop for infinitiy
-            if none exists.
-    """
-    xl = []
-    yl = []
-    sat_count = 0
-    iter_count = itertools.count()
-    print(cell1.ival_constraints)
-    print(cell2.ival_constraints)
-    if __debug__:
-        obs_cells = set()
-    while next(iter_count) <= MAX_ITER:
-        x_array, y_array = getxy_ignoramous(cell1, N, sim, t0=0)
-        if __debug__:
-            for i in y_array:
-                obs_cells.add(CM.cell_from_concrete(i, cell1.eps))
-            print('reachable cells:', obs_cells)
-        # satisfying indexes
-        sat_array = cell2.ival_constraints.sat(y_array)
-        sat_count += np.sum(sat_array)
-        xl.append(x_array[sat_array])
-        yl.append(y_array[sat_array])
-        if sat_count >= MIN_TRAIN:
-            break
-        # If no sample is found and force is True, must keep sampling till
-        # satisfying samples are found
-    if __debug__:
-        if sat_count < MIN_TRAIN:
-            err.warn('Fewer than MIN_TRAIN samples found!')
-    print('found samples: ', sat_count)
-    return np.vstack(xl), np.vstack(yl)
-
-
-def build_pwa_model(AA, abs_objs, sp, tol, include_err, model_type):
+def build_pwa_model(AA, qgraph, sp, tol, include_err, model_type):
     """build_pwa_model
     Builds both dft and rel models
 
@@ -519,20 +239,22 @@ def build_pwa_model(AA, abs_objs, sp, tol, include_err, model_type):
     step_sim = simsys.get_step_simulator(sp.controller_sim, sp.plant_sim, dt)
 
     #abs_state_models = {}
-    modelers = {
-            'rel': (rel.PWARelational, abs_rel_affine_models),
-            'dft': (pwa.PWA, functools.partial(q_affine_models, ntrain, ntest))
-            }
 
-    M, model = modelers[model_type]
-    pwa_model = M()
+    pwa_model = rel.PWARelational()
 
-    for a in abs_objs:
-        print('modeling: {}'.format(a))
-        for sub_model in model(a, AA, step_sim, tol, sp, include_err):
-            if sub_model is not None:
+    print_graph(qgraph)
+
+    # for ever vertex (abs_state) in the graph
+    for q in qgraph:
+        # if the vertex has relation to another vertex
+        #if qgraph.out_degree(q):
+        if True:
+            print('modeling: {}'.format(q))
+            for sub_model in q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
+                assert(sub_model is not None)
+                print(sub_model.p.ID)
                 pwa_model.add(sub_model)
-            #abs_state_models[abs_state] = sub_model
+                #abs_state_models[abs_state] = sub_model
     return pwa_model
 
 
@@ -578,88 +300,69 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
     return pwa_models
 
 
-def abs_rel_affine_models(abs_state_rel, AA, step_sim, tol, sp, include_err):
-    cell1 = CM.Cell(abs_state_rel[0].plant_state.cell_id, AA.plant_abs.eps)
-    cell2 = CM.Cell(abs_state_rel[1].plant_state.cell_id, AA.plant_abs.eps)
-    # number of training samples
-    ntrain = min(AA.num_samples * MORE_FACTOR, MAX_TRAIN)
-    # number of test samples
-    ntest = min(ntrain * TEST_FACTOR, MAX_TEST)
-
-    return cell_rel_affine_models(
-            cell1, cell2, True, step_sim, ntrain, ntest, tol, include_err)
+# def q_graph_models(ntrain, ntest, step_sim, tol, include_err, qgraph):
+#     qmodels = {}
+#     # Make a model for every q in the graph
+#     for q in qgraph:
+#         X, Y = q.get_rels(ntrain, step_sim)
+#         models = mdl(tol, qgraph, q, (X, Y), X, K)
+#         qmodels[q] = models
+#     return qmodels
 
 
-#AA.plant_abs.get_abs_state_cell(abs_state.plant_state),
-def cell_rel_affine_models(cell1, cell2, force, step_sim, ntrain, ntest, tol, include_err):
-    """cell_affine_models
+def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
+    if k == -1:
+        err.warn('max depth exceeded but the error > tol. Giving up!')
+        return []
 
-    Parameters
-    ----------
-    cell1 : source cell
-    cell2 : target cell
-    step_sim : 1 time step (delta_t) simulator
-    tol : each abs state is split further into num_splits cells
-    in order to meet: modeling error < tol (module ntests samples)
-
-    Returns
-    -------
-    pwa.SubModel()
-
-    Notes
-    ------
-    """
-    # XXX: Generate different samples for each time step or reuse?
-    # Not clear!
-    sub_models = []
-
-    X, Y = getxy_rel_ignoramous(cell1, cell2, force, ntrain, step_sim)
-    # No samples found => no model
-    training_samples_found = len(X) != 0
-    if not training_samples_found:
-        return [None]
     rm = RegressionModel(X, Y)
-    X, Y = getxy_rel_ignoramous(cell1, cell2, True, ntest, step_sim)
-    testing_samples_found = len(X) != 0
-    # If valid samples are found, compute e_pc (error %) and dims
-    # where error % >= given tol
-    if testing_samples_found:
-        e_pc = rm.error_pc(X, Y)
-        error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
-    # Otherwise, forget it!
+    e_pc = rm.error_pc(X, Y)
+    err.imp('error%: {}'.format(e_pc))
+    error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
+    error_exceeds_tol = len(error_dims) > 0
+    #err.warn('e%:{}, |e%|:{}'.format(e_pc, np.linalg.norm(e_pc, 2)))
+    if error_exceeds_tol:
+        ms = []
+        for qi in qgraph.neighbors(q):
+            Y__ = sim(step_sim, Y_)
+            sat = qi.sat(Y__)
+            # TODO: If we are out of samples, we can't do much. Need to
+            # handle this situation better? Not sure? Request for more
+            # samples? Give up?
+            if any(sat):
+                rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k-1)
+                l = [(rm_, [q]+qseq_) for rm_, qseq_ in rm_qseq]
+                ms.extend(l)
+            else:
+                err.warn('out of samples...Giving up!')
+
+        # The loop never ran due to q not having any neighbors,
+        # Or, no samples were left. We do the best with what we have
+        # then.
+        if not ms:
+            ms = [(rm, [q])]
+        return ms
     else:
-        e_pc = None
-        error_dims = []
-
-    if __debug__:
-        print('error%:', e_pc)
-
-    if len(error_dims) > 0:
-        err.warn('splitting on e%:{}, |e%|:{}'.format(
-            e_pc, np.linalg.norm(e_pc, 2)))
-        for split_cell1 in cell1.split(axes=error_dims):
-            sub_models_ = cell_rel_affine_models(
-                    split_cell1, cell2, False, step_sim, ntrain, ntest, tol, include_err)
-            sub_models.extend(sub_models_)
-        return sub_models
-    else:
-        A, b = rm.A, rm.b
-        C1, d1 = cell1.ival_constraints.poly()
-        C2, d2 = cell2.ival_constraints.poly()
-
-        e = rm.error(X, Y) if (include_err and testing_samples_found) else None
-
-        dmap = rel.DiscreteAffineMap(A, b, e)
-        part1 = rel.Partition(C1, d1, cell1)
-        part2 = rel.Partition(C2, d2, cell2)
-        sub_model = rel.Relation(part1, part2, dmap)
-        if __debug__:
-            print('----------------Finalized------------------')
-    return [sub_model]
+        print('error is under control...')
+        return [(rm, [q])]
 
 
-# TODO: Fix the excess arguement issue
-def q_affine_models(ntrain, ntest, q, dummy1, step_sim, tol, dummy2, include_err):
+def sim(step_sim, x_array):
+    """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
+    """
+    d, pvt, s = [np.array([])]*3
+    ci, pi = [np.array([])]*2
+    t0 = 0
+    Yl = []
+
+    for x in x_array:
+        (t_, x_, s_, d_, pvt_, u_) = step_sim(t0, x, s, d, pvt, ci, pi)
+        Yl.append(x_)
+
+    return np.vstack(Yl)
+
+
+def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
     """cell_affine_models
 
     Parameters
@@ -676,38 +379,70 @@ def q_affine_models(ntrain, ntest, q, dummy1, step_sim, tol, dummy2, include_err
     Notes
     ------
     """
-    # XXX: Generate different samples for each time step or reuse?
-    # Not clear!
     sub_models = []
+    X, Y = q.get_rels(ntrain, step_sim)
+    regression_models = mdl(tol, step_sim, qgraph, q, (X, Y), X, K)
 
-    X, Y = q.getxy_ignoramous(ntrain, step_sim)
-    rm = RegressionModel(X, Y)
-    X, Y = q.getxy_ignoramous(ntest, step_sim)
-    e_pc = rm.error_pc(X, Y) # error %
-    if __debug__:
-        print('error%:', e_pc)
-    #error = np.linalg.norm(e_pc, 2)
-    # error exceeds tol in error_dims
-    error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
+    # TODO: fix this messy handling...?
+    if not regression_models:
+        # no model was found...node must be a sink node, otherwise
+        # such a condition is not possible!
+        # It must be due to missing neighbors of th sink node.
+        assert(qgraph.out_degree(q) == 0)
+        # Now request for the model once more but given an infinite
+        # tolerance so that we always get one. K=1 for sanity's sake,
+        # as a depth > 1 should never be reached with tol = Inf.
+        regression_models = mdl(np.inf, step_sim, qgraph, q, (X, Y), X, 1)
+        # Due to the tolerance being Inf, we should get back a single
+        # model
+        assert(len(regression_models) == 1)
 
-    if len(error_dims) > 0:
-        err.warn('splitting on e%:{}, |e%|:{}'.format(
-            e_pc, np.linalg.norm(e_pc, 2)))
-        for split_q in q.split(axes=error_dims):
-            sub_models_ = q_affine_models(
-                    ntrain, ntest,
-                    split_q, dummy1, step_sim, tol, dummy2, include_err)
-            sub_models.extend(sub_models_)
-        return sub_models
-    else:
-        A, b, C, d = q.modelQ(rm)
+    for rm, q_seq in regression_models:
+        A, b = q.modelQ(rm)
         e = q.errorQ(include_err, X, Y, rm)
-        dmap = pwa.DiscreteAffineMap(A, b, e)
-        part = pwa.Partition(C, d, q)
-        sub_model = pwa.SubModel(part, dmap)
-        if __debug__:
-            print('----------------Finalized------------------')
-    return [sub_model]
+        dmap = rel.DiscreteAffineMap(A, b, e)
+
+        C, d = q.ival_constraints.poly()
+        p = pwa.Partition(C, d, q)
+
+        future_partitions = []
+        assert(len(q_seq) >= 1)
+
+        # If the cell has no neighbhors in the qgraph, it must be a
+        # sink node. Make them self loop
+
+#         if not pnexts:  Self loops are forced now
+#             pnexts = [p]
+#         else:
+#             pnexts = []
+
+        # Force self loops
+        #err.warn('forcing self loops for every location!')
+        pnexts = [p]
+
+        if len(q_seq) == 1:
+            # No relational modeling was done. Use the relations from
+            # the graph. Add transitions to cell only seen in the
+            # subgraph.
+            for qi in qgraph.neighbors(q):
+                C, d = qi.ival_constraints.poly()
+                pnexts.append(pwa.Partition(C, d, qi))
+
+        # Relational modeling is available. Add the edge which was
+        # used to model this transition.
+        else:
+            # Add the immediate next reachable state
+            qnext = q_seq[1]
+            C, d = qnext.ival_constraints.poly()
+            pnexts.append(pwa.Partition(C, d, qnext))
+            # Add the states reachable in future
+            for qi in q_seq[2:]:
+                C, d = qi.ival_constraints.poly()
+                future_partitions.append(pwa.Partition(C, d, qi))
+
+        sub_model = rel.KPath(dmap, p, pnexts, future_partitions)
+        sub_models.append(sub_model)
+    return sub_models
 
 
 def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
@@ -734,11 +469,6 @@ def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
     not only the one chosen one.
     """
     raise NotImplementedError
-
-
-
-
-
 
 
 ################################################
@@ -796,3 +526,203 @@ def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
 #         if __debug__:
 #             print('----------------Finalized------------------')
 #     return [sub_model]
+
+
+
+# def getxy_rel_ignoramous_force_min_samples(cell1, cell2, force, N, sim, t0=0):
+#     """getxy_rel_ignoramous
+
+#     """
+#     xl = []
+#     yl = []
+#     sat_count = 0
+#     if __debug__:
+#         obs_cells = set()
+#     while True:
+#         x_array, y_array = getxy_ignoramous(cell1, N, sim, t0=0)
+#         if __debug__:
+#             for i in y_array:
+#                 obs_cells.add(CM.cell_from_concrete(i, cell1.eps))
+#             print('reachable cells:', obs_cells)
+
+#         # satisfying indexes
+#         sat_array = cell2.ival_constraints.sat(y_array)
+#         sat_count += np.sum(sat_array)
+#         xl.append(x_array[sat_array])
+#         yl.append(y_array[sat_array])
+#         # If no sample is found and force is True, must keep sampling till
+#         # satisfying samples are found
+#         if (sat_count >= MIN_TRAIN) or (not force):
+#             break
+#         if __debug__:
+#             print('re-sampling, count:', sat_count)
+
+#     print('found samples: ', sat_count)
+#     return np.vstack(xl), np.vstack(yl)
+
+
+# #AA.plant_abs.get_abs_state_cell(abs_state.plant_state),
+# def cell_rel_affine_models(cell1, cell2, force, step_sim, ntrain, ntest, tol, include_err):
+#     """cell_affine_models
+
+#     Parameters
+#     ----------
+#     cell1 : source cell
+#     cell2 : target cell
+#     step_sim : 1 time step (delta_t) simulator
+#     tol : each abs state is split further into num_splits cells
+#     in order to meet: modeling error < tol (module ntests samples)
+
+#     Returns
+#     -------
+#     pwa.SubModel()
+
+#     Notes
+#     ------
+#     """
+#     # XXX: Generate different samples for each time step or reuse?
+#     # Not clear!
+#     sub_models = []
+
+#     X, Y = getxy_rel_ignoramous(cell1, cell2, force, ntrain, step_sim)
+#     # No samples found => no model
+#     training_samples_found = len(X) != 0
+#     if not training_samples_found:
+#         return [None]
+#     rm = RegressionModel(X, Y)
+#     X, Y = getxy_rel_ignoramous(cell1, cell2, True, ntest, step_sim)
+#     testing_samples_found = len(X) != 0
+#     # If valid samples are found, compute e_pc (error %) and dims
+#     # where error % >= given tol
+#     if testing_samples_found:
+#         e_pc = rm.error_pc(X, Y)
+#         error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
+#     # Otherwise, forget it!
+#     else:
+#         e_pc = None
+#         error_dims = []
+
+#     if __debug__:
+#         print('error%:', e_pc)
+
+#     if len(error_dims) > 0:
+#         err.warn('splitting on e%:{}, |e%|:{}'.format(
+#             e_pc, np.linalg.norm(e_pc, 2)))
+#         for split_cell1 in cell1.split(axes=error_dims):
+#             sub_models_ = cell_rel_affine_models(
+#                     split_cell1, cell2, False, step_sim, ntrain, ntest, tol, include_err)
+#             sub_models.extend(sub_models_)
+#         return sub_models
+#     else:
+#         A, b = rm.A, rm.b
+#         C1, d1 = cell1.ival_constraints.poly()
+#         C2, d2 = cell2.ival_constraints.poly()
+
+#         e = rm.error(X, Y) if (include_err and testing_samples_found) else None
+
+#         dmap = rel.DiscreteAffineMap(A, b, e)
+#         part1 = rel.Partition(C1, d1, cell1)
+#         part2 = rel.Partition(C2, d2, cell2)
+#         sub_model = rel.Relation(part1, part2, dmap)
+#         if __debug__:
+#             print('----------------Finalized------------------')
+#     return [sub_model]
+
+
+# def refine_rel_model_based(
+#         AA, error_paths, pi_seq_list, sp, sys_sim, opts, sys, prop):
+#     '''does not handle pi_seq_list yet'''
+
+#     # abs_state relations: maps an abs_state to other abs_states
+#     # reachable in one time step
+#     abs_relations = defaultdict(set)
+#     for path in error_paths:
+#         # abs_state_1 -> abs_state_2
+#         for a1, a2 in U.pairwise(path):
+#             abs_relations[a1].add(a2)
+
+#     flat_relations = []
+#     for abs_state, rch_states in abs_relations.iteritems():
+#         flat_relation = list(itertools.product([abs_state], rch_states))
+#         flat_relations.extend(flat_relation)
+
+#     pwa_model = build_pwa_model(
+#             AA, flat_relations, sp, opts.max_model_error,
+#             opts.model_err, 'rel')
+
+#     if __debug__:
+#         sim_n_plot(error_paths, pwa_model, AA, sp, opts)
+#     check4CE(pwa_model, error_paths, sys.sys_name, 'rel', AA, sys, prop, sp, opts.bmc_engine)
+
+
+
+# def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
+#     """cell_affine_models
+
+#     Parameters
+#     ----------
+#     cell : cell
+#     step_sim : 1 time step (delta_t) simulator
+#     tol : each abs state is split further into num_splits cells
+#     in order to meet: modeling error < tol (module ntests samples)
+
+#     Returns
+#     -------
+#     pwa.SubModel()
+
+#     Notes
+#     ------
+#     """
+#     # XXX: Generate different samples for each time step or reuse?
+#     # Not clear!
+#     sub_models = []
+
+#     X, Y = q.getxy_ignoramous(ntrain, step_sim, qgraph)
+#     rm = RegressionModel(X, Y)
+#     X, Y = q.getxy_ignoramous(ntest, step_sim)
+#     e_pc = rm.error_pc(X, Y) # error %
+#     if __debug__:
+#         print('error%:', e_pc)
+#     #error = np.linalg.norm(e_pc, 2)
+#     # error exceeds tol in error_dims
+#     error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
+
+#     if len(error_dims) > 0:
+#         err.warn('splitting on e%:{}, |e%|:{}'.format(
+#             e_pc, np.linalg.norm(e_pc, 2)))
+#         for split_q in q.split(axes=error_dims):
+#             sub_models_ = q_affine_models(
+#                     ntrain, ntest,
+#                     split_q, step_sim, tol, include_err)
+#             sub_models.extend(sub_models_)
+#         return sub_models
+#     else:
+#         A, b, C, d = q.modelQ(rm)
+#         e = q.errorQ(include_err, X, Y, rm)
+#         dmap = pwa.DiscreteAffineMap(A, b, e)
+#         part = pwa.Partition(C, d, q)
+#         sub_model = pwa.SubModel(part, dmap)
+#         if __debug__:
+#             print('----------------Finalized------------------')
+#     return [sub_model]
+
+# def get_qs_from_error_paths(sp, AA, error_paths, pi_seqs):
+#     if AA.num_dims.pi == 0:
+#         # traversed_abs_state_set
+#         tas = {state for path in error_paths for state in path}
+#         qs = [Qx(abs_state2cell(a, AA)) for a in tas]
+#     else:
+#         pi_eps = sp.pi_ref.eps
+#         # collect all pi which were encountered with the abs_state
+#         abs_state_pi = defaultdict(set)
+#         for path, pi_seq in zip(error_paths, pi_seqs):
+#             for abs_state, pi in zip(path[:-1], pi_seq):
+#                 abs_state_pi[abs_state].add(pi)
+
+#         qs = []
+#         for abs_state, pi_ic_list in abs_state_pi.iteritems():
+#             xcell = abs_state2cell(abs_state, AA)
+#             for pi_ic in pi_ic_list:
+#                 wcell = ic2cell(pi_ic, pi_eps)
+#                 qs.append(Qxw(xcell, wcell, sp.pi_ref.i_cons))
+#     return qs
