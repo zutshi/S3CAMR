@@ -415,8 +415,18 @@ class GraphNX(object):
 
         return path_gen()
 
+    # TODO: Add this method to the abstract graph class
+    def __iter__(self):
+        return self.G.__iter__()
+
     def neighbors(self, node):
         return self.G.neighbors(node)
+
+    def out_degree(self, node):
+        return self.G.out_degree(node)
+
+    def iteredges(self):
+        return self.G.edges_iter()
 
     def draw(self, pos_dict=None):
         nx.draw_networkx(self.G, pos=pos_dict, labels=pos_dict,
