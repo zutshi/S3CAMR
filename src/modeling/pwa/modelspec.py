@@ -80,24 +80,16 @@ class DiscreteAffineMap(object):
         '''
         self.A = A
         self.b = b
-        self._error = e
+        assert(isinstance(e, cons.IntervalCons))
+        self.error = e
         return
 
-    @property
-    def error(self):
-        return self._error
-
-    @error.setter
-    def error(self, val):
-        assert(isinstance(val) == cons.IntervalCons)
-        self._error = val
-
     def __repr__(self):
-        s = '({},{},{})'.format(self.A, self.b, self.e)
+        s = '({},{},{})'.format(self.A, self.b, self.error)
         return s
 
     def __str__(self):
-        s = 'Mi - >(\n{},\n{}+-{})'.format(self.A, self.b, self.e)
+        s = 'Mi - >(\n{},\n{}+-{})'.format(self.A, self.b, self.error)
         return s
 
 
@@ -132,14 +124,14 @@ class ModelGeneric(ModelSpec):
         self.nlocs = 0
         self.sub_models = {}
         self.idx = 0
-        self.relation_ids = set()
+        #self.relation_ids = set()
         return
 
     def add(self, sub_model):
         part_id = self.idx
         self.sub_models[part_id] = sub_model
         self.idx += 1
-        self.relation_ids.add((sub_model.ID))
+        #self.relation_ids.add((sub_model.ID))
 
     #def get_sub_model(self, part_id):
     #    return self.sub_models[part_id]
