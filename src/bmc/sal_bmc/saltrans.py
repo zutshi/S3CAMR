@@ -33,7 +33,6 @@ class SALTransSys(object):
         self.module_name = module_name
         self.transitions = []
         self.prop = prop
-        # TODO: ask for inputs and outputs
         return
 
     def add_transition(self, tran):
