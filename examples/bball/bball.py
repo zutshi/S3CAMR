@@ -12,7 +12,7 @@ from assimulo.solvers import LSODAR
 from assimulo.solvers import RungeKutta34
 import pylab as plt
 
-PLT = False
+PLT = True
 
 
 class SIM(object):
