@@ -4,6 +4,7 @@ Creates a SAL transition system: Relational
 '''
 
 import itertools
+import collections
 
 import saltrans
 
@@ -11,9 +12,9 @@ import saltrans
 # Make classes out of every header, prop, init, etc
 class SALTransSysRel(saltrans.SALTransSys):
 
-    def __init__(self, module_name, num_dim, init_cons, prop):
+    def __init__(self, module_name, vs, init_cons, prop):
         super(SALTransSysRel, self).__init__(
-                module_name, num_dim, init_cons, prop)
+                module_name, vs, init_cons, prop)
         # Store a mapping from a cell id: tuple -> sal loc name: str
         self.locs = {}
         self.id_ctr = itertools.count()
@@ -32,6 +33,26 @@ class SALTransSysRel(saltrans.SALTransSys):
 #         if loc not in self.locs:
 #             self.locs[loc] = 'C' + str(next(self.id_ctr))
 #         return None
+
+    def add_location(self, location):
+        """Add a location
+
+        Parameters
+        ----------
+        locations : location/cell id
+
+        Notes
+        ------
+        Assumes every location is hashable and unique, else an
+        overwrite will occur!
+        """
+        # TODO: Fix the ugliness using setdefault
+        if location in self.locs:
+            return self.locs[location]
+        else:
+            self.locs[location] = 'C' + str(next(self.id_ctr))
+            return self.locs[location]
+        return
 
     def add_locations(self, locations):
         """add_locations
@@ -63,11 +84,6 @@ class SALTransSysRel(saltrans.SALTransSys):
 
 
 Transition = saltrans.Transition
-#     def __init__(self, name, g, r):
-#         super(Transition, self).__init__(name, g, r)
-#         #self.l1 = g.cell_id
-#         #self.l2 = r.nex_cell_id
-#         return
 
 
 class Guard(saltrans.Guard):
@@ -82,10 +98,11 @@ class Guard(saltrans.Guard):
 
 
 class Reset(saltrans.Reset):
-    def __init__(self, next_cell_id, A, b, error=None):
+    def __init__(self, next_cell_ids, A, b, error):
         super(Reset, self).__init__(A, b, error)
-        self.next_cell_id = next_cell_id
+        self.next_cell_ids = next_cell_ids
 
     def __str__(self):
         s = super(Reset, self).__str__()
-        return s + ";\ncell' = " + self.next_cell_id
+        assert(isinstance(self.next_cell_ids, collections.Iterable))
+        return s + ";\ncell' IN {" + ', '.join(self.next_cell_ids) + "}"
