@@ -1,4 +1,5 @@
 from __future__ import print_function
+import itertools as it
 
 #from collections import defaultdict
 
@@ -31,7 +32,7 @@ MAX_TRAIN = 2000
 
 MAX_TEST = 200
 
-K = 1
+K = 2
 
 NUM_SIMS = 100
 
@@ -40,8 +41,17 @@ def abs_state2cell(abs_state, AA):
     return CM.Cell(abs_state.plant_state.cell_id, AA.plant_abs.eps)
 
 
+def ic2multicell(ic, eps):
+    cells = CM.ic2cell(ic, eps)
+    return cells
+
+
 def ic2cell(ic, eps):
     cells = CM.ic2cell(ic, eps)
+    # Due to path normalization the entire pi range gets added as an
+    # edge by S3CAM wherever paths are shorter than the max path
+    # length. Please fix this and switch on the assertion.
+    # FIXED
     assert(len(cells) == 1)
     return cells[0]
     #return CM.Cell(CM.cell_from_concrete(pi, eps), eps)
@@ -91,12 +101,71 @@ def get_qgraph(sp, AA, G, error_paths, pi_seqs):
     for path, pi_seq in zip(error_paths, pi_seqs):
         for (a1, a2), pi_ic in zip(U.pairwise(path), pi_seq):
             x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
-            q1, q2 = Qx(x1cell), Qx(x2cell)
             if AA.num_dims.pi:
                 wcell = ic2cell(pi_ic, sp.pi_ref.eps)
             else:
                 wcell = None
+            q1, q2 = Qx(x1cell), Qx(x2cell)
             G.add_edge(q1, q2, pi=wcell)
+    return G
+
+
+#TODO: URGENT: The error path and pi_seq generated from S3CAM is not
+# clear. Are we capturing multiple pi values between same states?
+# Please review the code where the pi values are added to the edges
+# and error paths and pi_seqs extracted.
+
+# Subsumes get_qgraph
+def get_qgraph_xw(sp, AA, G, error_paths, pi_seqs):
+#     for i, pi_seq in enumerate(pi_seqs):
+#         for j, pi in enumerate(pi_seq):
+#             try:
+#                 ic2cell(pi, sp.pi_ref.eps)
+#             except AssertionError:
+#                 print(i,j)
+#                 print(pi)
+#      exit()
+
+    for path, pi_seq in zip(error_paths, pi_seqs):
+        # Normalize the (x, w) list
+        # e.g., for a 3 state length path, we have 3 abstract states
+        # and 2 pi cells (ic)
+        # a0 --pi01--> a1 --pi12--> a2
+        # Which means that the new flattened graph will have nodes
+        # like (a0, p01), (a1, p12), (a2, ?)
+        # a2 can not have None as its pi due to self loops being
+        # modled. As a pi value is not known for self loop dynamics,
+        # we assume all possible pi values, i.e., pi \in pi_cons and
+        # append it at the end of the pi_seq.
+        # Note, instead of directly appending it, we append None, and
+        # detect it below and replace accordingly. This is done in
+        # order to keep ic2cell() and ic2multicell() separate. This
+        # helps in catching bugs! Can be removed later to improve
+        # performance.
+        pi_seq.append(None)
+
+        # TODO: Merge the two branches?
+        if AA.num_dims.pi:
+            for (a1, a2), (pi1_ic, pi2_ic) in it.izip_longest(U.pairwise(path), U.pairwise(pi_seq)):
+                x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
+                w1cell = ic2cell(pi1_ic, sp.pi_ref.eps)
+
+                q1 = Qxw(x1cell, w1cell)
+
+                if pi2_ic is None:
+                    w2cells = ic2multicell(sp.pi_ref.i_cons, sp.pi_ref.eps)
+                    q2s = [Qxw(x2cell, w2cell) for w2cell in w2cells]
+                    for q2 in q2s:
+                        G.add_edge(q1, q2)
+                else:
+                    w2cell = ic2cell(pi2_ic, sp.pi_ref.eps)
+                    q2 = Qxw(x2cell, w2cell)
+                    G.add_edge(q1, q2)
+        else:
+            for (a1, a2) in U.pairwise(path):
+                x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
+                q1, q2 = Qx(x1cell), Qx(x2cell)
+                G.add_edge(q1, q2)
     return G
 
 
@@ -109,7 +178,7 @@ def refine_dft_model_based(
 
     G = graph_factory(opts.graph_lib)
 
-    qg = get_qgraph(sp, AA, G, error_paths, pi_seqs)
+    qg = get_qgraph_xw(sp, AA, G, error_paths, pi_seqs)
     pwa_model = build_pwa_model(
             AA, qg, sp, opts.max_model_error,
             opts.model_err, 'dft')
@@ -123,7 +192,8 @@ def refine_dft_model_based(
 
     if __debug__:
         # Need to define a new function to simulate inputs
-        sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts)
+        #sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts)
+        pass
     check4CE(pwa_model, depth, sys.sys_name, 'dft', AA, sys, prop, sp, opts.bmc_engine)
 
 
@@ -165,13 +235,14 @@ def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, bmc_engi
 def verify_bmc_trace(AA, sys, prop, sp, trace, xs, ws):
     """Get multiple traces and send them for random testing
     """
-    print(trace[0])
     init_assignments = trace[0].assignments
     x_array = np.array([init_assignments[x] for x in xs])
+    # Trace consists of transitions, but we want to interpret it as
+    # locations (abs_states + wi). Hence, subtract 1 from trace.
     pi_seq = [[step.assignments[w] for w in ws] for step in trace[:-1]]
     print(x_array)
     print(pi_seq)
-    rt.concretize_bmc_trace(sys, prop, AA, sp, x_array, pi_seq)
+    rt.concretize_bmc_trace(sys, prop, AA, sp, len(trace)-1, x_array, pi_seq)
     return
 
 
@@ -311,6 +382,10 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
 
 
 def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
+    assert(X.shape[1] == q.dim)
+    assert(Y_.shape[1] == q.dim)
+    assert(X.shape[0] == Y.shape[0] == Y_.shape[0])
+
     if k == -1:
         err.warn('max depth exceeded but the error > tol. Giving up!')
         return []
@@ -324,7 +399,7 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
     if error_exceeds_tol:
         ms = []
         for qi in qgraph.neighbors(q):
-            Y__ = sim(step_sim, Y_)
+            Y__ = qi.sim(step_sim, Y_)
             sat = qi.sat(Y__)
             # TODO: If we are out of samples, we can't do much. Need to
             # handle this situation better? Not sure? Request for more
@@ -347,19 +422,19 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
         return [(rm, [q])]
 
 
-def sim(step_sim, x_array):
-    """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
-    """
-    d, pvt, s = [np.array([])]*3
-    ci, pi = [np.array([])]*2
-    t0 = 0
-    Yl = []
+# def sim(step_sim, x_array):
+#     """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
+#     """
+#     d, pvt, s = [np.array([])]*3
+#     ci, pi = [np.array([])]*2
+#     t0 = 0
+#     Yl = []
 
-    for x in x_array:
-        (t_, x_, s_, d_, pvt_, u_) = step_sim(t0, x, s, d, pvt, ci, pi)
-        Yl.append(x_)
+#     for x in x_array:
+#         (t_, x_, s_, d_, pvt_, u_) = step_sim(t0, x, s, d, pvt, ci, pi)
+#         Yl.append(x_)
 
-    return np.vstack(Yl)
+#     return np.vstack(Yl)
 
 
 def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
@@ -383,19 +458,20 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
     X, Y = q.get_rels(ntrain, step_sim)
     regression_models = mdl(tol, step_sim, qgraph, q, (X, Y), X, K)
 
-    # TODO: fix this messy handling...?
-    if not regression_models:
-        # no model was found...node must be a sink node, otherwise
-        # such a condition is not possible!
-        # It must be due to missing neighbors of th sink node.
-        assert(qgraph.out_degree(q) == 0)
-        # Now request for the model once more but given an infinite
-        # tolerance so that we always get one. K=1 for sanity's sake,
-        # as a depth > 1 should never be reached with tol = Inf.
-        regression_models = mdl(np.inf, step_sim, qgraph, q, (X, Y), X, 1)
-        # Due to the tolerance being Inf, we should get back a single
-        # model
-        assert(len(regression_models) == 1)
+    assert(regression_models)
+#     # TODO: fix this messy handling...?
+#     if not regression_models:
+#         # no model was found...node must be a sink node, otherwise
+#         # such a condition is not possible!
+#         # It must be due to missing neighbors of th sink node.
+#         assert(qgraph.out_degree(q) == 0)
+#         # Now request for the model once more but given an infinite
+#         # tolerance so that we always get one. K=1 for sanity's sake,
+#         # as a depth > 1 should never be reached with tol = Inf.
+#         regression_models = mdl(np.inf, step_sim, qgraph, q, (X, Y), X, 1)
+#         # Due to the tolerance being Inf, we should get back a single
+#         # model
+#         assert(len(regression_models) == 1)
 
     for rm, q_seq in regression_models:
         A, b = q.modelQ(rm)
