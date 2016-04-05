@@ -327,6 +327,61 @@ class TopLevelAbs:
         #print('attr_map:', attr_map)
         return attr_map['ci'], attr_map['pi']
 
+
+    def get_error_paths_not_normalized(self, initial_state_set,
+                        final_state_set, pi_ref,
+                        ci_ref, pi_cons, ci_cons,
+                        max_paths):
+        '''
+        @type pi_cons: constraints.IntervalCons
+        @type ci_cons: constraints.IntervalCons
+        '''
+
+        MAX_ERROR_PATHS = max_paths
+        ci_dim = self.num_dims.ci
+        pi_dim = self.num_dims.pi
+        path_list = []
+        ci_seq_list = []
+        pi_seq_list = []
+
+        error_paths = self.compute_error_paths(initial_state_set, final_state_set, MAX_ERROR_PATHS)
+        bounded_error_paths = error_paths
+
+        def get_ci_seq(path):
+            return self.get_seq_of_ci_pi(path)[0]
+
+        def get_pi_seq(path):
+            return self.get_seq_of_ci_pi(path)[1]
+
+        def get_empty(_):
+            return []
+
+        get_ci = get_ci_seq if ci_dim != 0 else get_empty
+        get_pi = get_pi_seq if pi_dim != 0 else get_empty
+
+        unique_paths = set()
+        for path in bounded_error_paths:
+            pi_seq_cells = get_pi(path)
+            pi_ref.update_from_path(path, pi_seq_cells)
+            pi_seq = [CM.ival_constraints(pi_cell, pi_ref.eps) for pi_cell in pi_seq_cells]
+            if ci_ref is not None:
+                ci_seq_cells = get_ci(path)
+                ci_ref.update_from_path(path, ci_seq_cells)
+                ci_seq = [CM.ival_constraints(ci_cell, ci_ref.eps) for ci_cell in ci_seq_cells]
+            else:
+                ci_seq = get_ci(path)
+
+            #FIXME: Why are uniqe paths found only for the case when dim(ci) != 0?
+            plant_states_along_path = tuple(state.plant_state for state in path)
+            if plant_states_along_path not in unique_paths:
+                unique_paths.add(plant_states_along_path)
+                ci_seq_list.append(ci_seq)
+                pi_seq_list.append(pi_seq)
+                path_list.append(path)
+
+
+        return (path_list, ci_seq_list, pi_seq_list)
+
     def get_error_paths(self, initial_state_set,
                         final_state_set, pi_ref,
                         ci_ref, pi_cons, ci_cons,
