@@ -408,7 +408,7 @@ def falsify_using_model(
     # creates a new pi_ref, ci_ref
     (error_paths,
      ci_seq_list,
-     pi_seq_list) = current_abs.get_error_paths(initial_state_set,
+     pi_seq_list) = current_abs.get_error_paths_not_normalized(initial_state_set,
                                                 final_state_set,
                                                 pi_ref,
                                                 ci_ref,
