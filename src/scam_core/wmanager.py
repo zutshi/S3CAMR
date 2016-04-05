@@ -39,7 +39,7 @@ class WMap(object):
 
     # TODO: memoize this!
     def refined_get(self, abs_state):
-        parent_cell = CM.parent_of(abs_state)
+        parent_cell = CM.parent_of(abs_state.cell_id)
         parent_i_cells = self.s2p.get(parent_cell, self.get_all_i_cells())
         i_cells = set(ccell
                       for pcell in parent_i_cells
