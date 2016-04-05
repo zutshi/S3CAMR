@@ -16,7 +16,7 @@ import state
 import cellmanager as CM
 
 
-def concretize_bmc_trace(sys, prop, AA, sp, x0, pi_seq):
+def concretize_bmc_trace(sys, prop, AA, sp, trace_len, x0, pi_seq):
     """
     Tries to concretize a BMC trace
 
@@ -35,13 +35,13 @@ def concretize_bmc_trace(sys, prop, AA, sp, x0, pi_seq):
     # 1)
     # Check exact returned trace.
     print('Checking trace returned by BMC...')
-    trace = trace_violates(sys_sim, sys, prop, x0, pi_seq)
+    trace = trace_violates(sys_sim, sys, prop, trace_len, x0, pi_seq)
     if trace:
         print('violation found')
-        print(trace)
         exit()
     else:
         print('nothing found')
+        exit()
     # 2)
     # Check using random sims. Find the abstract state of the trace's
     # X0, and send it to random_test() along with pi_seqs
@@ -68,8 +68,12 @@ def concretize_bmc_trace(sys, prop, AA, sp, x0, pi_seq):
     exit()
 
 
-def trace_violates(sys_sim, sys, prop, x, pi_seq):
-    num_segments = int(np.ceil(prop.T / sys.delta_t))
+def trace_violates(sys_sim, sys, prop, trace_len, x, pi_seq):
+    # THe property can be violated at t <= Time Horizon. In that case
+    # simulate only as much as the trace length allows.
+    num_segments = trace_len
+    # num_segments = int(np.ceil(prop.T / sys.delta_t))
+
     #num_segments = len(pi)
     z = np.array(np.empty((1, 0)))
     pvt = z
@@ -94,7 +98,8 @@ def trace_violates(sys_sim, sys, prop, x, pi_seq):
 #     print(concrete_states.pvt_states.shape)
 #     print(concrete_states.plant_extraneous_inputs.shape)
 
-    trace = simsys.simulate(sys_sim, concrete_states[0], prop.T)
+    trace = simsys.simulate(sys_sim, concrete_states[0], sys.delta_t*num_segments)
+    print(trace)
     if check_prop_violation(trace, prop):
         return trace
     else:
@@ -161,7 +166,7 @@ def check_prop_violation(trace, prop):
     ------
     """
     # check using random sims
-    idx = prop.final_cons.contains(trace.x_array)
+    idx = prop.final_cons.contains(trace.x_array+0.0001)
     sat_x, sat_t = trace.x_array[idx], trace.t_array[idx]
     if sat_x.size != 0:
         print('x0={} -> x={}, t={}'.format(
@@ -309,6 +314,9 @@ def random_test(
     sim_num = 0
     simTime = 0.0
     i = 0
+    # records the actual pis used. These are printed in case a
+    # violation is found for reproducibility
+    pi_seqs_used = []
     while sim_num < A.N:
         if A.num_dims.ci == 0:
             ci_array = np.zeros((num_samples, 0))
@@ -350,6 +358,7 @@ def random_test(
 #             print('pi_cons_ub.shape:', pi_cons_ub.shape)
 #             print('num_samples', num_samples)
             pi_array = pi_cons_lb + random_arr * (pi_cons_ub - pi_cons_lb)
+            pi_seqs_used.append(pi_array)
 
         (s_array_, u_array) = compute_concrete_controller_output(
             A,
@@ -359,7 +368,6 @@ def random_test(
             s_array,
             num_samples,
             )
-        print(x_array)
         concrete_states = st.StateArray(  # t
                                         # cont_state_array
                                         # abs_state.discrete_state
@@ -396,6 +404,8 @@ def random_test(
                 if xf.x in system_params.final_cons:
                     res.append(idx)
                     print(x0_array[idx, :], d0_array[idx, :], '->', '\t', xf.x, xf.d)
+                    tmp_pi = [pi[idx, :] for pi in pi_seqs_used]
+                    print('pi_seq:', tmp_pi)
                     #if A.num_dims.ci != 0:
                     #    print('ci:', ci_array[idx])
                     #if A.num_dims.pi != 0:
