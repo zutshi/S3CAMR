@@ -76,8 +76,12 @@ class Step(object):
 
 
 def Trace(s):
-    trace = s[:-1]
+    trace_with_NOP = s[:-1]
     exec_time = s[-1]
+
+    # remove NOPs
+    trace = [step for step in trace_with_NOP if step.tid != 'NOP']
+
     return TraceSimple(trace)
 
 
