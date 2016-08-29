@@ -1,6 +1,7 @@
 import itertools as it
+import utils as U
 # full precision
-PREC = '0.5'
+PREC = '0.3'
 
 
 def float2str(n):
@@ -13,10 +14,6 @@ def float2str(n):
     Returns
     -------
     String notation truncated to PREC
-
-    Notes
-    ------
-    Returns empty string '' if after truncation the float is 0.0
     """
     return '{n:{p}f}'.format(p=PREC, n=n).rstrip('0').rstrip('.')
 
@@ -69,4 +66,9 @@ def linexpr2str(xs, coeffs, b):
     """
     b1 = (b, '1')
     cx = it.chain(it.izip(coeffs, xs), [b1])
-    return ' + '.join((filter(None, (cx2str(c, x) for c, x in cx))))
+    ret = ' + '.join((filter(None, (cx2str(c, x) for c, x in cx))))
+    # make sure an empty string is not returned. This can happen if
+    # the linexpr evaluates to a 0
+    if not ret:
+        ret = '0'
+    return ret

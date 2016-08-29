@@ -6,7 +6,13 @@ from itertools import count
 from collections import defaultdict
 from blessed import Terminal
 
+from networkx.drawing.nx_agraph import graphviz_layout
+from networkx.drawing.nx_agraph import write_dot
+
+GRAPH_PATH = './graph.dot'
+
 term = Terminal()
+
 
 class GraphNX(object):
 
@@ -431,6 +437,13 @@ class GraphNX(object):
     def draw(self, pos_dict=None):
         nx.draw_networkx(self.G, pos=pos_dict, labels=pos_dict,
                          with_labels=True)
+
+    def draw_graphviz(self):
+        pos = graphviz_layout(self.G)
+        #nx.draw_graphviz(self.G, pos)
+        nx.draw(self.G, pos)
+        print('generating graph:', GRAPH_PATH)
+        write_dot(self.G, GRAPH_PATH)
 
     def __contains__(self, key):
         return key in self.G

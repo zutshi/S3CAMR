@@ -27,7 +27,14 @@ class SIM(object):
         self.solver.set_initial_value(X0, t=0.0)
         self.solver.set_f_params(U)
         X_ = self.solver.integrate(T)
-        pvf = pc.check(T, X_)
+
+        # TODO: HACK! to make prop_check work
+        tmp_X = np.empty(3)
+        tmp_X[0:2] = X_
+        # dummy val
+        tmp_X[2] = 0
+
+        pvf = pc.check(T, tmp_X)
         # Y = C*x + D*u
 
         #plt.plot(plot_data[0] + Ti, plot_data[1][:, 0])
@@ -38,21 +45,28 @@ class SIM(object):
 
         return X_, pvf
 
-    def sim(self, TT, X0, D, P, _, W, property_checker):
-        print(TT, X0, D, P, W)
-
+    def sim(self, TT, X0, D, P, U, W, property_checker):
         Ti = TT[0]
         Tf = TT[1]
         T = Tf - Ti
 
-        u, D_ = controller(X0, D, W)
-        X_, pvf = self.plant_sim(T, X0, u, property_checker)
+        # TODO: How to resolve this temp. fix?
+        # X[2] is being used as a placeholder for PI controller's
+        # (integrator) state. Ideally D should be used, but model-dft
+        # does regression only on X
+        S = X0[2]
+        u, S_ = controller(X0, S, W)
+        X = X0[0:2]
+        X_, pvf = self.plant_sim(T, X, u, property_checker)
 
-        dummy_P = np.zeros(P.shape)
+        Y = X0.copy()
+        Y[0:2] = X_
+        Y[2] = S_
+        dummy_P = P#np.zeros(P.shape)
         ret_t = Tf
-        ret_X = X_
+        ret_X = Y
         # ret_Y = Y
-        ret_D = D_
+        ret_D = D#D_
         ret_P = dummy_P
         return (ret_t, ret_X, ret_D, ret_P), pvf
 
@@ -146,7 +160,14 @@ def solout_fun(property_checker, plot_data):
         # print Y
         # print t, Y
 
-        if property_checker.check(t, Y):
+        # TODO: HACK! to make prop_check work
+        tmp_Y = np.empty(3)
+        tmp_Y[0:2] = Y
+        # dummy val
+        tmp_Y[2] = 0
+        #####################################
+
+        if property_checker.check(t, tmp_Y):
             #violating_state[0] = (np.copy(t), np.copy(Y))
             # print 'violation found:', violating_state[0]
             # return -1 to stop integration

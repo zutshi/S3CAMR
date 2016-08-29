@@ -117,7 +117,7 @@ class SALTransSys(object):
     def init_set(self):
         iv = self.init_cons
         s = ['\n\t{v} IN {{ r : REAL | r >=  {l} AND r <= {h} }}'.format(
-            v=v, i=i, l=iv.l[i], h=iv.h[i]) for i, v in enumerate(self.vs)]
+            v=v, l=float2str(iv.l[i]), h=float2str(iv.h[i])) for i, v in enumerate(self.vs)]
         return ';'.join(s)
 
     # sal description
@@ -265,12 +265,12 @@ class Reset(object):
         set_def = ("{xi_}' IN {{ r : REAL| "
                    "r >= {Axi_plus_delta_li} AND "
                    "r <= {Axi_plus_delta_hi} }}")
-        for vsi_, Ai, bi, dli, dhi in zip(self.vs_, self.A, self.b, delta_l, delta_h):
+        for vsi_, Ai, dli, dhi in zip(self.vs_, self.A, delta_l, delta_h):
             #if error is not significant, i.e., it is less than the
             # precision used while dumping sal file, ignore it. Else,
             # include it and make the rhs of the assignment a set.
             if float2str(dli) == float2str(dhi):
-                assignment_stmt = vsi_ + "' = " + linexpr2str(self.vs, Ai, bi)
+                assignment_stmt = vsi_ + "' = " + linexpr2str(self.vs, Ai, dli)
             else:
                 assignment_stmt = set_def.format(
                         xi_=vsi_,

@@ -89,7 +89,8 @@ class DiscreteAffineMap(object):
         return s
 
     def __str__(self):
-        s = 'Mi - >(\n{},\n{}+-{})'.format(self.A, self.b, self.error)
+        s = 'Mi - >(\n{},\n{} + [{}, {}])'.format(
+                self.A, self.b, self.error.l, self.error.h)
         return s
 
 
@@ -149,6 +150,8 @@ class ModelGeneric(ModelSpec):
         try:
             sub_model = self.find_sub_model(x)
         except ModelError:
+            if __debug__:
+                print('No sub-model found')
             return x
 
         return sub_model.predict(x)

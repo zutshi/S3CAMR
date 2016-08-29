@@ -298,7 +298,7 @@ class Plotting(PlottingBase):
                  else prep_x_trace(trace_list, o_idx))
 
             for i, j in zip(x, y):
-                ax.plot(i, j)
+                ax.plot(i, j, '-*')
 
     def plot_trace_list_sat(self, trace_list):
         '''

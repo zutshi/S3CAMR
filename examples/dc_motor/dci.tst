@@ -1,4 +1,4 @@
-
+inf = float('inf')
 delta_t = 0.02
 
 
@@ -44,14 +44,17 @@ plant_pvt_init_data = None
 
 # P5
 T = 1.0
-initial_set = [[-0.0, -0.0], [0.0, 0.0]]
-pi = [[-0.5], [-0.0]]
-error_set = [[1.0, 10.0], [1.2, 11.0]]
+initial_set = [[0.0, 0.0, 0], [0.0, 0.0, 0]]
+pi = [[-0.5], [-0.000001]]
+error_set = [[1.0, 10.0, -inf], [1.2, 11.0, inf]]
 # vio = 0/100k took 45 mins without plotting
 # symex: falsified in ~2m with/without plotting
 #   took only one iter
 #   needs 2 samples! takes around 92s with and 51s w/o plotting and logging
-grid_eps = [0.1, 0.1]
+#grid_eps = [0.1, 0.1]
+
+grid_eps = [.5, .5, .5]
+
 pi_grid_eps = [0.5]
 min_smt_sample_dist = 0.05
 #num_samples = 2 #symex
@@ -61,7 +64,7 @@ num_samples = 2 #concrete
 # error_set = [[1.2, 10], [1.3, 11]] #nahi ho raha! BUT random testing results havent
 #confirmed if falsification exist
 
-initial_discrete_state = [0.0]
+initial_discrete_state = []
 MAX_ITER = 6
 
 
