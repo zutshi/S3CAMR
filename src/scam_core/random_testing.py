@@ -1,7 +1,10 @@
 from __future__ import print_function
 
+import sys as SYS
+
 import numpy as np
 import tqdm
+from blessed import Terminal
 
 import err
 import utils as U
@@ -15,6 +18,7 @@ import simulatesystem as simsys
 import state
 import cellmanager as CM
 
+term = Terminal()
 
 def concretize_bmc_trace(sys, prop, AA, sp, trace_len, x0, pi_seq):
     """
@@ -37,20 +41,26 @@ def concretize_bmc_trace(sys, prop, AA, sp, trace_len, x0, pi_seq):
     print('Checking trace returned by BMC...')
     trace = trace_violates(sys_sim, sys, prop, trace_len, x0, pi_seq)
     if trace:
-        print('violation found')
+        print(term.green('violation found'))
+        print('violation found', file=SYS.stderr)
         exit()
     else:
         print('nothing found')
-        exit()
+        print('nothing found', file=SYS.stderr)
+        print(term.red('nothing found'))
+        #exit()
     # 2)
     # Check using random sims. Find the abstract state of the trace's
     # X0, and send it to random_test() along with pi_seqs
     print('concretizing using sampling X0...[fixed X0+pi_seq]')
     if abstract_trace_violates(sys, sp, prop, AA, x0, pi_seq):
         print('our job is done...')
+        print('our job is done...', file=SYS.stderr)
         exit()
     else:
         print('nothing found')
+        print('nothing found', file=SYS.stderr)
+        exit()
 
 
     # 3)
@@ -351,6 +361,10 @@ def random_test(
 
             pi_cons_lb = reduce(lambda acc_arr, arr: np.concatenate((acc_arr, arr)), pi_lb_list)
             pi_cons_ub = reduce(lambda acc_arr, arr: np.concatenate((acc_arr, arr)), pi_ub_list)
+
+            #print(pi_cons_lb)
+            #print(pi_cons_ub)
+            #U.pause()
 
             random_arr = np.random.rand(num_samples, A.num_dims.pi)
 
