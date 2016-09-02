@@ -10,6 +10,9 @@ import cellmanager as CM
 import err
 from utils import print
 
+
+import matplotlib.pyplot as plt
+
 MIN_TRAIN = 50
 MIN_TEST = MIN_TRAIN
 MAX_ITER = 25
@@ -217,10 +220,17 @@ class Qx(Q):
         t0 = 0
         Yl = []
 
+        #plt.figure()
+
         x_array = self.xcell.sample_UR(N)
+        #print(t0)
+        #print(x_array)
         for x in x_array:
             (t_, x_, s_, d_, pvt_, u_) = sim(t0, x, s, d, pvt, ci, pi)
             Yl.append(x_)
+        #plt.show()
+        #exit()
+        #raw_input('drawn?')
 
         return x_array, np.vstack(Yl)
 

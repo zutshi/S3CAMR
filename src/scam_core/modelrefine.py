@@ -22,6 +22,8 @@ from constraints import IntervalCons, top2ic
 
 from graphs.graph import factory as graph_factory
 
+from IPython import embed
+
 #np.set_printoptions(suppress=True, precision=2)
 
 # multiply num samples with the
@@ -32,7 +34,7 @@ MAX_TRAIN = 2000
 
 MAX_TEST = 200
 
-K = 2
+K = 1
 
 NUM_SIMS = 100
 
@@ -83,7 +85,7 @@ def sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts):
         'final': {path[-1] for path in error_paths},
         'regular': {state for path in error_paths for state in path[1:-1]}
         }
-    print('simulating...')
+    print('simulating using depth = {} ...'.format(depth))
     pwa_traces = simulate(AA, s, sp, pwa_model, depth, S0)
     print('done')
     opts.plotting.figure()
@@ -179,6 +181,7 @@ def refine_dft_model_based(
     G = graph_factory(opts.graph_lib)
 
     qg = get_qgraph_xw(sp, AA, G, error_paths, pi_seqs)
+    #qg.draw_graphviz()
     pwa_model = build_pwa_model(
             AA, qg, sp, opts.max_model_error,
             opts.model_err, 'dft')
@@ -192,7 +195,7 @@ def refine_dft_model_based(
 
     if __debug__:
         # Need to define a new function to simulate inputs
-        #sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts)
+        sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts)
         pass
     check4CE(pwa_model, depth, sys.sys_name, 'dft', AA, sys, prop, sp, opts.bmc_engine)
 
@@ -224,7 +227,8 @@ def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, bmc_engi
     #    print('Safe')
     if status == InvarStatus.Unsafe:
         print('Unsafe...trying to concretize...')
-        verify_bmc_trace(AA, sys, prop, sp, sal_bmc.trace, xs, ws)
+        #verify_bmc_trace(AA, sys, prop, sp, sal_bmc.trace, xs, ws)
+        verify_bmc_trace(AA, sys, prop, sp, sal_bmc.get_last_trace(), xs, ws)
     elif status == InvarStatus.Unknown:
         print('Unknown...exiting')
         exit()
@@ -235,6 +239,7 @@ def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, bmc_engi
 def verify_bmc_trace(AA, sys, prop, sp, trace, xs, ws):
     """Get multiple traces and send them for random testing
     """
+    print(trace)
     init_assignments = trace[0].assignments
     x_array = np.array([init_assignments[x] for x in xs])
     # Trace consists of transitions, but we want to interpret it as
@@ -313,7 +318,8 @@ def build_pwa_model(AA, qgraph, sp, tol, include_err, model_type):
 
     pwa_model = rel.PWARelational()
 
-    print_graph(qgraph)
+    if __debug__:
+        print_graph(qgraph)
 
     # for ever vertex (abs_state) in the graph
     for q in qgraph:
@@ -323,7 +329,7 @@ def build_pwa_model(AA, qgraph, sp, tol, include_err, model_type):
             print('modeling: {}'.format(q))
             for sub_model in q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
                 assert(sub_model is not None)
-                print(sub_model.p.ID)
+                print(sub_model.p.ID, '->', sub_model.pnexts[0].ID)
                 pwa_model.add(sub_model)
                 #abs_state_models[abs_state] = sub_model
     return pwa_model
@@ -418,7 +424,7 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
             ms = [(rm, [q])]
         return ms
     else:
-        print('error is under control...')
+        #print('error is under control...')
         return [(rm, [q])]
 
 
