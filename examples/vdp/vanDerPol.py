@@ -8,7 +8,7 @@ from scipy.integrate import ode
 
 import matplotlib.pyplot as plt
 
-PLOT = True
+PLOT = False
 
 
 class SIM(object):
