@@ -319,8 +319,9 @@ def build_pwa_model(AA, qgraph, sp, tol, include_err, model_type):
 
     pwa_model = rel.PWARelational()
 
-    if __debug__:
-        print_graph(qgraph)
+    # can draw the graph now! No need to print
+    #if __debug__:
+        #print_graph(qgraph)
 
     # for ever vertex (abs_state) in the graph
     for q in qgraph:
@@ -497,7 +498,7 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
 
             # TODO: this need to be fixed?
             if not nb:
-                print('no location in graph to improve...')
+                err.warn('no location in graph to improve...')
 
         # The loop never ran due to q not having any neighbors,
         # Or, no samples were left. We do the best with what we have
@@ -506,7 +507,8 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
         # TODO: this will happen when the last location fails? confirm
         if not ms:
             ms = [(rm, [q], e_pc)]
-            rm.plot(X, Y, tol, 'q:{}, err:{}'.format(q, e_pc))
+            if __debug__:
+                rm.plot(X, Y, tol, 'q:{}, err:{}'.format(q, e_pc))
     else:
         print('error is under control...')
         ms = [(rm, [q], e_pc)]
