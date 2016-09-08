@@ -6,6 +6,7 @@ from __future__ import print_function
 import state as st
 import traces
 import err
+import utils as U
 #import progBar as pb
 #import utils
 
@@ -92,7 +93,9 @@ def get_system_simulator(sys):
             ):
 
         T = tf - t0
-        num_segments = int(np.ceil(T / sys.delta_t))
+        # use the ceiling function from utils to detect and fix
+        # floating point issues
+        num_segments = int(U.ceil(T / sys.delta_t, np.ceil))
         # num_points = num_segments + 1
         trace = traces.Trace(sys.num_dims, num_segments + 1)
         t = t0
