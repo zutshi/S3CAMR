@@ -46,7 +46,8 @@ class GraphGT(object):
         H.edge_attr = self.edge_attr
         return H
 
-    def add_edge(self, n1, n2, ci=None, pi=None):
+    def add_edge(self, n1, n2, **attr_dict_arg):#ci=None, pi=None
+        attrs = {'ci': None, 'pi': None}
         #print >> sys.stderr, 'gt:', n1, n2
 
         #v1 = self.vd[n1]
@@ -72,7 +73,9 @@ class GraphGT(object):
         e = self.G.edge(v1, v2, add_missing=True)
         #TODO: The attributes of an existing edge will be updated.
         # Should this be the intended behavior?
-        self.edge_attr[e] = {'ci': ci, 'pi': pi}
+        #self.edge_attr[e] = {'ci': ci, 'pi': pi}
+        attrs.update(attr_dict_arg)
+        self.edge_attr[e] = attrs
 
     def add_edges_from(self, iterable):
         for e in iterable:
