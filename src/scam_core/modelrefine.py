@@ -12,7 +12,7 @@ from modeling.pwa import relational as rel
 import random_testing as rt
 from bmc import bmc
 from bmc.bmc_spec import InvarStatus
-from modeling.affinemodel import RegressionModel
+from modeling.affinemodel import RegressionModel, RobustRegressionModel
 from cellmodels import Qxw, Qx
 import cellmanager as CM
 import utils as U
@@ -181,10 +181,11 @@ def refine_dft_model_based(
     G = graph_factory(opts.graph_lib)
 
     qg = get_qgraph_xw(sp, AA, G, error_paths, pi_seqs)
-    #qg.draw_graphviz()
     pwa_model = build_pwa_model(
             AA, qg, sp, opts.max_model_error,
             opts.model_err, 'dft')
+    #qg.draw_graphviz()
+    qg.draw_mplib()
 
     max_path_len = max([len(path) for path in error_paths])
     print('max_path_len:', max_path_len)
@@ -329,10 +330,40 @@ def build_pwa_model(AA, qgraph, sp, tol, include_err, model_type):
             print('modeling: {}'.format(q))
             for sub_model in q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
                 assert(sub_model is not None)
-                print(sub_model.p.ID, '->', sub_model.pnexts[0].ID)
+                # sub_model.pnexts[0] = sub_model.p.ID to enforce self loops
+                print(U.colorize('{} -> {}, err:{}'.format(
+                    sub_model.p.ID,
+                    [p.ID for p in sub_model.pnexts],
+                    sub_model.max_error_pc)))
                 pwa_model.add(sub_model)
                 #abs_state_models[abs_state] = sub_model
+
+    #if __dbg__: # make this debug only later
+    add_error_info_to_qgraph_edges_data(qgraph, pwa_model)
+
     return pwa_model
+
+
+def add_error_info_to_qgraph_edges_data(qgraph, pwa_model):
+    """Adds a 'label' attribute to the edges. This is useful for
+    graphs rendered using graphviz, as it annotates the edges with the
+    value of those attributes. Currently, the label's value is the
+    error between a learned relation between two nodes."""
+
+    # update edge attribute by adding it again
+    def label_edge_with_error(e, error):
+        e_attrs = qgraph.G[e[0]][e[1]]
+        e_attrs['label'] = np.round(error, 2)
+        qgraph.G.add_edge(*e, attr_dict=e_attrs)
+
+    # keep on looping through the submodels till the right one is
+    # found
+    for e in qgraph.G.edges():
+        q = e[0]
+        for sub_model in pwa_model:
+            if sub_model.p.ID == q:
+                label_edge_with_error(e, sub_model.max_error_pc)
+                break
 
 
 # TODO: it is a superset of build_pwa_dft_model
@@ -387,7 +418,7 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
 #     return qmodels
 
 
-def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
+def mdl_old(tol, step_sim, qgraph, q, (X, Y), Y_, k):
     assert(X.shape[1] == q.dim)
     assert(Y_.shape[1] == q.dim)
     assert(X.shape[0] == Y.shape[0] == Y_.shape[0])
@@ -397,7 +428,7 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
         return []
 
     rm = RegressionModel(X, Y)
-    e_pc = rm.error_pc(X, Y)
+    e_pc = rm.max_error_pc(X, Y)
     err.imp('error%: {}'.format(e_pc))
     error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
     error_exceeds_tol = len(error_dims) > 0
@@ -412,7 +443,7 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
             # samples? Give up?
             if any(sat):
                 rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k-1)
-                l = [(rm_, [q]+qseq_) for rm_, qseq_ in rm_qseq]
+                l = [(rm_, [q]+qseq_, e_pc_) for rm_, qseq_, e_pc_ in rm_qseq]
                 ms.extend(l)
             else:
                 err.warn('out of samples...Giving up!')
@@ -421,12 +452,66 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
         # Or, no samples were left. We do the best with what we have
         # then.
         if not ms:
-            ms = [(rm, [q])]
+            ms = [(rm, [q], e_pc)]
         return ms
     else:
-        #print('error is under control...')
-        return [(rm, [q])]
+        return [(rm, [q], e_pc)]
 
+
+def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
+    assert(X.shape[1] == q.dim)
+    assert(Y_.shape[1] == q.dim)
+    assert(X.shape[0] == Y.shape[0] == Y_.shape[0])
+
+    print(U.colorize('# samples = {}'.format(X.shape[0])))
+
+    rm = RegressionModel(X, Y)
+    #rm = RobustRegressionModel(X, Y)
+    e_pc = rm.max_error_pc(X, Y)
+    err.imp('error%: {}'.format(e_pc))
+    error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
+    error_exceeds_tol = len(error_dims) > 0
+    #err.warn('e%:{}, |e%|:{}'.format(e_pc, np.linalg.norm(e_pc, 2)))
+
+    if error_exceeds_tol:
+        # Did the loop run or not
+        nb = False
+        ms = []
+        print('error exceeds...')
+        if k == 0:
+            err.warn('max depth exceeded but the error > tol. Giving up!')
+        else:
+            for qi in qgraph.neighbors(q):
+                nb = True
+                Y__ = qi.sim(step_sim, Y_)
+                sat = qi.sat(Y__)
+                # TODO: If we are out of samples, we can't do much. Need to
+                # handle this situation better? Not sure? Request for more
+                # samples? Give up?
+                if any(sat):
+                    rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k-1)
+                    l = [(rm_, [q]+qseq_, e_pc_) for rm_, qseq_, e_pc_ in rm_qseq]
+                    ms.extend(l)
+                else:
+                    err.warn('out of samples...Giving up!')
+
+            # TODO: this need to be fixed?
+            if not nb:
+                print('no location in graph to improve...')
+
+        # The loop never ran due to q not having any neighbors,
+        # Or, no samples were left. We do the best with what we have
+        # then.A
+
+        # TODO: this will happen when the last location fails? confirm
+        if not ms:
+            ms = [(rm, [q], e_pc)]
+            rm.plot(X, Y, tol, 'q:{}, err:{}'.format(q, e_pc))
+    else:
+        print('error is under control...')
+        ms = [(rm, [q], e_pc)]
+
+    return ms
 
 # def sim(step_sim, x_array):
 #     """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
@@ -479,7 +564,7 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
 #         # model
 #         assert(len(regression_models) == 1)
 
-    for rm, q_seq in regression_models:
+    for rm, q_seq, e_pc in regression_models:
         A, b = q.modelQ(rm)
         e = q.errorQ(include_err, X, Y, rm)
         dmap = rel.DiscreteAffineMap(A, b, e)
@@ -523,6 +608,7 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
                 future_partitions.append(pwa.Partition(C, d, qi))
 
         sub_model = rel.KPath(dmap, p, pnexts, future_partitions)
+        sub_model.max_error_pc = e_pc
         sub_models.append(sub_model)
     return sub_models
 
@@ -583,7 +669,7 @@ def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
 #     X, Y = q.getxy_ignoramous(ntrain, step_sim)
 #     rm = RegressionModel(X, Y)
 #     X, Y = q.getxy_ignoramous(ntest, step_sim)
-#     e_pc = rm.error_pc(X, Y) # error %
+#     e_pc = rm.max_error_pc(X, Y) # error %
 #     if __debug__:
 #         print('error%:', e_pc)
 #     #error = np.linalg.norm(e_pc, 2)
@@ -599,7 +685,7 @@ def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
 #             sub_models.extend(sub_models_)
 #         return sub_models
 #     else:
-#         #print('error%:', rm.error_pc(X, Y))
+#         #print('error%:', rm.max_error_pc(X, Y))
 #         A, b, C, d = q.modelQ(rm)
 #         e = q.error(include_err, X, Y, rm)
 #         dmap = pwa.DiscreteAffineMap(A, b, e)
@@ -677,7 +763,7 @@ def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
 #     # If valid samples are found, compute e_pc (error %) and dims
 #     # where error % >= given tol
 #     if testing_samples_found:
-#         e_pc = rm.error_pc(X, Y)
+#         e_pc = rm.max_error_pc(X, Y)
 #         error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
 #     # Otherwise, forget it!
 #     else:
@@ -762,7 +848,7 @@ def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
 #     X, Y = q.getxy_ignoramous(ntrain, step_sim, qgraph)
 #     rm = RegressionModel(X, Y)
 #     X, Y = q.getxy_ignoramous(ntest, step_sim)
-#     e_pc = rm.error_pc(X, Y) # error %
+#     e_pc = rm.max_error_pc(X, Y) # error %
 #     if __debug__:
 #         print('error%:', e_pc)
 #     #error = np.linalg.norm(e_pc, 2)
