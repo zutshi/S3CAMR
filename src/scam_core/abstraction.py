@@ -257,7 +257,7 @@ class TopLevelAbs:
         #   - get it from simulation trace:
         #       n = int(np.floor(t/self.delta_t))
 
-        self.G.add_edge(abs_state_src, rchd_abs_state, ci, pi)
+        self.G.add_edge(abs_state_src, rchd_abs_state, ci=ci, pi=pi)
         return
 
     # TODO: does not have access to step plant and step controller!
