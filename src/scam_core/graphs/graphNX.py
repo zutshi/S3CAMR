@@ -1,4 +1,7 @@
 #global nx
+
+import ast
+
 import networkx as nx
 import utils as U
 from heapq import heappush, heappop
@@ -9,7 +12,8 @@ from blessed import Terminal
 from networkx.drawing.nx_agraph import graphviz_layout
 from networkx.drawing.nx_agraph import write_dot
 
-GRAPH_PATH = './graph.dot'
+GVIZ_GRAPH_PATH = './graph.dot'
+MPLIB_GRAPH_PATH = './graph.png'
 
 term = Terminal()
 
@@ -84,9 +88,11 @@ class GraphNX(object):
     def nodes_iter(self):
         return self.G.nodes_iter()
 
-    def add_edge(self, v1, v2, ci=None, pi=None, weight=1):
+    def add_edge(self, v1, v2, **attr_dict_arg):#ci=None, pi=None, weight=1):
+        attrs = {'ci': None, 'pi': None, 'weight': 1}
         #print 'nx:', v1, v2
-        self.G.add_edge(v1, v2, weight=1, ci=ci, pi=pi)
+        attrs.update(attr_dict_arg)
+        self.G.add_edge(v1, v2, attrs)
 
         self.ctr += 1
 
@@ -97,8 +103,10 @@ class GraphNX(object):
                                     self.G.number_of_nodes(),
                                     self.G.number_of_edges())))
 
-    def add_edges_from(self, edge_list, ci=None, pi=None, weight=1):
-        self.G.add_edges_from(edge_list, weight=1, ci=ci, pi=pi)
+    def add_edges_from(self, edge_list, **attr_dict_arg):#ci=None, pi=None, weight=1):
+        attrs = {'ci': None, 'pi': None, 'weight': 1}
+        attrs.update(attr_dict_arg)
+        self.G.add_edges_from(edge_list, attrs)
 
     def add_node(self, v):
         self.G.add_node(v)
@@ -440,10 +448,28 @@ class GraphNX(object):
 
     def draw_graphviz(self):
         pos = graphviz_layout(self.G)
-        #nx.draw_graphviz(self.G, pos)
+        nx.draw_graphviz(self.G, pos)
         nx.draw(self.G, pos)
-        print('generating graph:', GRAPH_PATH)
-        write_dot(self.G, GRAPH_PATH)
+        print('generating graph:', GVIZ_GRAPH_PATH)
+        write_dot(self.G, GVIZ_GRAPH_PATH)
+
+    def draw_mplib(self):
+        from matplotlib import pyplot as plt
+        plt.figure()
+        #pos = nx.spring_layout(self.G)
+
+        node_labels = {n: str(n) for n in self.G.nodes()}
+        # literal_eval evals strings: '(x1,x2)' -> (x1,x2)
+        pos_dict = {n: ast.literal_eval(str(n)) for n in self.G.nodes()}
+        # assert 2-dim
+        assert(len(ast.literal_eval(str(self.G.nodes()[0]))) == 2)
+        nx.draw(self.G, pos=pos_dict, labels=node_labels)
+
+        edge_labels = nx.get_edge_attributes(self.G, 'label')
+        nx.draw_networkx_edge_labels(self.G, pos=pos_dict, edge_labels=edge_labels)
+
+        plt.savefig(MPLIB_GRAPH_PATH)
+        plt.show()
 
     def __contains__(self, key):
         return key in self.G
