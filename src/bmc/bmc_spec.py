@@ -48,6 +48,17 @@ class TraceSimple(object):
     def __iter__(self):
         return (step for step in self.trace)
 
+    def to_list(self, xvars):
+        x_array = []
+        for step in self.trace:
+            # jth step
+            xj = []
+            for xi in xvars:
+                xival = step.assignments[xi]
+                xj.append(xival)
+            x_array.append(xj)
+        return x_array
+
     def __len__(self):
         return len(self.trace)
 
