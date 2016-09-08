@@ -35,6 +35,9 @@ class Plotting(PlottingBase):
     def show(self):
         plt.show()
 
+    def plot(self, *args):
+        self.ax.plot(*args)
+
     def plot_abs_states(self, AA, s):
         color_map = {
                     'init': 'g',
@@ -237,6 +240,7 @@ class Plotting(PlottingBase):
         # ordinate, abcissa
         for a, o in x_vs_y:
             ax = plt.figure().gca()
+            self._ax = ax
             a_str = a[0]
             o_str = o[0]
 
@@ -280,6 +284,7 @@ class Plotting(PlottingBase):
         # ordinate, abcissa
         for a, o in x_vs_y:
             ax = plt.figure().gca()
+            self._ax = ax
             a_str = a[0]
             o_str = o[0]
 
