@@ -1,6 +1,7 @@
 #global nx
 
 import ast
+import subprocess
 
 import networkx as nx
 import utils as U
@@ -13,6 +14,7 @@ from networkx.drawing.nx_agraph import graphviz_layout
 from networkx.drawing.nx_agraph import write_dot
 
 GVIZ_GRAPH_PATH = './graph.dot'
+GRAPH_EPS_PATH = './graph.eps'
 MPLIB_GRAPH_PATH = './graph.png'
 
 term = Terminal()
@@ -452,6 +454,7 @@ class GraphNX(object):
         nx.draw(self.G, pos)
         print('generating graph:', GVIZ_GRAPH_PATH)
         write_dot(self.G, GVIZ_GRAPH_PATH)
+        subprocess.call(['dot', '-Tps', GVIZ_GRAPH_PATH, '-o', GRAPH_EPS_PATH])
 
     def draw_mplib(self):
         from matplotlib import pyplot as plt
