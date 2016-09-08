@@ -184,8 +184,10 @@ def refine_dft_model_based(
     pwa_model = build_pwa_model(
             AA, qg, sp, opts.max_model_error,
             opts.model_err, 'dft')
-    #qg.draw_graphviz()
-    qg.draw_mplib()
+
+    if __debug__:
+        #qg.draw_graphviz()
+        qg.draw_mplib()
 
     max_path_len = max([len(path) for path in error_paths])
     print('max_path_len:', max_path_len)
@@ -198,10 +200,10 @@ def refine_dft_model_based(
         # Need to define a new function to simulate inputs
         sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts)
         pass
-    check4CE(pwa_model, depth, sys.sys_name, 'dft', AA, sys, prop, sp, opts.bmc_engine)
+    check4CE(pwa_model, depth, sys.sys_name, 'dft', AA, sys, prop, sp, opts)
 
 
-def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, bmc_engine):
+def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, opts):
 
     # Extend both init set and final set to include inputs if any
     dummy_cons = top2ic(AA.num_dims.pi) # T <=> [-inf, inf]
@@ -217,7 +219,7 @@ def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, bmc_engi
     vs = xs + ws
 
     sal_bmc = bmc.factory(
-            bmc_engine,
+            opts.bmc_engine,
             vs,
             pwa_model, init_cons, safety_prop,
             '{}_{}'.format(sys_name, model_type),
@@ -229,7 +231,7 @@ def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, bmc_engi
     if status == InvarStatus.Unsafe:
         print('Unsafe...trying to concretize...')
         #verify_bmc_trace(AA, sys, prop, sp, sal_bmc.trace, xs, ws)
-        verify_bmc_trace(AA, sys, prop, sp, sal_bmc.get_last_trace(), xs, ws)
+        verify_bmc_trace(AA, sys, prop, sp, opts, sal_bmc.get_last_trace(), xs, ws)
     elif status == InvarStatus.Unknown:
         print('Unknown...exiting')
         exit()
@@ -237,18 +239,22 @@ def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, bmc_engi
         raise err.Fatal('Internal')
 
 
-def verify_bmc_trace(AA, sys, prop, sp, trace, xs, ws):
+def verify_bmc_trace(AA, sys, prop, sp, opts, trace, xs, ws):
     """Get multiple traces and send them for random testing
     """
+
+    #TODO: enclose this in plotMP
     print(trace)
-    init_assignments = trace[0].assignments
-    x_array = np.array([init_assignments[x] for x in xs])
+    x_array = np.array(trace.to_list(xs))
+
+    #init_assignments = trace[0].assignments
+    #x0_array = np.array([init_assignments[x] for x in xs])
     # Trace consists of transitions, but we want to interpret it as
     # locations (abs_states + wi). Hence, subtract 1 from trace.
     pi_seq = [[step.assignments[w] for w in ws] for step in trace[:-1]]
-    print(x_array)
-    print(pi_seq)
-    rt.concretize_bmc_trace(sys, prop, AA, sp, len(trace)-1, x_array, pi_seq)
+    #print(x0_array)
+    #print(pi_seq)
+    rt.concretize_bmc_trace(sys, prop, AA, sp, opts, len(trace)-1, x_array, pi_seq)
     return
 
 
