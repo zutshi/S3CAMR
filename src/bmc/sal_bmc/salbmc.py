@@ -19,21 +19,32 @@ class SALBMCError(Exception):
     pass
 
 
+class SalOpts():
+    def __init__(self):
+        self.yices = 2
+        self.verbosity = 3
+        self.iterative = False
+        self.preserve_tmp_files = True
+
+
 # Must separate the arguements. i.e., -v 3 should be given as ['-v', '3']
 # This can be avoided by using shell=True, but that is a security risk
-def sal_run_cmd(sal_path, depth, module_name, prop_name, yices=2, verbosity=3, iterative=False):
+def sal_run_cmd(sal_path, depth, module_name, prop_name, opts=SalOpts()):
     cmd = [
         sal_path,
-        '-v', str(verbosity),
+        '-v', str(opts.verbosity),
         '-d', str(depth),
         '{}.sal'.format(module_name),
         prop_name
     ]
 
-    if yices == 2:
+    if opts.yices == 2:
         cmd.extend(['-s', 'yices2'])
 
-    if iterative:
+    if opts.preserve_tmp_files:
+        cmd.append('--preserve-tmp-files')
+
+    if opts.iterative:
         cmd.append('-it')
 
     print ' '.join(cmd)
@@ -133,28 +144,27 @@ class BMC(BMCSpec):
             #raise KeyError
 
         sal_path = fops.sanitize_path(sal_path_)
-        verbosity = 3
 
         sal_cmd = sal_run_cmd(
                     sal_path,
                     depth,
                     self.module_name,
                     self.prop_name,
-                    yices=2,
-                    verbosity=verbosity)
+                    )
 
         try:
             sal_op = U.strict_call_get_op(sal_cmd)
         except U.CallError as e:
             if yices2_not_found in e.message:
                 print 'SAL can not find yices2. Trying with yices...'
+                opts = SalOpts()
+                opts.yices = 1
                 sal_cmd = sal_run_cmd(
                             sal_path,
                             depth,
                             self.module_name,
                             self.prop_name,
-                            yices=1,
-                            verbosity=verbosity)
+                            opts)
                 sal_op = U.strict_call_get_op(sal_cmd)
             else:
                 raise err.Fatal('unknown SAL error!')
