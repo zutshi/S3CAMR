@@ -20,7 +20,7 @@ import cellmanager as CM
 
 term = Terminal()
 
-def concretize_bmc_trace(sys, prop, AA, sp, trace_len, x0, pi_seq):
+def concretize_bmc_trace(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq):
     """
     Tries to concretize a BMC trace
 
@@ -29,7 +29,7 @@ def concretize_bmc_trace(sys, prop, AA, sp, trace_len, x0, pi_seq):
     AA :
     sys :
     prop :
-    x0 : list of concrete states
+    x_array : discrete trace represented by a numpy array of x: concrete states
     pi_seq : associated list of concrete pi sequences
     Notes
     ------
@@ -39,11 +39,10 @@ def concretize_bmc_trace(sys, prop, AA, sp, trace_len, x0, pi_seq):
     # 1)
     # Check exact returned trace.
     print('Checking trace returned by BMC...')
-    trace = trace_violates(sys_sim, sys, prop, trace_len, x0, pi_seq)
+    trace = trace_violates(sys_sim, sys, prop, opts, trace_len, x_array, pi_seq)
     if trace:
         print(term.green('violation found'))
         print('violation found', file=SYS.stderr)
-        exit()
     else:
         print('nothing found')
         print('nothing found', file=SYS.stderr)
@@ -53,7 +52,7 @@ def concretize_bmc_trace(sys, prop, AA, sp, trace_len, x0, pi_seq):
     # Check using random sims. Find the abstract state of the trace's
     # X0, and send it to random_test() along with pi_seqs
     print('concretizing using sampling X0...[fixed X0+pi_seq]')
-    if abstract_trace_violates(sys, sp, prop, AA, x0, pi_seq):
+    if abstract_trace_violates(sys, sp, prop, AA, opts, x_array, pi_seq):
         print('our job is done...')
         print('our job is done...', file=SYS.stderr)
         exit()
@@ -78,7 +77,7 @@ def concretize_bmc_trace(sys, prop, AA, sp, trace_len, x0, pi_seq):
     exit()
 
 
-def trace_violates(sys_sim, sys, prop, trace_len, x, pi_seq):
+def trace_violates(sys_sim, sys, prop, opts, trace_len, x_array, pi_seq):
     # THe property can be violated at t <= Time Horizon. In that case
     # simulate only as much as the trace length allows.
     num_segments = trace_len
@@ -91,7 +90,8 @@ def trace_violates(sys_sim, sys, prop, trace_len, x, pi_seq):
     s = z
     u = z
     t = np.array([[0]])
-    x = np.array([x])
+    x0 = x_array[0, :]
+    x = np.array([x0])
     d = np.array([prop.initial_discrete_state])
     pi_array = np.array([pi_seq])
     concrete_states = state.StateArray(
@@ -109,14 +109,20 @@ def trace_violates(sys_sim, sys, prop, trace_len, x, pi_seq):
 #     print(concrete_states.plant_extraneous_inputs.shape)
 
     trace = simsys.simulate(sys_sim, concrete_states[0], sys.delta_t*num_segments)
+
+    from matplotlib import pyplot as plt
     print(trace)
+    opts.plotting.plot_trace_list([trace], x_vs_y=opts.plots)
+    plt.plot(x_array[:, 0], x_array[:, 1], 'r*')
+    opts.plotting.show()
+
     if check_prop_violation(trace, prop):
         return trace
     else:
         return None
 
 
-def abstract_trace_violates(sys, sp, prop, AA, x, pi_seq):
+def abstract_trace_violates(sys, sp, prop, AA, opts, x_array, pi_seq):
     if AA.num_dims.pi != 0:
         pi_eps = sp.pi_ref.pi_eps
         pi_seq = [
@@ -132,14 +138,15 @@ def abstract_trace_violates(sys, sp, prop, AA, x, pi_seq):
     s = z
     u = z
     t = np.array(0)
-    x = np.array(x)
+    x0 = x_array[0, :]
+    x = np.array(x0)
     d = np.array(prop.initial_discrete_state)
 
     concrete_state = state.State(
             t=t, x=x, d=d,
             pvt=pvt, ci=ci_array, s=s, pi=pi_array, u=u)
 
-    initial_state_list = [AA.get_abs_state_from_concrete_state(concrete_state)]
+    initial_state = AA.get_abs_state_from_concrete_state(concrete_state)
 
     print(
             CM.Cell(
@@ -147,16 +154,28 @@ def abstract_trace_violates(sys, sp, prop, AA, x, pi_seq):
                 AA.plant_abs.eps).ival_constraints
             )
 
-    return random_test(
+    # TODO: AA.samples is too low?
+    # TODO: Also, the samples themselves seem fishy
+    AA.num_samples = 100
+    trace_list, vio_found = random_test(
         AA,
         sp,
-        initial_state_list,
+        [initial_state],
         [],
         [pi_seq],
         prop.initial_discrete_state,
         initial_controller_state=None,
-        sample_ci=False
+        sample_ci=False,
+        return_vio_only=False
         )
+
+    #opts.plotting.figure()
+    opts.plotting.plot_trace_list(trace_list, x_vs_y=opts.plots)
+    opts.plotting.plot_abs_states(AA, {'init': [initial_state]})
+    opts.plotting.plot(x_array[:, 0], x_array[:, 1], 'r*')
+    opts.plotting.show()
+    if vio_found:
+        err.imp('Found!')
 
 
 # TODO: make a module of its own once we add more general property using
@@ -216,7 +235,8 @@ def random_test(
         pi_seq_list,
         init_d,
         initial_controller_state,
-        sample_ci
+        sample_ci,
+        return_vio_only=True
         ):
 
     # ##!!##logger.debug('random testing...')
@@ -258,7 +278,6 @@ def random_test(
         if ic is not None:
 
             # scatter the continuous states
-
             x_samples = ic.sample_UR(A.num_samples)
 
             # ##!!##logger.debug('ic: {}'.format(ic))
@@ -275,9 +294,8 @@ def random_test(
             # ignore the state as it is completely outside the initial
             # constraints
 
+    #x_array[-1, :] = np.array([0.4, -0.4])
     # print(x_array)
-    # print(x_array.shape)
-
     print(x_array.shape)
     num_samples = len(x_array)
     if num_samples == 0:
@@ -290,7 +308,7 @@ def random_test(
 
         print('simulating {} samples'.format(num_samples))
 
-    trace_list = [traces.Trace(A.num_dims, A.N) for i in range(num_samples)]
+    trace_list = [traces.Trace(A.num_dims, A.N+1) for i in range(num_samples)]
 
     s_array = np.tile(initial_controller_state, (num_samples, 1))
 
@@ -314,6 +332,9 @@ def random_test(
 
     x0_array = x_array
     d0_array = d_array
+
+    for i, trace in enumerate(trace_list):
+        trace.append(s_array[i], 0, x_array[i], 0, 0, t_array[i], d_array[i])
 
     # sanity check
 
@@ -440,7 +461,13 @@ def random_test(
 
         # u_array =
 
-    return map(trace_list.__getitem__, res)
+    if return_vio_only:
+        return map(trace_list.__getitem__, res)
+    else:
+        #for trace in trace_list:
+            #print(trace.x_array[0, :])
+        #exit()
+        return trace_list, bool(res)
 
 
 def compute_concrete_controller_output(*args):
