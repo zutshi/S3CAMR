@@ -139,15 +139,8 @@ class RegressionModel(object):
         step0 = (X_max[0] - X_min[0])/div
         step1 = (X_max[1] - X_min[1])/div
         step = min(step0, step1)
-        print('x0 range:', X_min[0], X_max[0])
-        print('x1 range:', X_min[1], X_max[1])
-
-        #X1_range = X_min[0], X_max[0]
-        #X2_range = X_min[1], X_max[1]
-
-        #xx1, xx2 = np.meshgrid(
-        #        np.arange(X1_range[0], X1_range[1], step=step),
-        #        np.arange(X2_range[0], X2_range[1], step=step))
+        #print('x0 range:', X_min[0], X_max[0])
+        #print('x1 range:', X_min[1], X_max[1])
 
         # Predict data of estimated models
 
@@ -164,34 +157,32 @@ class RegressionModel(object):
         outlier0_idx = error_pc[:, 0] > tol
         outlier1_idx = error_pc[:, 1] > tol
 
-        #if __dbg__:
-        if True:
-            if any(outlier0_idx):
-                #print('X:\n', X[outlier0_idx, :])
-                #print('Y0_pred:', self.predict(X[outlier0_idx, :])[:, 0])
-                #print('Y0_true', Y0[outlier0_idx])
-                Y0_pred_ = self.predict(X[outlier0_idx, :])[:, 0]
-                Y0_pred = np.reshape(Y0_pred_, (Y0_pred_.size, 1))
-                # make it 2-dim to match dim of X and Y0_pred
-                Y0_true_ = Y0[outlier0_idx]
-                Y0_true = np.reshape(Y0_true_, (Y0_true_.size, 1))
-                epc0_ = error_pc[outlier0_idx, 0]
-                epc0 = np.reshape(epc0_, (epc0_.size, 1))
+        if any(outlier0_idx):
+            #print('X:\n', X[outlier0_idx, :])
+            #print('Y0_pred:', self.predict(X[outlier0_idx, :])[:, 0])
+            #print('Y0_true', Y0[outlier0_idx])
+            Y0_pred_ = self.predict(X[outlier0_idx, :])[:, 0]
+            Y0_pred = np.reshape(Y0_pred_, (Y0_pred_.size, 1))
+            # make it 2-dim to match dim of X and Y0_pred
+            Y0_true_ = Y0[outlier0_idx]
+            Y0_true = np.reshape(Y0_true_, (Y0_true_.size, 1))
+            epc0_ = error_pc[outlier0_idx, 0]
+            epc0 = np.reshape(epc0_, (epc0_.size, 1))
 
-                print('X - Y0_pred - Y0_true - error_pc')
-                print(np.hstack((X[outlier0_idx, :], Y0_pred, Y0_true, epc0)))
+            print('X - Y0_pred - Y0_true - error_pc')
+            print(np.hstack((X[outlier0_idx, :], Y0_pred, Y0_true, epc0)))
 
-            if any(outlier1_idx):
-                Y1_pred_ = self.predict(X[outlier1_idx, :])[:, 1]
-                Y1_pred = np.reshape(Y1_pred_, (Y1_pred_.size, 1))
+        if any(outlier1_idx):
+            Y1_pred_ = self.predict(X[outlier1_idx, :])[:, 1]
+            Y1_pred = np.reshape(Y1_pred_, (Y1_pred_.size, 1))
 
-                # make it 2-dim to match dim of X and Y1_pred
-                Y1_true_ = Y1[outlier1_idx]
-                Y1_true = np.reshape(Y1_true_, (Y1_true_.size, 1))
-                epc1_ = error_pc[outlier1_idx, 1]
-                epc1 = np.reshape(epc1_, (epc1_.size, 1))
-                print('X - Y1_pred - Y1_true - error_pc')
-                print(np.hstack((X[outlier1_idx, :], Y1_pred, Y1_true, epc1)))
+            # make it 2-dim to match dim of X and Y1_pred
+            Y1_true_ = Y1[outlier1_idx]
+            Y1_true = np.reshape(Y1_true_, (Y1_true_.size, 1))
+            epc1_ = error_pc[outlier1_idx, 1]
+            epc1 = np.reshape(epc1_, (epc1_.size, 1))
+            print('X - Y1_pred - Y1_true - error_pc')
+            print(np.hstack((X[outlier1_idx, :], Y1_pred, Y1_true, epc1)))
 
         # plot the surface
         #print(xx)
