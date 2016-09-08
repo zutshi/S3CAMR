@@ -10,12 +10,7 @@ import cellmanager as CM
 import err
 from utils import print
 
-
 import matplotlib.pyplot as plt
-
-MIN_TRAIN = 50
-MIN_TEST = MIN_TRAIN
-MAX_ITER = 25
 
 
 class Q(object):
@@ -133,7 +128,7 @@ class Qxw(Q):
 
     def modelQ(self, rm):
 
-        #print('error%:', rm.error_pc(X, Y))
+        #print('error%:', rm.max_error_pc(X, Y))
         # Matrices are extended to include w/pi
         # A = [AB]
         #     [00]
@@ -325,7 +320,7 @@ class Qqxw(Q):
 
     def modelQ(self, rm):
 
-        #print('error%:', rm.error_pc(X, Y))
+        #print('error%:', rm.max_error_pc(X, Y))
         # Matrices are extended to include w/pi
         # A = [AB]
         #     [00]
