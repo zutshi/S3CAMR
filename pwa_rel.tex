@@ -1,0 +1,131 @@
+We now describe how PWA relational modeling can be used to enrich
+discrete abstractions of black box systems. We first describe the idea
+of enriched relations. We then show how the annotated reachability
+graph can be interpreted as a PWA model or as a PWA relational model.
+Finally, we show that both are instances of a $k$-relational
+translation from a reachability graph, which we use in our approach.
+
+\subsection{Enriched Abstraction}
+
+The existential abstraction relation in \chapref{abs} was defined as
+follows:
+\[
+%\exists \x\in\C. \exists \x'\in\C'. \x'=\simulate(\x, \tau) \iff \C\rel{\tau}\C'
+    C \areach{t} C' \iff \exists \x \in C.\ \exists \x' \in C'.\ \x \areach{t} \x'
+\]
+The abstract relation $\areach{t}$ can be enriched by incorporating
+the affine relation between $\x$ and $\x'$. For an arbitrary dynamical
+system, such a relation can be rarely represented using an exact affine map.
+This is due to the presence of non-linear and hybrid behaviors; but,
+an affine map can always be estimated with an error.
+
+If the system dynamics are completely specified in the form of a white
+box model, we can use first order approximations to find the affine
+expressions for the relations. Using a tool like \flowstar, we can
+obtain over-approximate affine maps of the form $A\x + [\vb^l,
+\vb^h]$, where $[\vb^l,\vb^h]$ denotes the interval of vectors such
+that, every element $b_i$ of the vector $\vb$ lies between the
+respective scalar interval $b_i\in[b^l_i,b^h_i]$.
+
+For the case of black box systems, such a sound approximation is not
+possible. Instead, we rely on a statistical method like simple linear
+regression to estimate the affine map $\amap: A\x + \vb$. We then use
+cross-validation to estimate the error $\delta$ and generalize
+$\amap$ to an interval affine map as before $\amap: A\x + \vb \pm
+\delta$.
+
+Finally, we get an abstraction with the below relation
+\[
+    C \areach{A\x+\vb+\delta} C' \iff \exists \x \in C.\ \exists \x' \in C'.\
+    \x' \in A\x + \vb \pm \delta.
+\]
+
+We now compute a PWA model for a given black box system by estimating
+the dynamics using OLS. We can estimate the affine relations between
+every cell, but as discussed in ~\chapref{abs}, it is a futile
+approach.  Instead, we use the same heuristic as before:
+scatter-and-simulate, to select the cell relations for estimation. We
+build the reachability graph as before, but in addition, annotate each
+edge with the values of estimated $A$, $\vb$, and $\delta$ for the
+respective relation. The reachability graph thus computed, is a
+transition system. Using off-the-shelf bounded model checkers, we
+reason about the system's safety properties.
+
+
+\subsection{PWA Model ($0$-relational)}
+When $k=0$, the $0$-relational model is a PWA system which only
+defines the evolution of states $\x$, and does not specify the
+reachable cell. The guards of the guarded affine maps are defined over
+cells: $\guard_i(\x) \equiv \x \in C_i$.
+
+We use regression to estimate the dynamics for the outgoing trajectory
+segments form a cell $C$. Hence, the data set $\ds$ for the regression
+includes all trajectory segments beginning from the same cell
+\[
+    \ds = \setof{\pi_t | start(\pi_t) \in C}.
+\]
+This includes trajectory segments ending in different cells.  For $n$
+cells, this results in a PWA model (and a transition system), as
+shown below.
+
+\begin{equation}
+    \pwa = \left\{
+        \begin{array}{ll}
+            \gm{1} = A_1\vx + \vb_1 + \delta_1 & \vx \in C_1\\
+            \gm{2} = A_2\vx + \vb_2 + \delta_2 & \vx \in C_2\\
+            \ldots & \ldots\\
+            \gm{n} = A_n\vx + \vb_n + \delta_n & \vx \in C_n
+        \end{array}
+    \right.
+\end{equation}
+
+Note that this can be quite imprecise when the cells are big,
+containing regions of state-space with complex dynamics. This is true
+for both non-linear systems and hybrid dynamical system, where a cell
+can contain two or more modes with differing continuous dynamics.
+
+\subsection{PWA Relational Model ($1$-relational)}
+
+To improve the preciseness of learnt dynamics, we include the
+reachability relation (as discussed before this section) in the
+regression. For every relation $C\areach{t}C'$, the data set $\ds$ is
+comprised only of trajectory segments $\pi_t$ which start and end in
+the same set of cells.
+\[
+    \ds = \setof{\pi_t | start(\pi_t) \in C \land end(\pi_t) \in C'}.
+\]
+The resulting $1$-relational model is at least as precise as the
+corresponding $0$-relational model.
+
+\subsection{$k$-relational PWA Model}
+
+Finally, we generalize the PWA relational models to $k$-relational PWA
+models. A $k$-relational model is constructed by using $k$ length
+\textit{connected} segmented trajectories. A segmented trajectory $\SegTraj$ is
+\textit{connected} iff its cost $\cost(\SegTraj) = 0$.
+
+Two $\SegTraj:\tupleof{\pi_{t_1}, \ldots, \pi_{t_k}}$ and
+$\SegTraj':\tupleof{\pi'_{t_1}, \ldots, \pi'_{t_k}}$ are
+\textit{similar} if their trajectory segments have the same sequence
+of cell traversals $\tupleof{C_1, C_2, \ldots, C_k}$, \ie
+\[
+    \forall i\in\setof{1 \ldots k}.
+    start(\pi_{t_i}) \in C_i
+    \land start(\pi'_{t_i}) \in C_i
+    \land end(\pi_{t_i}) \in C_{i+1}
+    \land end(\pi'_{t_i}) \in C_{i+1}
+\]
+
+For every cell $C$ in the reachability graph, we construct a data set
+$\ds$ by collecting $\pi_{t_i}$, such that they are the first segment of $k$
+length \textit{connected} and \textit{similar} segmented trajectories.
+%\[
+%    \ds = \setof{\pi_{\tau_i} |
+%        \pi_{\tau_i}
+%        start(\pi_{\tau_{i}}) \in C_i
+%        \land
+%        end(\pi_{\tau_{i}}) \in C_i}
+%\]
+
+
+

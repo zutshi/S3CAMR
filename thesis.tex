@@ -1,0 +1,241 @@
+\documentclass[defaultstyle,11pt]{mythesis}
+
+\usepackage{hyperref}		% PDF hyperreferences??
+
+
+% packages just included...did not check for duplications or if they
+% are actually required!
+\RequirePackage{xspace}
+\usepackage{float}
+\usepackage{rotating}
+\usepackage[ruled,vlined,linesnumbered]{algorithm2e}
+\usepackage{syntonly}
+\usepackage{stmaryrd}
+%\usepackage{subfigure}
+\usepackage{wrapfig}
+\usepackage{import}
+\usepackage{enumerate}
+\usepackage{amsmath,amssymb,amsfonts}
+\pagestyle{plain}
+\usepackage{times}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{fancyhdr}
+\usepackage{balance}
+\usepackage[sort]{cite}
+%\usepackage[cmex10,fleqn]{amsmath}
+\usepackage{array}
+\usepackage{booktabs,siunitx}
+\usepackage{url}
+% traj_opt
+\usepackage{tikz}
+\usetikzlibrary{arrows,backgrounds,decorations,decorations.pathmorphing,positioning,fit,automata,shapes,snakes,patterns}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+%\usepackage{subfig}
+\usepackage{color}
+\usepackage{xcolor,colortbl}
+\usepackage{microtype}
+\usetikzlibrary{arrows,backgrounds,positioning,fit,automata,shapes,snakes,patterns}
+\usetikzlibrary{arrows,backgrounds,decorations,decorations.pathmorphing,positioning,fit,automata,shapes,snakes,patterns}
+
+\usepackage[utf8]{inputenc}
+\usepackage{latexsym}
+\usepackage{nameref}
+
+% symex
+\usepackage{framed}
+\usepackage{ragged2e}
+\usepackage{varwidth}
+\usetikzlibrary{arrows,backgrounds,positioning,fit,automata,shapes,snakes,patterns}
+\usetikzlibrary{arrows,backgrounds,decorations,decorations.pathmorphing,positioning,fit,automata,shapes,snakes,patterns}
+\usetikzlibrary{shapes.geometric, arrows, positioning, calc, matrix}
+% \tikzset{block/.style = {draw, fill=blue!20, rectangle,
+%                          minimum height=3em, minimum width=6em},
+%         sum/.style = {draw, fill=blue!20, circle, node distance=1cm},
+%         input/.style = {coordinate},
+%         output/.style = {coordinate},
+%         pinstyle/.style = {pin edge={to-,thin,black}}
+% }
+
+%\usepackage{siunitx}
+\usepackage{listings}
+
+% \makeatletter
+% \def\url@mystyle{%
+%   %\@ifundefined{selectfont}{\def\UrlFont{\sf}}{\def\UrlFont{\small\ttfamily}}}
+%   \@ifundefined{selectfont}{\def\UrlFont{\mathtt}}{\def\UrlFont{}}}
+%   %\@ifundefined{selectfont}{\def\UrlFont{\sf}}{\def\UrlFont{\small}}}
+% \makeatother
+% %\urlstyle{mystyle}
+% \urlstyle{rm}
+
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+%%%%%%%%%%%%   All the preamble material:   %%%%%%%%%%%%
+
+\title{Reachability Analysis of Cyber-Physical Systems using Symbolic-Numeric Techniques}
+
+\author{Aditya Krishna}{Zutshi}
+
+\otherdegrees{B.E., Manipal University, 2007 \\
+	      M.S., University Colorado, 2011}
+
+\degree{Doctor of Philosophy}		%  #1 {long descr.}
+	{Ph.D., Electrical Engineering}		%  #2 {short descr.}
+
+\dept{Department of}			%  #1 {designation}
+{Electrical, Computer, and Energy Engineering}		%  #2 {name}
+
+\advisor{Prof.}				%  #1 {title}
+	{Sriram Sankaranarayanan}			%  #2 {name}
+        %\reader{}{}		%  3rd person to sign thesis
+        \reader{Prof.\;Fabio Somenzi}		%  3rd person to sign thesis
+        \readerThree{Prof.\;Bor-Yuh Evan Chang}		%  2nd person to sign thesis
+        \readerFour{Dr.\;Jyotirmoy V. Deshmukh}		%  3rd person to sign thesis
+        \readerFive{Dr.\;James Kapinski}		%  3rd person to sign thesis
+
+\abstract{  \OnePageChapter	% because it is very short
+
+    In this thesis, we address the problem of reachability analysis in
+    cyber-physical systems. These are systems engineered by
+    interfacing computational components with the physical world. They
+    provide partially or fully automated safety-critical services in
+    the form of medical devices, autonomous vehicles, avionics and
+    power systems.
+
+    We propose techniques to reason about the reachability of such
+    systems, and provide methods for falsifying their safety
+    properties. We model the cyber component as a software program and
+    the physical component as a hybrid dynamical system. Unlike model
+    based analysis, which uses either a purely symbolic or a numerical
+    approach, we argue in favor of using a combination of the two. We
+    justify this by noting that the software program running on a
+    computer is completely specified and has precise semantics. In
+    contrast, the model of the physical system is only an
+    approximation. Hence, we treat the former as a white box, but
+    treat the latter as a black box.
+
+    Using symbolic methods for the cyber components and numerical
+    methods for hybrid systems, we carefully capture the complex
+    behaviors of software programs and circumvent the difficulty in
+    analyzing complex models developed through first principles. To
+    combine the two techniques, we use a Counterexample Guided
+    Abstraction Refinement (CEGAR) framework. Furthermore, we explore
+    learning techniques like regression and piecewise affine modeling
+    to estimate and represent black box hybrid dynamical systems for
+    the purpose of falsification.
+
+    We use prototype implementations to demonstrate the effectiveness
+    of presented ideas. Using non-trivial benchmarks, we compare their
+    performance against the state of the art. We also comment on their
+    applicability and discuss ideas for further improvement.
+
+
+
+    %% OLD
+%    In this thesis, we addresses the problem of reachability analyses
+%    in cyber-physical systems. These systems are the result of cyber
+%    components interacting with the physical world. They provide
+%    partially or fully automated safety-critical services in the form
+%    of medical devices, autonomous vehicles, avionics and power
+%    systems.
+%    %but not limited to health care as medical devices, personal and
+%    %public transportation as critical safety features in cars,
+%    %auto-pilots in airplanes, and, in managing sensitive
+%    %infrastructure like power plants.
+%
+%    We propose techniques to reason about the reachability of such
+%    systems, in order to provide methods for falsifying their safety
+%    properties. We model the cyber component as a software program and
+%    the physical component as a hybrid dynamical system. Unlike model
+%    based analysis techniques which use either a purely symbolic or a
+%    numerical approach, we argue in favor of using the combination of
+%    the two.
+%    %We justify this by highlighting the differences in the two models
+%    %available in practice.
+%    To elaborate, the completely specified software program running on
+%    a microprocessor has precise semantics. In contrast, the physical
+%    system is only approximately modeled in practice. Hence, we use
+%    white-box techniques for the former, but treat the latter as a
+%    black-box.  This allows us to carefully capture the complex
+%    behaviors of softwares and circumvent the difficulty in analyzing
+%    complex models developed through first principles.
+%
+%    We use symbolic techniques for the cyber components and propose
+%    numerical techniques for hybrid systems. We then put forth a
+%    Counterexample Guided Abstraction Refinement (CEGAR) framework to
+%    combine the two techniques and provide a procedure to falsify
+%    safety properties of the system. Furthermore, we explore learning
+%    techniques like regression and piecewise affine modeling to
+%    estimate and represent relevant symbolic information required to
+%    falsify the property.
+%
+%    We use prototype implementations to demonstrate the effectiveness
+%    of presented ideas. We use non-trivial benchmarks to compare their
+%    performance against the state of the art. We also comment on their
+%    applicability and discuss ideas for further improvement.
+
+}
+\dedication[Dedication]{	% NEVER use \OnePageChapter here.
+	}
+
+\acknowledgements{	\OnePageChapter	% *MUST* BE ONLY ONE PAGE!
+	}
+
+% \IRBprotocol{E927F29.001X}	% optional!
+
+\ToCisShort	% use this only for 1-page Table of Contents
+
+\LoFisShort	% use this only for 1-page Table of Figures
+% \emptyLoF	% use this if there is no List of Figures
+
+\LoTisShort	% use this only for 1-page Table of Tables
+% \emptyLoT	% use this if there is no List of Tables
+
+\definecolor{mygreen}{rgb}{0,0.6,0}
+\definecolor{mygray}{rgb}{0.5,0.5,0.5}
+\definecolor{mymauve}{rgb}{0.58,0,0.82}
+
+\newtheorem{example}{Example}[section]
+\newtheorem{definition}{Definition}[section]
+\newtheorem{assumption}{Assumption}[section]
+\newtheorem{lemma}{Lemma}[section]
+\newtheorem{proof}{Proof}[section]
+%\newtheorem{theorem}{Theorem}[section]
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%       BEGIN DOCUMENT...         %%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{document}
+
+\input macros.tex
+\input generic.macros.tex
+\input specific.macros.tex
+
+
+\include{intro}
+\include{prelims}
+\include{segtrajs}
+\include{abstractions}
+\include{symex}
+\include{implementation}
+\include{relational}
+\include{conclusion}
+
+%%%%%%%%%   then the Bibliography, if any   %%%%%%%%%
+\bibliographystyle{plain}	% or "siam", or "alpha", etc.
+%\nocite{*}		% list all refs in database, cited or not
+\bibliography{refs}		% Bib database in "refs.bib"
+
+%%%%%%%%%   then the Appendices, if any   %%%%%%%%%
+% \appendix
+% \include{appendixA.tex}
+% \include{appendixB.tex}
+
+\end{document}

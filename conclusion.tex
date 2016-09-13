@@ -1,0 +1,45 @@
+
+
+\section{Summary}% and Future Work}
+
+We have presented another methodology to find falsifications in black
+box dynamical systems. Combining the ideas from abstraction based
+search (\chapref{abs}), with our previous relational
+abstractions~\cite{zutshi2012timed}, we created enriched abstractions.
+These can be checked for safety violations using existing bounded
+model checkers.  We used learning techniques to estimate the local
+dynamics underlying trajectory segments, and approximated a transition
+system from a black box system. Finally, we showed our approach on a
+few examples.
+
+As a future extension, we are working on a specialized BMC for the
+problem at hand. We intend to explore efficient ways for encoding the
+PWA relational system.
+
+%  There are several directions we can take from here.
+
+%  \paragraph{Impr}The biggest impediment to our approach are SMT solvers which use the
+%  theory of reals with exact precision. This is important for
+%  verification approaches, but not can be relaxed for falsification. An
+%  SMT solver which uses approximate reasoning but returns robust
+%  counter-examples will be very useful, though it doesn't exist as yet.
+%  
+%  Specializing BMC towards discretization
+%  
+%  \subsection{Challenges and Extensions}
+%  Let us outline the challenges we face in this approach. Although
+%  SAT/SMT solvers are very efficient owing to extensive engineering
+%  effort, reachability of transition systems resulting from dynamical
+%  systems remains a difficult problem.
+%  
+%  %Why exactly?
+%  As the time horizon of the safety property increases, the possible
+%  combinations of discrete transitions increases exponentially. Hence,
+%  to find a counterexample which is a sequence of discrete transitions
+%  over a `long' time horizon is not tractable for most but the simplest
+%  of dynamical systems. % Solve using proper discretizations
+
+%\section{Learning Discrete Abstraction for Black Box Systems}
+%\section{Comparison with traditional Trajectory Linearization}
+%\subsection{Piece-Wise Affine Model}
+%\subsection{Other models}

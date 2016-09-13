@@ -1,0 +1,143 @@
+% Generic
+%\DeclareMathAlphabet{\mathpzc}{OT1}{pzc}{m}{it}
+
+% English
+\newcommand{\ie}{{i.e.}\xspace}
+\newcommand{\Ie}{{I.e.}\xspace}
+\newcommand{\eg}{{e.g.}\xspace}
+\newcommand{\etc}{{etc.}\xspace}
+\newcommand{\viz}{{viz.\xspace}}
+\newcommand{\etal}{{et al.}\xspace}
+
+\renewcommand\vec[1]{\mathbf{#1}}
+% Generic refs
+\newcommand{\lemref}[1]{Lemma~\ref{lem:#1}}
+\newcommand{\secref}[1]{Sec.~\ref{sec:#1}}
+\newcommand{\figref}[1]{Fig.~\ref{fig:#1}}
+\newcommand{\exref}[1]{Example~\ref{ex:#1}}
+\newcommand{\thmref}[1]{Theorem~\ref{thm:#1}}
+\newcommand{\tabref}[1]{Table~\ref{tab:#1}}
+\newcommand{\algoref}[1]{Algorithm~\ref{algo:#1}}
+\newcommand{\lstref}[1]{Listing~\ref{lst:#1}}
+\newcommand{\chapref}[1]{Chapter~\ref{chap:#1}}
+\newcommand{\defref}[1]{Definition~\ref{def:#1}}
+
+% Comments, Reviewing, Formatting
+\newcommand{\ignore}[1]{}
+\newcommand\todo[1]{[[\textcolor{red}{\textsf{#1}}]]}
+% General Math
+\newcommand{\setof}[1]{\ensuremath{\{#1\}}}
+\newcommand\tupleof[1]{\ensuremath\left\langle #1 \right \rangle}
+\newcommand{\sublist}[2]{\ensuremath{#1_{1},\ldots,#1_{#2}}}
+\newcommand{\suplist}[2]{\ensuremath{#1^{1},\ldots,#1^{#2}}}
+\newcommand \card[1] {\left| #1 \right|}
+\newcommand \floor[1] {\left\lfloor #1 \right\rfloor}
+\newcommand \ceil[1] {\left\lceil #1 \right\rceil}
+
+% Complexity
+\newcommand{\npcomplete}{\textsc{Np}-\textsc{complete}}
+\newcommand{\nphard}{\textsc{Np}-\textsc{Hard}}
+\newcommand{\nlogspace}{\textsc{NLogspace}\xspace}
+\newcommand{\pspace}{\textsc{PSpace}\xspace}
+\newcommand{\expspace}{\textsc{ExpSpace}\xspace}
+
+\newcommand{\mcl}[1]{\multicolumn{1}{l}{#1}}
+\newcommand{\mcc}[1]{\multicolumn{1}{c}{#1}}
+
+\newcommand{\mypara}[1]{\vspace{0.6em} \noindent{\bf #1}}
+\newcommand{\myipara}[1]{\vspace{0.6em} {\em #1}\xspace}
+%\newcommand{\myipara}[1]{\vspace{0.6em} \noindent{\em #1}\xspace}
+\newcommand{\myiparaCompact}[1]{ {\em #1}\xspace}
+
+% Sets
+\newcommand{\Reals}{\ensuremath{\mathbb{R}}}
+\newcommand{\reals}{\Reals}
+\newcommand{\Nats}{\ensuremath{\mathbb{N}}}
+\newcommand{\Integers}{\ensuremath{\mathbb{Z}}}
+\newcommand{\Rationals}{\ensuremath{\mathbb{Q}}}
+
+%%\newcommand{\mathsf}[1]{\mbox{\textsc{#1}}}
+\newcommand{\mathsc}[1]{\mbox{\sc #1}}
+\newcommand\scr[1]{\ensuremath\mathcal{#1}}
+\newcommand\Gradient{\ensuremath\nabla}
+\newcommand\pdiff[2]{\partial_{#1}{#2}}
+\newcommand\jth[2]{ #1^{(#2)} }
+
+% Logic
+% \newcommand{\land}{\ensuremath\wedge}
+% \newcommand{\lor}{\ensuremath\vee}
+
+% Software
+\newcommand\flowstar{FLOW*}
+\newcommand\MATLAB{Matlab\textsuperscript{\textregistered}}
+\newcommand\SIMULINK{Simulink\textsuperscript{\textregistered}}
+\newcommand\STATEFLOW{Stateflow\textsuperscript{\textregistered}}
+\newcommand\EMCODER{Embedded Coder\textsuperscript{\textregistered}}
+
+\newcommand\vs{\mathbf{s}}
+\newcommand\vw{\mathbf{w}}
+\newcommand\vx{\mathbf{x}}
+\newcommand\vy{\mathbf{y}}
+\newcommand\vz{\mathbf{z}}
+\newcommand\vu{\mathbf{u}}
+\newcommand\vj{\mathbf{j}}
+
+% long squiggily arow
+\newcounter{sarrow}
+\newcommand\xrsquigarrow[1]{%
+\stepcounter{sarrow}%
+\begin{tikzpicture}[decoration=snake]
+\node (\thesarrow) {\strut#1};
+\draw[->,decorate] (\thesarrow.south west) -- (\thesarrow.south east);
+\end{tikzpicture}
+}
+
+% misc
+\newcommand\ii{i+1}
+\newcommand\denotation[1]{ \left\llbracket #1 \right\rrbracket}
+
+
+
+% The \munepsfig command is used to insert a new EPS figure
+% into our document.  Usage is:
+%
+%       \munepsfig[args]{filename}{caption}
+%
+% where:
+%       - the optional 'args' argument is passed to the
+%         embedded \includegraphics command, this can be used
+%         to scale the figure or rotate it.
+%       - 'filename' is the name of the EPS file in the 'figures'
+%         directory that is to be inserted (note that 'filename'
+%         should not include the '.eps' extension).
+%       - 'filename' also serves as the label for the figure.
+%         with the text 'fig:' prepended.
+%
+% Sample Usage:
+%       \munepsfig[scale=0.5,angle=90]{barchart}{Population over time}
+
+% inserts the EPS file 'figures/barchart.eps' reduced in size by 50%
+% rotated 90 degrees and with the caption "Popuation over Time."
+% We can refer to that figure as Figure~\ref{fig:barchart} in the text.
+%
+\newcommand{\inclfig}[3][scale=1.0]{%
+        \begin{figure}[!htbp]
+                \centering
+                \vspace{2mm}
+%               \includegraphics[#1]{figures/#2.eps}
+                \includegraphics[#1]{figs/#2}
+                \caption{#3}
+                \label{fig:#2}
+        \end{figure}
+}
+
+% Units
+%\newcommand{\degree}{^{\circ}}
+\newcommand{\degreeC}{^{\circ}{\rm C}}
+%\newcommand{\degreeF}{^{\circ}{\rm F}}
+
+%\newcommand{\CC}{C\nolinebreak\hspace{-.05em}\raisebox{.4ex}{\tiny\bf +}\nolinebreak\hspace{-.10em}\raisebox{.4ex}{\tiny\bf +}}
+\def\Cpp{{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{\tiny\bf ++}}}
+\def\CC{{C\nolinebreak[4]\hspace{-.05em}\raisebox{.4ex}{}}\;}
+
+

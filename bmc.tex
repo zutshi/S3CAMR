@@ -1,0 +1,60 @@
+
+% include an algorithm
+We now describe the entire procedure in three steps.
+\begin{enumerate}
+    \item Given a black box system specified by $\simulate$, we
+        use scatter-and-simulate with ($\Delta$-length) trajectory
+        segments to sample a finite reachability graph
+        $\scr{H}(\Delta)$.
+    \item Using regression, we enrich the graph relations and annotate
+        the edges with the estimated affine maps.
+    \item Interpreting the directed reachability graph as a transition
+        system, we use a bounded model checker to find fixed length
+        violations to safety properties.
+\end{enumerate}
+
+
+\subsection{Search Parameters}
+
+The search parameters for S3CAM-R include the parameters of S3CAM:
+$N$, $\epsilon$ and $\Delta$. Additionally, they also include the
+maximum error budget $\delta_{max}$ for OLS and the maximum length of
+segmented trajectory for building $k$-relational models.
+
+We have already discussed the effects of $N$, $\epsilon$ and $\Delta$
+on S3CAM's performance. However, they also have an effect on
+relational modeling. A finer grid with small cells produces more
+accurate models than a coarser grid with large cells. Similarly,
+small time length trajectory segments result in more accurate
+modeling. An increase in the number of samples also increases the
+accuracy.
+
+\paragraph{Maximum Model Error ($\boldsymbol{\delta}_{\bold{max}}$) .}
+Given a $\delta_{max}$, we keep increasing $k$ during the
+$k$-relational modeling process till $\delta_i \le \delta_{max}$ is
+satisfied. A $k_{max}$ can be introduced as the bound on the longest
+segmented trajectory to consider.
+
+% \paragraph{Bounded k relations ($\boldsymbol{k}_{\bold{max}}$.) }
+
+\subsection{Reasons for Failure}
+The approach can fail to find a counter-example when it exists in
+three ways.
+
+\begin{itemize}
+\item No abstract counter-example is found by S3CAM. This happens when
+    S3CAM fails. We remedy it by increasing search budgets and/or
+    restarting.
+
+\item An abstract counter-example is found, but the BMC fails to find
+    a concrete counter-example in the PWA relational model. The failure
+    can be attributed to either (a) a spurious abstract
+    counter-example or (b) a poorly estimated model. The former can be
+    addressed by restarting but the latter requires that the maximum
+    model error $\delta_{max}$ be decreased.
+
+\item An abstract counter-example is found, and so is its
+    concretization in the PWA relational model by the BMC. However, it
+    is not reproducible in the black box system. This again happens
+    when the PWA relational model is not precise enough.
+    \end{itemize}

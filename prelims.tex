@@ -1,0 +1,140 @@
+
+\subsection{Relational Abstraction}
+
+For continuous dynamical systems, it is hard to directly reason about
+reachability. Discretization is often employed to transform the
+systems into a discrete transition system. One idea is to abstract
+continuous relations by \textit{reachability invariants}. The
+resulting relations can be either time independent or time dependent.
+Depending on the property at hand, we can select the appropriate one.
+The resulting abstractions (usually discrete transitions systems) can
+be analyzed using model checkers. We briefly discuss the two types of
+relational abstractions.
+
+\mypara{Time-less Relational Abstraction}
+
+Relational abstractions for hybrid systems were proposed in
+\cite{Sankaranarayanan+Tiwari/2011/Relational}. Proposed for hybrid
+automaton models, the idea is to summarize the continuous dynamics of
+each mode using a relation over reachable states. The resulting
+relation is time independent and hence valid for all time as long as
+the mode invariant is satisfied. The relations take the general form
+of $R(\x,\x') \bowtie 0$, where $\bowtie$ represents one of the
+relational operators $=, \ge, \le, <, >$. For \eg, an abstraction
+which captures the monotonicity with respect to time for the
+differential equation $\dot{x} = 2$ is $x' > x$.  The abstraction
+capturing the relation between the set of ODEs: $\dot{x} = 2$,
+$\dot{y} = 5$, is $5(x' - x) = 2(y' - y)$.
+
+Such relations summarize the given system as a transition system.
+These can be verified using $k$-induction or falsified using bounded
+model checkers. The relationalization procedure involves finding
+suitable abstractions, such as affine abstractions, eigen abstractions
+and box abstractions~\cite{Sankaranarayanan+Tiwari/2011/Relational}.
+For this, differnt techniques like template based invariant
+generation~\cite{Gulwani+Tiwari/2008/Constraint,
+Colon+Sankaranarayanan+Sipma/03/Linear} can be used.
+
+\mypara{Timed Relational Abstraction}
+
+As the above discussed relations are timeless, we cannot check their
+timing properties.  Moreover, they cannot be easily specialized for
+time-triggered systems. Timed relational abstractions provide a
+similar solution by computing relations, but, time dependent ones.
+
+For the case of dynamics defined by affine set of ODEs, timed
+relations are provided by their solutions $\x(t) = e^{tA}\x(0)$.
+This gives us the timed relation $\x' = e^{tA}\x$. Clearly, the
+relation is non-linear with respect to time. However, for the case of
+SDCS with a fixed time period, we obtain linear relations in $\x$.
+We demonstrated the usefulness of timed relational abstractions on
+linear systems in~\cite{zutshi2012timed}, and now incorporate the idea
+to discretize black box dynamical systems.
+
+%TODO
+% \subsection{Time-Aware}
+% Captures the behavior between two time instants which timed relational
+% abstraction ignores.
+
+\subsection{Simple Linear Regression}
+
+\mypara{Regression}
+
+In statistics, regression is the problem of finding a
+\textit{predictor}, which can suitably predict the relationship
+between the given set of observed input $\x$ and output $\y$ vectors.
+In other words, assuming that $\y$ depends on $\x$, regression
+strategies find either a parameterized or a non-parameterized
+prediction function to explain the dependence. We now discuss simple
+linear regression, which is parametric in nature and searches for an
+affine predictor. It is also called \textit{ordinary least squares}.
+
+\mypara{Ordinary Least Squares (OLS)}
+
+Let the data set be comprised of $N$ input and output pairs $(\x,
+y)$, where $\x\in\reals^n$ and $y\in\reals$. If $N>n$, which is
+the case in the current context of \textit{finding the best fit}, the
+problem is overdetermined; there are more equations than
+unknowns. Hence, a single affine function cannot be found which
+satisfies the equation $\forall i\in\{1\ldots N\}. y_i = A\x_i + \vb$. Instead, we
+need to find the `best' choice for $A$ and $\vb$. This is formally
+defined using a loss function. For the case of simple linear
+regression or OLS, the loss function is the sum of squares of the
+errors in prediction.  The task is then to determine the matrix of
+coefficients $A$ and an offset vector $\vb$, such that the least
+square error of the affine predictor is minimized for the given data
+set.
+\[
+    \min_{A, b}\displaystyle\sum_{i=1}^{N}{\left(\y_i - (A\x_i + \vb)\right)^2}
+\]
+The solution of OLS can be analytically computed as
+\[ A = (X^TX)^{-1}X^T\y\]
+where $X$ is the matrix representing the horizontal stacking of all $\x$.
+The details can be found in several texts on learning and statistics
+\cite{friedman2001elements}.
+
+\subsection{Piecewise Affine Model (PWA)}
+
+A PWA model is a collection of guarded affine maps which compute the
+next state of the underlying dynamical system. The affine maps
+discretize the underlying continuous-time dynamics.
+
+Given a state vector $\x\in\reals^n$, a guarded affine map
+$\gm:(\guard, \amap)$ defines the discretized consecution rule as a
+pair of an affine guard predicate $\guard:C\x - \vd \le 0$ and an affine map
+$\amap:A\x+\vb$, where $A \in \reals^{n \times n}$, $C \in
+\reals^{m \times n}$ are matrices and $\vb \in \reals^n$, $\vd
+\in \reals^m$ are vectors. A guarded affine map is satisfied if its
+guard is satisfied.
+
+We now formalize the PWA affine model for a dynamical system.
+\begin{definition}[PWA Model]
+
+Given a dynamical system over a continuous state-space
+$\ContStates\in\reals^n$, a PWA model is a map $\ContStates \mapsto
+\setof{\gm_1, \gm_2, \ldots, \gm_n}$ from the state-space of the
+dynamical system to a finite set of guarded affine maps
+$\setof{\gm_1, \gm_2, \ldots, \gm_n}$. It defines the consecution
+rule by the affine map of the satisfied $\gm$.
+
+\begin{equation}
+    \pwa = \left\{
+        \begin{array}{ll}
+            \gm_1: \amap_1(\x) &\text{if}\; \guard_1(\x) \\
+            \gm_2: \amap_2(\x) &\text{if}\; \guard_2(\x) \\
+            \ldots & \ldots\\
+            \gm_n: \amap_n(\x) &\text{if}\; \guard_n(\x) \\
+        \end{array}
+    \right.
+\end{equation}
+
+\end{definition}
+
+where $\amap_i = A_i\x + \vb_i$, and $\guard_i(\x) \equiv C_i\x-\vd_i\le0$.
+Abusing the notation, we denote the next state computed by the PWA
+model as $\x' = \pwa(\x)$. A PWA model is \textit{deterministic}, iff
+for every state $\x\in\ContStates$, a unique guarded affine map is
+satisfied. A PWA model is \textit{complete}, iff for every state
+$\x\in\ContStates$, there exists at least one satisfied guarded affine
+map $\gm$.
+% $\forall x \in \ContStates. \forall \gm_i. $

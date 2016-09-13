@@ -1,0 +1,38 @@
+
+\section{Implementation and Evaluation}
+
+The implementation was prototyped as S3CAM-R, an extension to our
+previously mentioned tool S3CAM (\chapref{case}). OLS regression
+routines were used from Scikit-learn~\cite{pedregosa2011scikit},
+Python module for machine learning. SAL~\cite{SAL-SRI}
+with Yices2~\cite{dutertre2014yices} was the model checker.
+
+We tabulate our preliminary evaluation in \tabref{res-rel}. We use the
+Van der Pol oscillator and the Brusselator, as described in the previous
+chapter. As before, we ran S3CAM-R $10$ times with different seeds and
+averaged the results. We tabulate both the total time taken and the
+time taken by SAL to compute the counter-example and compare against
+S3CAM.
+
+\begin{table*}[!htbp]
+\centering
+\caption{Avg. timings for benchmarks. The \textbf{BMC} column lists time
+    taken by the BMC engine. The total time is noted under
+\textbf{S3CAM-R} and \textbf{S3CAM}.}
+\label{tab:res-rel}
+\begin{tabular}{@{}llll@{}}
+\toprule
+Benchmark & BMC & S3CAM-R & S3CAM\\
+\midrule
+Van der Pol ($\scr{P}3$)    & $0.0s$  & $10.0s$ & $15.0s$\\
+Brusselator               & $0.2s$ & $4.0s$  & $2.5s$\\
+%Lorenz                    & $0.$ & $s$  & $.s$\\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+% 1m8s, 2m56.184s, 1m31.059s[f], 1m32.665s,  1m45.312s, 1m22.397s, 2m1.451s[f], 1m12.118s, 1m26.596s
+% 0.12, 0.06,         0.33       0.13,       0.22,     FAIL,       ,X           0.08        0.15
+
+The results are favorable and show promise. However, we need to
+explore more benchmarks to conclude conclusively.

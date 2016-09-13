@@ -1,0 +1,60 @@
+
+In \chapref{abs}, we analyzed systems by restricting ourselves to
+black box semantics. This enabled us to introduce an approach
+independent of the system's structure (in practice). By observing the
+dynamics only locally and sparsely (due to a coarse abstraction), we
+were able to efficiently find abstract counter-examples. However, to
+concretize them, we were forced to `take a closer look' or refine the
+abstraction. As noted previously, splitting the state-space evenly is
+an expensive operation in higher dimensions and we would like to avoid
+it. We address this by using learning techniques to model the given
+black box system by a PWA relational model.
+
+In this chapter, we propose an approach which uses regression to
+quantitatively estimate the discovered relations (witnessed by
+trajectory segments) by affine maps. These maps are summaries of
+locally observed behaviors, which we incorporate into the sampled
+reachability graph as edge annotations. The resulting graph can be
+interpreted as a discrete transition system and model checked for
+time bounded safety properties. If a violation is discovered, it is
+expected to be `close' to a true violation of the system.
+
+\section{Overview}
+
+In this chapter, we further our exploration of trajectory segment
+based methods; and propose another approach for searching safety
+violations in dynamical systems. Unlike the CEGAR based approach in
+\chapref{abs} which directly uses the sampled reachability graph, we
+first model quantitatively the local behaviors (represented by edges).
+Recall that the edges of the graph represent observed trajectory
+segments, between the respective cells. From this, we can only
+conclude that a cell is reachable but cannot comment on the
+underlying dynamics. If however, we estimate the dynamics of the
+witnessed trajectory segments between two cells, we can model the
+local dynamics. As we use affine templates to achieve this, it can be
+compared to trajectory \textit{linearization}.
+% We differentiate it by noting that
+
+The dynamics can be either estimated soundly or only approximated with
+error estimates. For the former, we require the white box model of a
+system. Using a reach-set estimation tool like
+\flowstar~\cite{chen2013flow}, the reachable states of an abstract
+state can be soundly computed. As this is not usually the case, in the
+rest of the chapter we focus on the case of black box systems.
+Recall that such systems are equipped with a simulation function
+$\simulate$, but the internal details of the model are opaque to us.
+We use simple regression to fit an affine map to the locally
+observed behaviors and use cross-validation to estimate the errors.
+This results in an interval affine map, approximating a reachable
+hyper-rectangle in the state-space.
+
+Observe that the directed reachability graph can be interpreted as a
+discrete transitions system. However, an explicit model checker can
+only find abstract counter-examples in it. The graph does not have
+enough information to enable the direct search of concrete
+counter-examples. We remedy this by incorporating the estimated local
+dynamics by annotating the graph edges with them. The resulting
+transition system is rich enough that an off-the-shelf bounded model
+checker can find concrete violations of a safety property, thus doing
+away with the expensive refinement process. We now discuss the
+background required to present our ideas.
