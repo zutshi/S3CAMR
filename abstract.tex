@@ -1,0 +1,9 @@
+In this work we address the problem of findfing behaviors violating a
+given time bounded LTL property in hybrid dynamical systems. We
+approach the problem in two distinct steps. First, we approximate the
+behavior of the underlying system using a piecewise affine discrete
+time model. The model is incomplete in nature and is computed with
+respect to the given property.  We then encode the falsification
+search as a bounded model checking query and use an SMT solver to find
+a counter example. If found, we check the violation to ensure
+reproducibility in the given hybrid dynamical system.

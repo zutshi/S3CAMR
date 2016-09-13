@@ -9,7 +9,112 @@ the underlying system. Taking such a route can potentially improve the
 previously used expensive refinement procedure and also provides us an
 alternative perspective on the problem.
 
-\section{Approach 1: Relation based refinement}
+\subsection{PWA modeling and Falsification}
+
+The symbolic abstraction of the given system $\scrS$ can be thought of
+as a discrete transition system, where each abstract state represents
+a location and its relation represents the transition relation. Let
+$L: \C \mapsto g(\vx)$ be a map from a cell to its constraint
+representation. Then we have, $L(C_i\in\C) \implies \RA{\tau}()$
+
+
+symbolic maps describing evolution of the system for each cell. This
+is akin to computing a piecewise affine, discrete time model of the
+system. It also provides us with a way to define relations between two
+abstract states. We associate an an affine map $\Map{i}$ with every
+abstract state $C_i$, which maps a concrete state in cell $C_i$ to
+another concrete state reachable in one time step $\tau$. The time
+step parameterized abstract relation $\RA{\tau}$ can be stated in
+terms of these maps. Two abstract states are related, if the system
+can evolve from one to another in time $\tau$.
+
+$\Map{}$ can be either be soundly approximated using a regression
+technique and numerical simulations or can be over-approximated by
+symbolic reach set computation tools like flow*~\cite{chen2013flow}.
+The resulting abstraction $\hat{\scrS}$ is non-deterministic, and can
+be interpreted as a discrete time, piecewise affine model of the
+underlying plant. A time bounded reachability question for the system
+$\scrS$ can then be encoded as a BMC formula over finite steps and
+checked over the abstraction $\hat{\scrS}$ using an SMT solver like
+Z3~\cite{DeMoura+Bjorner/08/Z3}. If satisfiable, Z3 returns a path in
+the abstraction which is a sequence of abstract states, and indicates
+a potential concrete violating trajectory of the given system $\scrS$.
+A concretization step is used to discover such a concrete violation.
+On the other hand, an unsatisfiable formula indicates the absence of a
+counterexample in the abstraction.
+
+We first introduce the template of the piecewise affine model, present
+a method to estimate it from a given black box system, and then detail
+the resulting abstraction and propose an iterative falsification
+methodology.
+
+\paragraph {Assumptions.} We assume that the plant is described as a
+black box system equipped with a forward numerical simulation function
+$\simulate$.
+
+\section{Answering the Reachability Question}
+
+Approximating a continuous plant $\scrS$ by the abstract transition
+system $\hat{\scrS}$ allows us to encode the reachability problem by a
+BMC formula. As we kept the map $\Map{}$ affine, we can use
+off-the-shelf SMT solvers like Z3~\cite{DeMoura+Bjorner/08/Z3} to
+check it. We now formally state the problem.
+
+\paragraph{Problem Statement.} Given a polytope representing unsafe of
+states, $X_f: A_f\vx \le \vb_f$, a discrete transition system
+$\hat{\scrS}$ defined by $\Map{}$, it's initial set of states (also a
+polytope) $X_0: A_0\vx \le \vb_0$, a finite number of steps $N$, does
+there exist a trajectory of the system from an initial state $\vx_0
+\in X_0$ to an unsafe set such that $\vx_k \in X_f$, where $\vx_k =
+\Map{}^k(\vx)$ and $k \le N$.
+
+\subsection{Search for a violation.} Given a BMC formula over affine
+arithmetic, an SMT solver either returns a satisfying assignment for
+it or finds it unsatisfiable. The former case provide us with an
+abstract violation while the latter conveys us the absence of one in
+the sound abstraction. To find the corresponding concrete violation if
+it exists, a concretization step is used.
+
+\subsection{Concretization} An abstract path can be concretized by
+using random simulations. Same as before, we use the initial abstract
+state $C_0$ in the returned abstract path and sample it to get
+$\scr{N}$ concrete states ($\scr{N}$ is the concretization budget).
+The states are then simulated for specified time horizon $T$ using the
+given simulation function $\simulate$. If a violation is triggered, we
+conclude a successful falsification and stop. If not, we refine the
+abstraction.
+
+\subsection{Refinement} A refinement of the abstraction can be carried
+out by reducing the error in the relation. The error is captured by
+the interval $[\underline{\vb}, \overline{\vb}]$ in the map $\Map{}$.
+Multiple strategies can be used to refine the maps, depending upon the
+underlying method used to over-approximate the $\Map{}$. One way would
+be to reduce the size of the cells by refining the $\epsilon$-tiling.
+The interval affine maps thus found using the same method would be
+more precise.
+
+\section{Discussion}
+
+There are a few known points which need to be addressed in this
+approach. Particularly, an algorithm needs to be designed to explore
+the cells and estimate their associated maps. An exhaustive
+enumeration is undesirable, and hence there needs to be a mechanism to
+prioritize which cells to explore. A potential candidate would be to
+use the previously introduced scatter-and simulate algorithm.
+
+Another aspect we need to discuss is the refinement procedure.
+Assuming a finer $\epsilon$-tiling has been mentioned, but but perhaps
+we can refine each cell individually as per their respective observed
+over-approximation. Also, it needs to be investigated if a less
+expensive and more flexible state-space decomposition can be used
+instead of $\epsilon$-tiling, for \emph{e.g.} simplicial
+decomposition.
+
+Finally, if possible, we would like the time step $\tau$ to be dynamic
+and dynamics based instead of fixing one for the entire system.
+
+
+\section{S3CAM + Relation Based Refinement}
 In the first approach, we propose to modify the refinement procedure
 used by SCAM. Before we proceed, let us briefly recall the general
 SCAM algorithm.
@@ -134,102 +239,6 @@ be computed. % by linearly transofrming the errors along each
 % The local models can be refined iteratively by adding the new
 % failure witnesses from the concretization step.
 
-\section{Approach 2: PWA modeling and Falsification}
-
-symbolic maps describing evolution of the system for each cell. This
-is akin to computing a piecewise affine, discrete time model of the
-system. It also provides us with a way to define relations between two
-abstract states. We associate an an affine map $\Map{i}$ with every
-abstract state $C_i$, which maps a concrete state in cell $C_i$ to
-another concrete state reachable in one time step $\tau$. The time
-step parameterized abstract relation $\RA{\tau}$ can be stated in
-terms of these maps. Two abstract states are related, if the system
-can evolve from one to another in time $\tau$.
-
-$\Map{}$ can be either be soundly approximated using a regression
-technique and numerical simulations or can be over-approximated by
-symbolic reach set computation tools like flow*~\cite{chen2013flow}.
-The resulting abstraction $\hat{\scrS}$ is non-deterministic, and can
-be interpreted as a discrete time, piecewise affine model of the
-underlying plant. A time bounded reachability question for the system
-$\scrS$ can then be encoded as a BMC formula over finite steps and
-checked over the abstraction $\hat{\scrS}$ using an SMT solver like
-Z3~\cite{DeMoura+Bjorner/08/Z3}. If satisfiable, Z3 returns a path in
-the abstraction which is a sequence of abstract states, and indicates
-a potential concrete violating trajectory of the given system $\scrS$.
-A concretization step is used to discover such a concrete violation.
-On the other hand, an unsatisfiable formula indicates the absence of a
-counterexample in the abstraction.
-
-We first introduce the template of the piecewise affine model, present
-a method to estimate it from a given black box system, and then detail
-the resulting abstraction and propose an iterative falsification
-methodology.
-
-\paragraph {Assumptions.} We assume that the plant is described as a
-black box system equipped with a forward numerical simulation function
-$\simulate$.
-
-\section{Answering the Reachability Question}
-
-Approximating a continuous plant $\scrS$ by the abstract transition
-system $\hat{\scrS}$ allows us to encode the reachability problem by a
-BMC formula. As we kept the map $\Map{}$ affine, we can use
-off-the-shelf SMT solvers like Z3~\cite{DeMoura+Bjorner/08/Z3} to
-check it. We now formally state the problem.
-
-\paragraph{Problem Statement.} Given a polytope representing unsafe of
-states, $X_f: A_f\vx \le \vb_f$, a discrete transition system
-$\hat{\scrS}$ defined by $\Map{}$, it's initial set of states (also a
-polytope) $X_0: A_0\vx \le \vb_0$, a finite number of steps $N$, does
-there exist a trajectory of the system from an initial state $\vx_0
-\in X_0$ to an unsafe set such that $\vx_k \in X_f$, where $\vx_k =
-\Map{}^k(\vx)$ and $k \le N$.
-
-\subsection{Search for a violation.} Given a BMC formula over affine
-arithmetic, an SMT solver either returns a satisfying assignment for
-it or finds it unsatisfiable. The former case provide us with an
-abstract violation while the latter conveys us the absence of one in
-the sound abstraction. To find the corresponding concrete violation if
-it exists, a concretization step is used.
-
-\subsection{Concretization} An abstract path can be concretized by
-using random simulations. Same as before, we use the initial abstract
-state $C_0$ in the returned abstract path and sample it to get
-$\scr{N}$ concrete states ($\scr{N}$ is the concretization budget).
-The states are then simulated for specified time horizon $T$ using the
-given simulation function $\simulate$. If a violation is triggered, we
-conclude a successful falsification and stop. If not, we refine the
-abstraction.
-
-\subsection{Refinement} A refinement of the abstraction can be carried
-out by reducing the error in the relation. The error is captured by
-the interval $[\underline{\vb}, \overline{\vb}]$ in the map $\Map{}$.
-Multiple strategies can be used to refine the maps, depending upon the
-underlying method used to over-approximate the $\Map{}$. One way would
-be to reduce the size of the cells by refining the $\epsilon$-tiling.
-The interval affine maps thus found using the same method would be
-more precise.
-
-\section{Discussion}
-
-There are a few known points which need to be addressed in this
-approach. Particularly, an algorithm needs to be designed to explore
-the cells and estimate their associated maps. An exhaustive
-enumeration is undesirable, and hence there needs to be a mechanism to
-prioritize which cells to explore. A potential candidate would be to
-use the previously introduced scatter-and simulate algorithm.
-
-Another aspect we need to discuss is the refinement procedure.
-Assuming a finer $\epsilon$-tiling has been mentioned, but but perhaps
-we can refine each cell individually as per their respective observed
-over-approximation. Also, it needs to be investigated if a less
-expensive and more flexible state-space decomposition can be used
-instead of $\epsilon$-tiling, for \emph{e.g.} simplicial
-decomposition.
-
-Finally, if possible, we would like the time step $\tau$ to be dynamic
-and dynamics based instead of fixing one for the entire system.
 
 
 % TODO: Problems to be addressed...
