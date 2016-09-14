@@ -32,7 +32,8 @@ MAX_TRAIN = 2000
 
 MAX_TEST = 200
 
-K = 1
+KMAX = 1
+KMIN = 1
 
 NUM_SIMS = 100
 
@@ -465,52 +466,51 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
     assert(Y_.shape[1] == q.dim)
     assert(X.shape[0] == Y.shape[0] == Y_.shape[0])
 
-    print(U.colorize('# samples = {}'.format(X.shape[0])))
+    #print(U.colorize('# samples = {}'.format(X.shape[0])))
 
-    rm = RegressionModel(X, Y)
-    #rm = RobustRegressionModel(X, Y)
-    e_pc = rm.max_error_pc(X, Y)
-    err.imp('error%: {}'.format(e_pc))
-    error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
-    error_exceeds_tol = len(error_dims) > 0
-    #err.warn('e%:{}, |e%|:{}'.format(e_pc, np.linalg.norm(e_pc, 2)))
+    if k >= KMIN:
+        rm = RegressionModel(X, Y)
+        #rm = RobustRegressionModel(X, Y)
+        e_pc = rm.max_error_pc(X, Y)
+        err.imp('error%: {}'.format(e_pc))
+        error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
+        error_exceeds_tol = len(error_dims) > 0
+        refine = error_exceeds_tol
+        #err.warn('e%:{}, |e%|:{}'.format(e_pc, np.linalg.norm(e_pc, 2)))
+        if __debug__:
+            from matplotlib import pyplot as plt
+            # flush out the plot from the simulations
+            #plt.show()
+            rm.plot(X, Y, tol, 'q:{}, err:{}'.format(q, e_pc))
+    else:
+        refine = True
 
-    if error_exceeds_tol:
-        # Did the loop run or not
-        #nb = False
+    if refine:
         ms = []
         print('error exceeds...')
-        if k == 0:
+        if k >= KMAX:
+            assert(k == KMAX)
             err.warn('max depth exceeded but the error > tol. Giving up!')
             ms = [(rm, [], e_pc)]
         else:
-            #TODO: adding q will lead to infinite recursion!!FIX IT
             # first check for existance of a self loop
             #if any(q.sat(Y)):
                 #err.imp('self loop exists')
-                #raw_input('pause')
             for qi in it.chain([q], qgraph.neighbors(q)):
-                #nb = True
                 Y__ = qi.sim(step_sim, Y_)
                 sat = qi.sat(Y__)
                 # TODO: If we are out of samples, we can't do much. Need to
                 # handle this situation better? Not sure? Request for more
                 # samples? Give up?
                 if any(sat):
-                    rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k-1)
+                    if __debug__:
+                        from matplotlib import pyplot as plt
+                        plt.plot(Y__[sat, 0], Y__[sat, 1], 'y*')
+                    rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k+1)
                     l = [(rm_, [qi]+qseq_, e_pc_) for rm_, qseq_, e_pc_ in rm_qseq]
-                    #l = [(rm_, [q]+qseq_, e_pc_) for rm_, qseq_, e_pc_ in rm_qseq]
                     ms.extend(l)
                 else:
                     err.warn('out of samples...Giving up!')
-
-            # TODO: this need to be fixed?
-            #if not nb:
-            #    err.warn('no location in graph to improve...')
-
-        # The loop never ran due to q not having any neighbors,
-        # Or, no samples were left. We do the best with what we have
-        # then.A
 
         # TODO: this will happen when the last location fails? confirm
         if not ms:
@@ -518,13 +518,8 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
             # was never initially explored by S3CAM. Can happen, but
             # possibility is very very low.
             err.Fatal('Very low prob. of happening. Check code')
-            #ms = [(rm, [], e_pc)]
-            #ms = [(rm, [q], e_pc)]
-            #if __debug__:
-            #    rm.plot(X, Y, tol, 'q:{}, err:{}'.format(q, e_pc))
     else:
         print('error is under control...')
-        #ms = [(rm, [q], e_pc)]
         ms = [(rm, [], e_pc)]
 
     return ms
@@ -563,7 +558,7 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
     """
     sub_models = []
     X, Y = q.get_rels(ntrain, step_sim)
-    regression_models = mdl(tol, step_sim, qgraph, q, (X, Y), X, K)
+    regression_models = mdl(tol, step_sim, qgraph, q, (X, Y), X, k=0)
 
     assert(regression_models)
 #     # TODO: fix this messy handling...?
