@@ -43,7 +43,7 @@ num_samples = 10
 # Abstraction params: coarse
 # grid_eps = [50, 10, 10, 10]
 # delta_t = 5.0
-# num_samples = 50
+# num_samples = 20
 
 MAX_ITER = 4
 
