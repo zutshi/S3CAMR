@@ -223,9 +223,10 @@ class Qx(Q):
         for x in x_array:
             (t_, x_, s_, d_, pvt_, u_) = sim(t0, x, s, d, pvt, ci, pi)
             Yl.append(x_)
-        #plt.show()
-        #exit()
-        #raw_input('drawn?')
+        if __debug__:
+            #plt.title('ignore')
+            #plt.show()
+            plt.close()
 
         return x_array, np.vstack(Yl)
 
