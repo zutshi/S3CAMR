@@ -1,8 +1,11 @@
 import abc
+import logging
 
 import numpy as np
 import constraints as cons
 from utils import poly_sat
+
+logger = logging.getLogger(__name__)
 
 
 class ModelError(Exception):
@@ -144,14 +147,13 @@ class ModelGeneric(ModelSpec):
         for sub_model in self.sub_models.itervalues():
             if sub_model.sat(x):
                 return sub_model
-        raise ModelError('no appropriate submodel found')
+        raise ModelError('No appropriate submodel found')
 
     def predict(self, x):
         try:
             sub_model = self.find_sub_model(x)
         except ModelError:
-            if __debug__:
-                print('No sub-model found')
+            logger.debug('No sub-model found')
             return x
 
         return sub_model.predict(x)
