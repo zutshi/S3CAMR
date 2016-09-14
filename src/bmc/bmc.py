@@ -55,11 +55,9 @@ def convert_KPath2Relational(pwa_model):
     new_pwa_model = R.PWARelational()
     for sm in pwa_model:
         assert(isinstance(sm, R.KPath))
-        assert(len(sm.pnexts) != 0)
-        # new sub model
-        if (len(sm.pnexts) == 1):
-            for p in sm.pnexts:
-                new_sm = R.Relation(sm.p, p, sm.m)
-                new_pwa_model.add(new_sm)
+        assert(len(sm.pnexts) >= 1)
+        for p_ in sm.pnexts:
+            new_sm = R.Relation(sm.p, p_, sm.m)
+            new_pwa_model.add(new_sm)
 
     return new_pwa_model
