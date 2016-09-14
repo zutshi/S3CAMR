@@ -44,6 +44,9 @@ class PlottingDisabled(PlottingBase):
     def plot_pwa_traces(self, txs):
         return
 
+    def plot(self, *args):
+        return
+
 
 def plot_opts_parse(popts):
     if popts:
