@@ -22,8 +22,6 @@ from constraints import IntervalCons, top2ic
 
 from graphs.graph import factory as graph_factory
 
-from IPython import embed
-
 #np.set_printoptions(suppress=True, precision=2)
 
 # multiply num samples with the
@@ -118,7 +116,7 @@ def get_qgraph(sp, AA, G, error_paths, pi_seqs):
 # and error paths and pi_seqs extracted.
 
 # Subsumes get_qgraph
-def get_qgraph_xw(sp, AA, G, error_paths, pi_seqs):
+def get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs):
 #     for i, pi_seq in enumerate(pi_seqs):
 #         for j, pi in enumerate(pi_seq):
 #             try:
@@ -127,6 +125,7 @@ def get_qgraph_xw(sp, AA, G, error_paths, pi_seqs):
 #                 print(i,j)
 #                 print(pi)
 #      exit()
+    G = graph_factory(opts.graph_lib)
 
     for path, pi_seq in zip(error_paths, pi_seqs):
         # Normalize the (x, w) list
@@ -178,16 +177,13 @@ def refine_dft_model_based(
     if AA.num_dims.pi:
         Qxw.init(sp.pi_ref.i_cons)
 
-    G = graph_factory(opts.graph_lib)
+    qg = get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs)
+    pwa_model = build_pwa_model(AA, qg, sp, opts, 'dft')
 
-    qg = get_qgraph_xw(sp, AA, G, error_paths, pi_seqs)
-    pwa_model = build_pwa_model(
-            AA, qg, sp, opts.max_model_error,
-            opts.model_err, 'dft')
-
-    if __debug__:
-        #qg.draw_graphviz()
-        qg.draw_mplib()
+#     if __debug__:
+#         qg.draw_graphviz()
+#         qg.draw_mplib()
+    draw_model(opts, pwa_model)
 
     max_path_len = max([len(path) for path in error_paths])
     print('max_path_len:', max_path_len)
@@ -290,16 +286,7 @@ def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, bmc_engine
     sal_bmc.check()
 
 
-# TODO: move it udner ./graph/
-def print_graph(g):
-    print('printing graph...')
-    print('='*40)
-    for e in g.iteredges():
-        print(e)
-    print('='*40)
-
-
-def build_pwa_model(AA, qgraph, sp, tol, include_err, model_type):
+def build_pwa_model(AA, qgraph, sp, opts, model_type):
     """build_pwa_model
     Builds both dft and rel models
 
@@ -313,6 +300,9 @@ def build_pwa_model(AA, qgraph, sp, tol, include_err, model_type):
     include_err : include error in determining next state
                   x' = x +- errror
     """
+    tol = opts.max_model_error
+    include_err = opts.model_err
+
     # number of training samples
     ntrain = min(AA.num_samples * MORE_FACTOR, MAX_TRAIN)
     # number of test samples
@@ -324,10 +314,6 @@ def build_pwa_model(AA, qgraph, sp, tol, include_err, model_type):
     #abs_state_models = {}
 
     pwa_model = rel.PWARelational()
-
-    # can draw the graph now! No need to print
-    #if __debug__:
-        #print_graph(qgraph)
 
     # for ever vertex (abs_state) in the graph
     for q in qgraph:
@@ -345,32 +331,41 @@ def build_pwa_model(AA, qgraph, sp, tol, include_err, model_type):
                 pwa_model.add(sub_model)
                 #abs_state_models[abs_state] = sub_model
 
-    #if __dbg__: # make this debug only later
-    add_error_info_to_qgraph_edges_data(qgraph, pwa_model)
-
     return pwa_model
 
 
-def add_error_info_to_qgraph_edges_data(qgraph, pwa_model):
+def draw_model(opts, pwa_model):
     """Adds a 'label' attribute to the edges. This is useful for
     graphs rendered using graphviz, as it annotates the edges with the
     value of those attributes. Currently, the label's value is the
     error between a learned relation between two nodes."""
 
-    # update edge attribute by adding it again
-    def label_edge_with_error(e, error):
-        e_attrs = qgraph.G[e[0]][e[1]]
-        e_attrs['label'] = np.round(error, 2)
-        qgraph.G.add_edge(*e, attr_dict=e_attrs)
+#     # update edge attribute by adding it again
+#     def label_edge_with_error(e, error):
+#         e_attrs = qgraph.G[e[0]][e[1]]
+#         e_attrs['label'] = np.round(error, 2)
+#         qgraph.G.add_edge(*e, attr_dict=e_attrs)
 
-    # keep on looping through the submodels till the right one is
-    # found
-    for e in qgraph.G.edges():
-        q = e[0]
-        for sub_model in pwa_model:
-            if sub_model.p.ID == q:
-                label_edge_with_error(e, sub_model.max_error_pc)
-                break
+#     # keep on looping through the submodels till the right one is
+#     # found
+#     for e in qgraph.G.edges():
+#         q1 = e[0]
+#         q2 = e[1]
+#         for sub_model in pwa_model:
+#             # TODO: builds a list every time!
+#             if sub_model.p.ID == q1 and any(q2 == pn.ID for pn in sub_model.pnexts):
+#                 label_edge_with_error(e, sub_model.max_error_pc)
+#                 break
+
+    G = graph_factory(opts.graph_lib)
+
+    for sub_model in pwa_model:
+        for p_ in sub_model.pnexts:
+            #e_attr = {'label': np.round(sub_model.max_error_pc, 2)}
+            error = np.round(sub_model.max_error_pc, 2)
+            G.add_edge(sub_model.p.ID, p_.ID, label=error)
+    G.draw_graphviz()
+    G.draw_mplib()
 
 
 # TODO: it is a superset of build_pwa_dft_model
@@ -482,14 +477,20 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
 
     if error_exceeds_tol:
         # Did the loop run or not
-        nb = False
+        #nb = False
         ms = []
         print('error exceeds...')
         if k == 0:
             err.warn('max depth exceeded but the error > tol. Giving up!')
+            ms = [(rm, [], e_pc)]
         else:
-            for qi in qgraph.neighbors(q):
-                nb = True
+            #TODO: adding q will lead to infinite recursion!!FIX IT
+            # first check for existance of a self loop
+            #if any(q.sat(Y)):
+                #err.imp('self loop exists')
+                #raw_input('pause')
+            for qi in it.chain([q], qgraph.neighbors(q)):
+                #nb = True
                 Y__ = qi.sim(step_sim, Y_)
                 sat = qi.sat(Y__)
                 # TODO: If we are out of samples, we can't do much. Need to
@@ -497,14 +498,15 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
                 # samples? Give up?
                 if any(sat):
                     rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k-1)
-                    l = [(rm_, [q]+qseq_, e_pc_) for rm_, qseq_, e_pc_ in rm_qseq]
+                    l = [(rm_, [qi]+qseq_, e_pc_) for rm_, qseq_, e_pc_ in rm_qseq]
+                    #l = [(rm_, [q]+qseq_, e_pc_) for rm_, qseq_, e_pc_ in rm_qseq]
                     ms.extend(l)
                 else:
                     err.warn('out of samples...Giving up!')
 
             # TODO: this need to be fixed?
-            if not nb:
-                err.warn('no location in graph to improve...')
+            #if not nb:
+            #    err.warn('no location in graph to improve...')
 
         # The loop never ran due to q not having any neighbors,
         # Or, no samples were left. We do the best with what we have
@@ -512,12 +514,18 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
 
         # TODO: this will happen when the last location fails? confirm
         if not ms:
-            ms = [(rm, [q], e_pc)]
-            if __debug__:
-                rm.plot(X, Y, tol, 'q:{}, err:{}'.format(q, e_pc))
+            # This means, all samples which landed are in a cell which
+            # was never initially explored by S3CAM. Can happen, but
+            # possibility is very very low.
+            err.Fatal('Very low prob. of happening. Check code')
+            #ms = [(rm, [], e_pc)]
+            #ms = [(rm, [q], e_pc)]
+            #if __debug__:
+            #    rm.plot(X, Y, tol, 'q:{}, err:{}'.format(q, e_pc))
     else:
         print('error is under control...')
-        ms = [(rm, [q], e_pc)]
+        #ms = [(rm, [q], e_pc)]
+        ms = [(rm, [], e_pc)]
 
     return ms
 
@@ -581,7 +589,7 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
         p = pwa.Partition(C, d, q)
 
         future_partitions = []
-        assert(len(q_seq) >= 1)
+        #assert(len(q_seq) >= 1)
 
         # If the cell has no neighbhors in the qgraph, it must be a
         # sink node. Make them self loop
@@ -593,9 +601,11 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
 
         # Force self loops
         #err.warn('forcing self loops for every location!')
-        pnexts = [p]
+        pnexts = []
 
-        if len(q_seq) == 1:
+        #if len(q_seq) == 1:
+        # if q_seq is empty, all its neighbours are reachable
+        if not q_seq:
             # No relational modeling was done. Use the relations from
             # the graph. Add transitions to cell only seen in the
             # subgraph.
@@ -607,11 +617,11 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
         # used to model this transition.
         else:
             # Add the immediate next reachable state
-            qnext = q_seq[1]
+            qnext = q_seq[0]
             C, d = qnext.ival_constraints.poly()
             pnexts.append(pwa.Partition(C, d, qnext))
             # Add the states reachable in future
-            for qi in q_seq[2:]:
+            for qi in q_seq[1:]:
                 C, d = qi.ival_constraints.poly()
                 future_partitions.append(pwa.Partition(C, d, qi))
 
