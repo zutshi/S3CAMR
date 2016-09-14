@@ -10,7 +10,7 @@ from itertools import count
 from collections import defaultdict
 from blessed import Terminal
 
-from networkx.drawing.nx_agraph import graphviz_layout
+#from networkx.drawing.nx_agraph import graphviz_layout
 from networkx.drawing.nx_agraph import write_dot
 
 GVIZ_GRAPH_PATH = './graph.dot'
@@ -383,15 +383,15 @@ class GraphNX(object):
         # TODO: how to do this with lambda?
         # Also, is this indeed correct?
 
-        if __debug__:
-            # delete below lines till exit
-            K = max_paths
-            (len_list, path_list) = self.k_shortest_paths(H,
-                                                          dummy_super_source_node,
-                                                          dummy_super_sink_node,
-                                                          k=K)
-            for p in path_list:
-                print p
+#         if __debug__:
+#             # delete below lines till exit
+#             K = max_paths
+#             (len_list, path_list) = self.k_shortest_paths(H,
+#                                                           dummy_super_source_node,
+#                                                           dummy_super_sink_node,
+#                                                           k=K)
+#             for p in path_list:
+#                 print p
 
         def path_gen():
 
@@ -449,12 +449,13 @@ class GraphNX(object):
                          with_labels=True)
 
     def draw_graphviz(self):
-        pos = graphviz_layout(self.G)
-        nx.draw_graphviz(self.G, pos)
-        nx.draw(self.G, pos)
-        print('generating graph:', GVIZ_GRAPH_PATH)
+        #pos = graphviz_layout(self.G)
+        #nx.draw_graphviz(self.G, pos)
+        #nx.draw(self.G, pos)
+        print 'generating graphs:', GVIZ_GRAPH_PATH, GRAPH_EPS_PATH
         write_dot(self.G, GVIZ_GRAPH_PATH)
-        subprocess.call(['dot', '-Tps', GVIZ_GRAPH_PATH, '-o', GRAPH_EPS_PATH])
+        opts = ['-Efontsize=10', '-Gnodesep=1', '-Granksep=3', '-Tps']
+        subprocess.call(['dot'] + opts + [GVIZ_GRAPH_PATH, '-o', GRAPH_EPS_PATH])
 
     def draw_mplib(self):
         from matplotlib import pyplot as plt
@@ -472,13 +473,13 @@ class GraphNX(object):
         nx.draw_networkx_edge_labels(self.G, pos=pos_dict, edge_labels=edge_labels)
 
         plt.savefig(MPLIB_GRAPH_PATH)
-        plt.show()
+        #plt.show()
 
     def __contains__(self, key):
         return key in self.G
 
     def __repr__(self):
         s = ''
-        s += '''==== Nodes ==== {} '''.format(self.G.nodes())
-        s += '''==== Edges ==== {} '''.format(self.G.edges())
+        s += '''==== Nodes ====\n {} \n'''.format(self.G.nodes())
+        s += '''==== Edges ====\n {} \n'''.format(self.G.edges())
         return s
