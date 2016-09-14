@@ -43,6 +43,7 @@ def concretize_bmc_trace(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq):
     if trace:
         print(term.green('violation found'))
         print('violation found', file=SYS.stderr)
+        exit()
     else:
         print('nothing found')
         print('nothing found', file=SYS.stderr)
@@ -172,10 +173,9 @@ def abstract_trace_violates(sys, sp, prop, AA, opts, x_array, pi_seq):
     #opts.plotting.figure()
     opts.plotting.plot_trace_list(trace_list, x_vs_y=opts.plots)
     opts.plotting.plot_abs_states(AA, {'init': [initial_state]})
-    opts.plotting.plot(x_array[:, 0], x_array[:, 1], 'r*-')
     opts.plotting.show()
-    if vio_found:
-        err.imp('Found!')
+
+    return vio_found
 
 
 # TODO: make a module of its own once we add more general property using
