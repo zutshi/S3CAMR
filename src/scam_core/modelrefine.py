@@ -599,8 +599,6 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
 #         else:
 #             pnexts = []
 
-        # Force self loops
-        #err.warn('forcing self loops for every location!')
         pnexts = []
 
         #if len(q_seq) == 1:
@@ -609,7 +607,10 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
             # No relational modeling was done. Use the relations from
             # the graph. Add transitions to cell only seen in the
             # subgraph.
-            for qi in qgraph.neighbors(q):
+            # Force self loops just in case. The other option is to
+            # examin in the mdl() function if a self loop is possible
+            #err.warn('forcing self loops for every location!')
+            for qi in it.chain([q], qgraph.neighbors(q)):
                 C, d = qi.ival_constraints.poly()
                 pnexts.append(pwa.Partition(C, d, qi))
 
