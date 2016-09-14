@@ -1,3 +1,7 @@
+tmp
+*.dot
+*.eps
+*.png
 *.pyc
 *.pyo
 *.tstc
