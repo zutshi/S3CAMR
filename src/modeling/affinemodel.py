@@ -139,6 +139,11 @@ class RegressionModel(object):
         dimX = len(X.shape)
         assert(dimX == 2)
 
+        # if 1 or less rows
+        if X.shape[0] <= 1:
+            err.warn('cant plot, only 1 value!!')
+            return
+
         div = 50
         X_min, X_max = np.min(X, axis=0), np.max(X, axis=0)
         step0 = (X_max[0] - X_min[0])/div
@@ -148,7 +153,6 @@ class RegressionModel(object):
         #print('x1 range:', X_min[1], X_max[1])
 
         # Predict data of estimated models
-
         xx1, xx2 = np.mgrid[X_min[0]:X_max[0]:step, X_min[1]:X_max[1]:step]
         xx = np.vstack([xx1.ravel(), xx2.ravel()]).T
         yy = self.predict(xx)
@@ -204,7 +208,7 @@ class RegressionModel(object):
 
         ax = fig.add_subplot(2, 1, 1, projection='3d')
         ax.plot_surface(xx1, xx2, np.reshape(yy0, (xx1.shape)))
-        ax.plot(X[:, 0], X[:, 1], Y0, 'b.')
+        ax.plot(X[:, 0], X[:, 1], Y0, 'y.')
         ax.plot(X[outlier0_idx, 0], X[outlier0_idx, 1], Y0[outlier0_idx], 'r.')
         ax.set_title('y0 vs x')
         ax.set_xlabel('x0')
@@ -216,7 +220,7 @@ class RegressionModel(object):
         #################
         ax = fig.add_subplot(2, 1, 2, projection='3d')
         ax.plot_surface(xx1, xx2, np.reshape(yy1, (xx1.shape)))
-        ax.plot(X[:, 0], X[:, 1], Y1, 'b.')
+        ax.plot(X[:, 0], X[:, 1], Y1, 'y.')
         ax.plot(X[outlier1_idx, 0], X[outlier1_idx, 1], Y1[outlier1_idx], 'r.')
         ax.set_title('y1 vs x')
         ax.set_xlabel('x0')
@@ -229,23 +233,16 @@ class RegressionModel(object):
 #         fig = plt.figure()
 #         ax = fig.gca(projection='3d')
 #         ax.plot_surface(xx1, xx2, np.reshape(yy0, (xx1.shape)))
-#         ax.plot(X[:, 0], X[:, 1], Y0, 'b.')
+#         ax.plot(X[:, 0], X[:, 1], Y0, 'y.')
 #         ax.set_title('y0 vs x:' + title)
 #         plt.show()
 
 #         fig = plt.figure()
 #         ax = fig.gca(projection='3d')
 #         ax.plot_surface(xx1, xx2, np.reshape(yy1, (xx1.shape)))
-#         ax.plot(X[:, 0], X[:, 1], Y1, 'b.')
+#         ax.plot(X[:, 0], X[:, 1], Y1, 'y.')
 #         ax.set_title('y1 vs x:' + title)
 #         plt.show()
-
-
-
-
-
-
-
 
 
 class FlowStarModel(object):
