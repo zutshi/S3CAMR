@@ -48,7 +48,7 @@ error_set = [[-1, -6.5], [-0.7, -5.6]]
 # python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft --seed 0 -pmp --prop-check --incl-error --max-model-error 10000
 grid_eps = [.51, .51]
 num_samples = 20
-delta_t = 0.5
+delta_t = 0.2
 
 # Gets a reproducible CE
 # python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft --seed 0 -pmp --prop-check --incl-error --max-model-error 10000
