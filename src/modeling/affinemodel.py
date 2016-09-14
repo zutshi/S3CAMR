@@ -1,5 +1,7 @@
 from __future__ import print_function
 
+import logging
+
 from sklearn import linear_model as skl_lm
 import numpy as np
 
@@ -7,6 +9,9 @@ import numpy as np
 
 import constraints as cons
 import err
+
+
+logger = logging.getLogger(__name__)
 
 
 # TODO: UNUSED
@@ -169,8 +174,8 @@ class RegressionModel(object):
             epc0_ = error_pc[outlier0_idx, 0]
             epc0 = np.reshape(epc0_, (epc0_.size, 1))
 
-            print('X - Y0_pred - Y0_true - error_pc')
-            print(np.hstack((X[outlier0_idx, :], Y0_pred, Y0_true, epc0)))
+            logger.debug('X - Y0_pred - Y0_true - error_pc')
+            logger.debug(np.hstack((X[outlier0_idx, :], Y0_pred, Y0_true, epc0)))
 
         if any(outlier1_idx):
             Y1_pred_ = self.predict(X[outlier1_idx, :])[:, 1]
@@ -181,8 +186,8 @@ class RegressionModel(object):
             Y1_true = np.reshape(Y1_true_, (Y1_true_.size, 1))
             epc1_ = error_pc[outlier1_idx, 1]
             epc1 = np.reshape(epc1_, (epc1_.size, 1))
-            print('X - Y1_pred - Y1_true - error_pc')
-            print(np.hstack((X[outlier1_idx, :], Y1_pred, Y1_true, epc1)))
+            logger.debug('X - Y1_pred - Y1_true - error_pc')
+            logger.debug(np.hstack((X[outlier1_idx, :], Y1_pred, Y1_true, epc1)))
 
         # plot the surface
         #print(xx)
