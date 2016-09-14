@@ -38,3 +38,9 @@ class PlottingBase():
     def plot_pwa_traces(self, txs):
         """plot pwa traces in the trace list"""
         return
+
+    #TODO: exists in matplotlib..but does it exists in other libs?
+    @abc.abstractmethod
+    def plot(self, *args):
+        """generic library plot calls"""
+        return
