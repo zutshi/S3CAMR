@@ -113,7 +113,7 @@ def trace_violates(sys_sim, sys, prop, opts, trace_len, x_array, pi_seq):
     from matplotlib import pyplot as plt
     print(trace)
     opts.plotting.plot_trace_list([trace], x_vs_y=opts.plots)
-    plt.plot(x_array[:, 0], x_array[:, 1], 'r*')
+    plt.plot(x_array[:, 0], x_array[:, 1], 'r*-')
     opts.plotting.show()
 
     if check_prop_violation(trace, prop):
@@ -172,7 +172,7 @@ def abstract_trace_violates(sys, sp, prop, AA, opts, x_array, pi_seq):
     #opts.plotting.figure()
     opts.plotting.plot_trace_list(trace_list, x_vs_y=opts.plots)
     opts.plotting.plot_abs_states(AA, {'init': [initial_state]})
-    opts.plotting.plot(x_array[:, 0], x_array[:, 1], 'r*')
+    opts.plotting.plot(x_array[:, 0], x_array[:, 1], 'r*-')
     opts.plotting.show()
     if vio_found:
         err.imp('Found!')
