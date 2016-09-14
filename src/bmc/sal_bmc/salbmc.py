@@ -60,11 +60,11 @@ class BMC(BMCSpec):
         Parameters
         ----------
         vs : list of variables. Order is important.
-        pwa_model : 
-        init_state : 
-        safety_prop : 
-        module_name : 
-        model_type : 
+        pwa_model :
+        init_state :
+        safety_prop :
+        module_name :
+        model_type :
 
         Returns
         -------
