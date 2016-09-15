@@ -10,7 +10,8 @@ import cellmanager as CM
 import err
 from utils import print
 
-import matplotlib.pyplot as plt
+if __debug__:
+    import matplotlib.pyplot as plt
 
 
 class Q(object):
@@ -204,6 +205,33 @@ class Qx(Q):
         for x in x_array:
             (t_, x_, s_, d_, pvt_, u_) = step_sim(t0, x, s, d, pvt, ci, pi)
             Yl.append(x_)
+
+        if __debug__:
+            print('plotting grids Qx')
+            #fig, ax = plt.subplots()
+            ax = plt.gca()
+#             ax.set_yticks([0.2, 0.6, 0.8], minor=False)
+#             ax.set_yticks([0.3, 0.55, 0.7], minor=True)
+#             ax.yaxis.grid(True, which='major')
+#             ax.yaxis.grid(True, which='minor')
+
+            # plot errors
+            eps = 0.51
+            for i in np.arange(0, 9, eps):
+                ax.axhline(i, linestyle='-', color='k')
+            for i in np.arange(0, -9, -eps):
+                ax.axhline(i, linestyle='-', color='k')
+            for i in np.arange(0, 3, eps):
+                ax.axvline(i, linestyle='-', color='k')
+            for i in np.arange(0, -3, -eps):
+                ax.axvline(i, linestyle='-', color='k')
+
+            # plot error states
+            ax.axhline(-5.6, linestyle='-', color='r')
+            ax.axhline(-6.5, linestyle='-', color='r')
+            ax.axvline(-1, linestyle='-', color='r')
+            ax.axvline(-0.7, linestyle='-', color='r')
+
 
         return np.vstack(Yl)
 
