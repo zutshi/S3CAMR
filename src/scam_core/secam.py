@@ -31,6 +31,8 @@ import properties
 import utils as U
 from utils import print
 
+import plot_hack as ph
+
 #matplotlib.use('GTK3Agg')
 
 #precision=None, threshold=None, edgeitems=None, linewidth=None, suppress=True, nanstr=None, infstr=None, formatter=Nonu)
@@ -739,6 +741,9 @@ def main():
                         default="s3camsmt",
                         help='Choose the bmc engine')
 
+    # TODO: fix this hack
+    parser.add_argument('--disable-plotting', action='store_true',
+                        help='Disables showing/rendering of plots')
 
 #    argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -752,6 +757,8 @@ def main():
 
     if args.seed is not None:
         np.random.seed(args.seed)
+
+    ph.PLOT = not args.disable_plotting
 
     # TODO:
     # dynamicall generate an opt class to mimic the same defined in
