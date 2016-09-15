@@ -48,7 +48,7 @@ def concretize_bmc_trace(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq):
         print('nothing found')
         print('nothing found', file=SYS.stderr)
         print(term.red('nothing found'))
-        #exit()
+        return False
     # 2)
     # Check using random sims. Find the abstract state of the trace's
     # X0, and send it to random_test() along with pi_seqs
