@@ -10,6 +10,7 @@ import numpy as np
 import constraints as cons
 import err
 
+import plot_hack as ph
 
 logger = logging.getLogger(__name__)
 
@@ -227,7 +228,7 @@ class RegressionModel(object):
         ax.set_ylabel('x1')
         ax.set_zlabel('y1')
 
-        plt.show()
+        ph.plt_show()
 
 # Old single figure plots
 #         fig = plt.figure()
