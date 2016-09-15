@@ -21,6 +21,10 @@ class KPath(modelspec.PartitionedDiscreteAffineModel):
         #self.ID = p
         self.p = p
         self.pnexts = pnexts
+
+        # convinience function for now
+        self.pnext = self.pnexts[0] if len(pnexts) == 1 else None
+
         self.p_future = p_future
         self.m = m
         # make p = p1, i.e., check sat against p[0] and ID is p[0]'s ID
