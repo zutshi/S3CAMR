@@ -16,65 +16,69 @@ class SALTransSysRel(saltrans.SALTransSys):
         super(SALTransSysRel, self).__init__(
                 module_name, vs, init_cons, prop)
         # Store a mapping from a cell id: tuple -> sal loc name: str
-        self.locs = {}
+        self.partid2Cid = {}
         self.id_ctr = itertools.count()
         return
 
-    def get_loc_id(self, loc):
-        """gets location id
-        Assumes all locations have been added using add_locations.
+    def get_C(self, partid):
+        """Gets the bmc Cid corresponding to a pwa partition id
+        Assumes all Cid have been added using add_C.
         Will raise an error if the requested location has not been
         added."""
-        #return self.locs.setdefault(loc, 'C' + str(next(self.id_ctr)))
-        return self.locs[loc]
+        #return self.partid2Cid.setdefault(loc, 'C' + str(next(self.id_ctr)))
+        return self.partid2Cid[partid]
 
 #     def add_loc(self, loc):
 #         """adds location if not present already"""
-#         if loc not in self.locs:
-#             self.locs[loc] = 'C' + str(next(self.id_ctr))
+#         if loc not in self.partid2Cid:
+#             self.partid2Cid[loc] = 'C' + str(next(self.id_ctr))
 #         return None
 
-    def add_location(self, location):
-        """Add a location
+    def add_C(self, c):
+        """Add a cell
 
         Parameters
         ----------
-        locations : location/cell id
+        c : cell id
 
         Notes
         ------
-        Assumes every location is hashable and unique, else an
+        Assumes every C is hashable and unique, else an
         overwrite will occur!
         """
         # TODO: Fix the ugliness using setdefault
-        if location in self.locs:
-            return self.locs[location]
-        else:
-            self.locs[location] = 'C' + str(next(self.id_ctr))
-            return self.locs[location]
-        return
+#         if c in self.partid2Cid:
+#             return self.partid2Cid[c]
+#         else:
+#             self.partid2Cid[c] = 'C' + str(next(self.id_ctr))
+#             return self.partid2Cid[c]
+#         return
+        # simplified equivalent code from above
+        if c not in self.partid2Cid:
+            self.partid2Cid[c] = 'C' + str(next(self.id_ctr))
+        return self.partid2Cid[c]
 
-    def add_locations(self, locations):
-        """add_locations
-        Add all locations in one-shot
+    def add_Cs(self, Cs):
+        """add_Cs
+        Add all locations/cells in one-shot
 
         Parameters
         ----------
-        locations : locations/cells
+        Cs : cells
 
         Notes
         ------
         Assumes every location in locations is unique
         """
         # just to make sure
-        locations = set(locations)
-        self.locs = {l: 'C' + str(next(self.id_ctr)) for l in locations}
+        Cs = set(Cs)
+        self.partid2Cid = {c: 'C' + str(next(self.id_ctr)) for c in Cs}
         return
 
     @property
     def type_decls(self):
         tp = super(SALTransSysRel, self).type_decls
-        s = tp + '\nCELL: TYPE = {' + ', '.join(self.locs.itervalues()) + '};'
+        s = tp + '\nCELL: TYPE = {' + ', '.join(self.partid2Cid.itervalues()) + '};'
         return s
 
     @property
