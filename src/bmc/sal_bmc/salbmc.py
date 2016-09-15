@@ -72,9 +72,15 @@ class BMC(BMCSpec):
         Notes
         ------
         """
+
+        self.prop_name = 'safety'
+        self.module_name = module_name
+        self.trace = None
+        # stores info to convert the bmc back to pwa
+        self.conversion_info = {}
+
         if model_type == 'dft':
-            self.sal_trans_sys = BMC.sal_module_dft(
-                    vs, pwa_model, init_state, safety_prop, module_name)
+            self.sal_trans_sys = self.sal_module_dft(vs, pwa_model, init_state, safety_prop, module_name)
         elif model_type == 'dmt':
             dts = pwa_model.keys()
             self.sal_trans_sys = BMC.sal_module_dmt(
@@ -87,24 +93,22 @@ class BMC(BMCSpec):
         else:
             raise SALBMCError('unknown model type')
 
-        self.prop_name = 'safety'
-        self.module_name = module_name
-        self.trace = None
         return
 
-    @staticmethod
-    def sal_module_dft(vs, pwa_model, init_set, safety_prop, module_name):
+    def sal_module_dft(self, vs, pwa_model, init_set, safety_prop, module_name):
         sal_trans_sys = slt_rel.SALTransSysRel(module_name, vs, init_set, safety_prop)
 
         for sub_model in pwa_model:
-            sal_trans_sys.add_location(sub_model.p.ID)
+            Cid = sal_trans_sys.add_C(sub_model.p.ID)
+            self.conversion_info[Cid] = sub_model.p.ID
+
         # sal_trans_sys.add_locations(pwa_model.relation_ids)
 
         for idx, sub_model in enumerate(pwa_model):
             p = sub_model.p
             pnexts = sub_model.pnexts
-            l = sal_trans_sys.get_loc_id(p.ID)
-            lnext = [sal_trans_sys.get_loc_id(pnext.ID) for pnext in pnexts]
+            l = sal_trans_sys.get_C(p.ID)
+            lnext = [sal_trans_sys.get_C(pnext.ID) for pnext in pnexts]
 
             g = slt_rel.Guard(l, p.C, p.d)
             g.vs = vs
@@ -113,8 +117,8 @@ class BMC(BMCSpec):
             r.vs_ = vs
             t = slt_rel.Transition('T_{}'.format(idx), g, r)
             sal_trans_sys.add_transition(t)
+            self.conversion_info[t.name] = sub_model
         return sal_trans_sys
-
 
     @staticmethod
     def sal_module_dmt(dts, vs, pwa_models, init_set, safety_prop, module_name):
@@ -190,3 +194,48 @@ class BMC(BMCSpec):
     def get_last_trace(self):
         """Returns the last trace found or None if no trace exists."""
         return self.trace
+
+    def pwa_trace(self):
+        """Converts a bmc trace to a sequence of sub_models in the original pwa.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        pwa_trace = [sub_model_0, sub_model_1, ... ,sub_model_n]
+
+        Notes
+        ------
+        For now, pwa_trace is only a list of sub_models, as relational
+        modeling is being done with KMIN = 1. Hence, there is no
+        ambiguity.
+        """
+
+        pwa_trace = []
+        steps = list(self.trace)
+        # each step, but the last, corresponds to a transition
+        for step in steps[:-1]:
+            part_id = self.conversion_info[step.assignments['cell']]
+            sub_model = self.conversion_info[step.tid]
+
+            # Assumption of trace building is that each submodel only
+            # has 1 unique next location. If this violated, we need to
+            # add cell ids/part ids to resolve the ambiguity.
+            assert(len(sub_model.pnexts) == 1)
+
+            assert(sub_model.p.ID == part_id)
+            # this is still untested, so in case assert is off...
+            if(sub_model.p.ID != part_id):
+                err.warn('gone case')
+
+            #pwa_trace.extend((part_id, sub_model))
+            pwa_trace.append(sub_model)
+
+        # append the last location/cell/partition id
+        #last_step = steps[-1]
+        #last_part_id = self.conversion_info[last_step.assignments['cell']]
+        #pwa_trace.append(last_part_id)
+        return pwa_trace
+        #print(pwa_trace)
+        #exit()
