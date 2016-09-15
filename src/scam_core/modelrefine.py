@@ -19,8 +19,10 @@ import utils as U
 from utils import print
 import err
 from constraints import IntervalCons, top2ic
-
 from graphs.graph import factory as graph_factory
+from lin_prog import analyzepath as azp
+import state
+
 
 #np.set_printoptions(suppress=True, precision=2)
 
@@ -37,6 +39,8 @@ KMIN = 1
 
 NUM_SIMS = 100
 
+KMAX_EXCEEDED = 0
+SUCCESS = 1
 
 def abs_state2cell(abs_state, AA):
     return CM.Cell(abs_state.plant_state.cell_id, AA.plant_abs.eps)
@@ -228,7 +232,7 @@ def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, opts):
     if status == InvarStatus.Unsafe:
         print('Unsafe...trying to concretize...')
         #verify_bmc_trace(AA, sys, prop, sp, sal_bmc.trace, xs, ws)
-        verify_bmc_trace(AA, sys, prop, sp, opts, sal_bmc.get_last_trace(), xs, ws)
+        verify_bmc_trace(AA, sys, prop, sp, opts, sal_bmc, xs, ws)
     elif status == InvarStatus.Unknown:
         print('Unknown...exiting')
         exit()
@@ -236,23 +240,39 @@ def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, opts):
         raise err.Fatal('Internal')
 
 
-def verify_bmc_trace(AA, sys, prop, sp, opts, trace, xs, ws):
+def verify_bmc_trace(AA, sys, prop, sp, opts, sal_bmc, xs, ws):
     """Get multiple traces and send them for random testing
     """
-
+    bmc_trace = sal_bmc.get_last_trace()
     #TODO: enclose this in plotMP
-    print(trace)
-    x_array = np.array(trace.to_list(xs))
+    print(bmc_trace)
+    x_array = np.array(bmc_trace.to_list(xs))
 
     #init_assignments = trace[0].assignments
     #x0_array = np.array([init_assignments[x] for x in xs])
     # Trace consists of transitions, but we want to interpret it as
     # locations (abs_states + wi). Hence, subtract 1 from trace.
-    pi_seq = [[step.assignments[w] for w in ws] for step in trace[:-1]]
-    #print(x0_array)
-    #print(pi_seq)
-    rt.concretize_bmc_trace(sys, prop, AA, sp, opts, len(trace)-1, x_array, pi_seq)
+    num_trace_states = len(bmc_trace)-1
+    pi_seq = [[step.assignments[w] for w in ws] for step in bmc_trace[:-1]]
+    res = rt.concretize_bmc_trace(sys, prop, AA, sp, opts, num_trace_states, x_array, pi_seq)
+
+    if not res:
+        #abs_path = get_abstract_path(AA, x_array)
+        #print(abs_path)
+        #exit()
+        pwa_trace = sal_bmc.pwa_trace()
+        azp.overapprox_x0(AA, prop, opts, pwa_trace)
     return
+
+
+def get_abstract_path(AA, x_array):
+    abs_path = []
+    t, d, pvt, ci, s, pi, u = [0]*7
+    for x in x_array:
+        concrete_state = state.State(t, x, d, pvt, ci, s, pi, u)
+        abs_state = AA.get_abs_state_from_concrete_state(concrete_state)
+        abs_path.append(abs_state)
+    return abs_path
 
 
 def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, bmc_engine):
@@ -321,18 +341,24 @@ def build_pwa_model(AA, qgraph, sp, opts, model_type):
         # if the vertex has relation to another vertex
         #if qgraph.out_degree(q):
         if True:
-            print('modeling: {}'.format(q))
+            if __debug__:
+                print('modeling: {}'.format(q))
             for sub_model in q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
                 assert(sub_model is not None)
                 # sub_model.pnexts[0] = sub_model.p.ID to enforce self loops
-                print(U.colorize('{} -> {}, err:{}'.format(
+                print(U.colorize('{} -> {}, err:{}, status: {}'.format(
                     sub_model.p.ID,
                     [p.ID for p in sub_model.pnexts],
-                    sub_model.max_error_pc)))
+                    sub_model.max_error_pc, sub_model_status(sub_model))))
                 pwa_model.add(sub_model)
                 #abs_state_models[abs_state] = sub_model
 
     return pwa_model
+
+
+# TODO: fix this mess and move it to pwa models
+def sub_model_status(s, status2str={KMAX_EXCEEDED: 'kamx exceeded', SUCCESS: 'success'}):
+    return status2str[s.status]
 
 
 def draw_model(opts, pwa_model):
@@ -472,7 +498,8 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
         rm = RegressionModel(X, Y)
         #rm = RobustRegressionModel(X, Y)
         e_pc = rm.max_error_pc(X, Y)
-        err.imp('error%: {}'.format(e_pc))
+        if __debug__:
+            err.imp('error%: {}'.format(e_pc))
         error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
         error_exceeds_tol = len(error_dims) > 0
         refine = error_exceeds_tol
@@ -487,11 +514,14 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
 
     if refine:
         ms = []
-        print('error exceeds...')
+        if __debug__:
+            print('error exceeds...')
         if k >= KMAX:
             assert(k == KMAX)
-            err.warn('max depth exceeded but the error > tol. Giving up!')
-            ms = [(rm, [], e_pc)]
+            status = KMAX_EXCEEDED
+            if __debug__:
+                err.warn('max depth exceeded but the error > tol. Giving up!')
+            ms = [(rm, [], e_pc, status)]
         else:
             # first check for existance of a self loop
             #if any(q.sat(Y)):
@@ -507,7 +537,8 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
                         from matplotlib import pyplot as plt
                         plt.plot(Y__[sat, 0], Y__[sat, 1], 'y*')
                     rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k+1)
-                    l = [(rm_, [qi]+qseq_, e_pc_) for rm_, qseq_, e_pc_ in rm_qseq]
+                    l = [(rm_, [qi]+qseq_, e_pc_, status_)
+                         for rm_, qseq_, e_pc_, status_ in rm_qseq]
                     ms.extend(l)
                 else:
                     err.warn('out of samples...Giving up!')
@@ -519,8 +550,10 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
             # possibility is very very low.
             err.Fatal('Very low prob. of happening. Check code')
     else:
-        print('error is under control...')
-        ms = [(rm, [], e_pc)]
+        status = SUCCESS
+        if __debug__:
+            print('error is under control...')
+        ms = [(rm, [], e_pc, status)]
 
     return ms
 
@@ -575,7 +608,7 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
 #         # model
 #         assert(len(regression_models) == 1)
 
-    for rm, q_seq, e_pc in regression_models:
+    for rm, q_seq, e_pc, status in regression_models:
         A, b = q.modelQ(rm)
         e = q.errorQ(include_err, X, Y, rm)
         dmap = rel.DiscreteAffineMap(A, b, e)
@@ -599,6 +632,8 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
         #if len(q_seq) == 1:
         # if q_seq is empty, all its neighbours are reachable
         if not q_seq:
+            # Relational modeling is currently forced as KMIN = 1
+            assert(False)
             # No relational modeling was done. Use the relations from
             # the graph. Add transitions to cell only seen in the
             # subgraph.
@@ -623,6 +658,7 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
 
         sub_model = rel.KPath(dmap, p, pnexts, future_partitions)
         sub_model.max_error_pc = e_pc
+        sub_model.status = status
         sub_models.append(sub_model)
     return sub_models
 
