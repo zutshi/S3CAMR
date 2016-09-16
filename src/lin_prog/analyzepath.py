@@ -139,8 +139,8 @@ def prop_constraints(AA, prop, trace_len):
     A[0:nr, 0:nc] = iA
     A[-nr:, -nc:] = fA
     b = np.hstack((ib, fb))
-    print(A)
-    print(b)
+    #print(A)
+    #print(b)
     return A, b
 
 
@@ -160,17 +160,23 @@ def overapprox_x0(AA, prop, opts, pwa_trace):
     #obj = np.ones(num_vars)
     bounds = [(-np.inf, np.inf)] * num_vars
 
-    directions = [(1, 0), (0, 1), (-1, 0), (0, -1)]
+    directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
     x_arr = np.array(sym.symbols(('x1', 'x2')))
+
+    res = []
 
     for di in directions:
         obj = np.array(di + (0.0,) * (num_vars - dim_x))
-        res = spopt.linprog(
+        res.append(spopt.linprog(
                 c=obj,
                 A_ub=A_ub,
                 b_ub=b_ub,
                 bounds=bounds,
                 method='simplex',
-                options={'disp': True})
-        print(np.dot(di, x_arr))
-        print(res)
+                options={'disp': True}))
+
+    for di, r in zip(directions, res):
+        if r.success:
+            print('{}: {}'.format(np.dot(di, x_arr), r.fun))
+        else:
+            print('status:', r.status)
