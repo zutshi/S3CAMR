@@ -1,74 +1,82 @@
 import itertools as it
-import utils as U
-# full precision
-PREC = '0.3'
+#import utils as U
+import err
 
 
-def float2str(n):
-    """float2str
+class Expr2Str(object):
+    PREC = None
 
-    Parameters
-    ----------
-    n : floating point number
+    @staticmethod
+    def set_prec(prec):
+        Expr2Str.PREC = prec
 
-    Returns
-    -------
-    String notation truncated to PREC
-    """
-    return '{n:{p}f}'.format(p=PREC, n=n).rstrip('0').rstrip('.')
+    @staticmethod
+    def float2str(n):
+        """float2str
 
+        Parameters
+        ----------
+        n : floating point number
 
-def cx2str(c, x):
-    """cx2str
+        Returns
+        -------
+        String notation truncated to PREC
+        """
+        assert(Expr2Str.PREC is not None)
+        return '{n:{p}f}'.format(p=Expr2Str.PREC, n=n).rstrip('0').rstrip('.')
 
-    Parameters
-    ----------
-    c : coefficient
-    x : varibale string
+    @staticmethod
+    def cx2str(c, x):
+        """cx2str
 
-    Returns
-    -------
-    String notation, e.g. '2.345*x'
+        Parameters
+        ----------
+        c : coefficient
+        x : varibale string
 
-    Notes
-    ------
-    Returns ''
+        Returns
+        -------
+        String notation, e.g. '2.345*x'
 
-    """
-    cstr = float2str(c)
-    if cstr == '0' or cstr == '-0':
-        cxstr = ''
-    elif cstr == '1':
-        cxstr = x
-    elif cstr == '-1':
-        cxstr = '-' + x
-    else:
-        cxstr = '{}*{}'.format(cstr, x)
-    return cxstr
+        Notes
+        ------
+        Returns ''
 
+        """
+        cstr = Expr2Str.float2str(c)
+        if cstr == '0' or cstr == '-0':
+            cxstr = ''
+        elif cstr == '1':
+            cxstr = x
+        elif cstr == '-1':
+            cxstr = '-' + x
+        else:
+            cxstr = '{}*{}'.format(cstr, x)
+        return cxstr
 
-def linexpr2str(xs, coeffs, b):
-    """linexpr2str
-    coeffs .* xs + b
-    Parameters
-    ----------
-    xs : x0, x1, x2, ...
-    coeffs : c0, c1, c2, ...
-    b : float
+    @staticmethod
+    def linexpr2str(xs, coeffs, b):
+        """linexpr2str
+        coeffs .* xs + b
+        Parameters
+        ----------
+        xs : x0, x1, x2, ...
+        coeffs : c0, c1, c2, ...
+        b : float
 
-    Returns
-    -------
-    c0*x0 + c1*x1 + c2*x2 + ...
+        Returns
+        -------
+        c0*x0 + c1*x1 + c2*x2 + ...
 
-    Notes
-    ------
-    Cleans up the expression whenever ci = 0 or +-1
-    """
-    b1 = (b, '1')
-    cx = it.chain(it.izip(coeffs, xs), [b1])
-    ret = ' + '.join((filter(None, (cx2str(c, x) for c, x in cx))))
-    # make sure an empty string is not returned. This can happen if
-    # the linexpr evaluates to a 0
-    if not ret:
-        ret = '0'
-    return ret
+        Notes
+        ------
+        Cleans up the expression whenever ci = 0 or +-1
+        """
+        b1 = (b, '1')
+        cx = it.chain(it.izip(coeffs, xs), [b1])
+        ret = ' + '.join((filter(None, (Expr2Str.cx2str(c, x) for c, x in cx))))
+        # make sure an empty string is not returned. This can happen if
+        # the linexpr evaluates to a 0
+        if not ret:
+            ret = '0'
+        return ret
