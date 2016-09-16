@@ -224,7 +224,8 @@ def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, opts):
             vs,
             pwa_model, init_cons, safety_prop,
             '{}_{}'.format(sys_name, model_type),
-            model_type)
+            model_type,
+            prec=3)
 
     status = sal_bmc.check(depth)
     #if status == InvarStatus.Safe:
@@ -256,12 +257,8 @@ def verify_bmc_trace(AA, sys, prop, sp, opts, sal_bmc, xs, ws):
     pi_seq = [[step.assignments[w] for w in ws] for step in bmc_trace[:-1]]
     res = rt.concretize_bmc_trace(sys, prop, AA, sp, opts, num_trace_states, x_array, pi_seq)
 
-    if not res:
-        #abs_path = get_abstract_path(AA, x_array)
-        #print(abs_path)
-        #exit()
-        pwa_trace = sal_bmc.pwa_trace()
-        azp.overapprox_x0(AA, prop, opts, pwa_trace)
+    pwa_trace = sal_bmc.pwa_trace()
+    azp.overapprox_x0(AA, prop, opts, pwa_trace)
     return
 
 
