@@ -8,6 +8,8 @@ from scipy.integrate import ode
 
 import matplotlib.pyplot as plt
 
+import utils as U
+
 PLOT = False
 
 
@@ -31,6 +33,7 @@ class SIM(object):
 
         self.solver = ode(dyn).set_integrator('dopri5', rtol=rtol, max_step=max_step, nsteps=nsteps)  # (1)
 
+    @U.memoize2 #is as slow!
     def sim(self, TT, X0, D, P, U, I, property_checker):
         property_violated_flag = False
         num_dim_x = len(X0)
