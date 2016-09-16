@@ -7,9 +7,11 @@ Creates a SAL transition system: DFT
 import textwrap as tw
 from math import isinf
 
-from ..helpers.expr2str import linexpr2str, float2str
+from ..helpers.expr2str import Expr2Str #linexpr2str, float2str
 
-import utils as U
+#import utils as U
+
+
 class SALTransError(Exception):
     pass
 
@@ -17,7 +19,7 @@ class SALTransError(Exception):
 # Make classes out of every header, prop, init, etc
 class SALTransSys(object):
 
-    def __init__(self, module_name, vs, init_cons, prop):
+    def __init__(self, module_name, vs, init_cons, prop, prec):
         """
         Parameters
         ----------
@@ -27,12 +29,15 @@ class SALTransSys(object):
         prop : Unsafe Set described as an interval constraint
         """
 
+        self.prec = prec
         self.vs = vs
         self.prop_name = 'safety'
         self.init_cons = init_cons
         self.module_name = module_name
         self.transitions = []
         self.prop = prop
+        # initialize the class with the prec
+        Expr2Str.set_prec(prec)
         return
 
     def add_transition(self, tran):
@@ -117,7 +122,7 @@ class SALTransSys(object):
     def init_set(self):
         iv = self.init_cons
         s = ['\n\t{v} IN {{ r : REAL | r >=  {l} AND r <= {h} }}'.format(
-            v=v, l=float2str(iv.l[i]), h=float2str(iv.h[i])) for i, v in enumerate(self.vs)]
+            v=v, l=Expr2Str.float2str(iv.l[i]), h=Expr2Str.float2str(iv.h[i])) for i, v in enumerate(self.vs)]
         return ';'.join(s)
 
     # sal description
@@ -211,7 +216,7 @@ class Guard(object):
         #num_x = nr
         # num ex. inputs
         #num_w = nc - nr
-        cons = (linexpr2str(self.vs, self.C[i, :], -self.d[i]) + ' <= 0'
+        cons = (Expr2Str.linexpr2str(self.vs, self.C[i, :], -self.d[i]) + ' <= 0'
                 for i in range(self.ncons))
         return ' AND '.join(cons)
 
@@ -269,13 +274,13 @@ class Reset(object):
             #if error is not significant, i.e., it is less than the
             # precision used while dumping sal file, ignore it. Else,
             # include it and make the rhs of the assignment a set.
-            if float2str(dli) == float2str(dhi):
-                assignment_stmt = vsi_ + "' = " + linexpr2str(self.vs, Ai, dli)
+            if Expr2Str.float2str(dli) == Expr2Str.float2str(dhi):
+                assignment_stmt = vsi_ + "' = " + Expr2Str.linexpr2str(self.vs, Ai, dli)
             else:
                 assignment_stmt = set_def.format(
                         xi_=vsi_,
-                        Axi_plus_delta_li=linexpr2str(self.vs, Ai, dli),
-                        Axi_plus_delta_hi=linexpr2str(self.vs, Ai, dhi)
+                        Axi_plus_delta_li=Expr2Str.linexpr2str(self.vs, Ai, dli),
+                        Axi_plus_delta_hi=Expr2Str.linexpr2str(self.vs, Ai, dhi)
                         )
             s.append(assignment_stmt)
         return ';\n'.join(s)
