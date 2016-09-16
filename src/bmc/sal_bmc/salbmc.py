@@ -54,7 +54,7 @@ def sal_run_cmd(sal_path, depth, module_name, prop_name, opts=SalOpts()):
 
 class BMC(BMCSpec):
     def __init__(self, vs, pwa_model, init_state, safety_prop,
-                 module_name, model_type):
+                 module_name, model_type, prec):
         """__init__
 
         Parameters
@@ -65,6 +65,7 @@ class BMC(BMCSpec):
         safety_prop :
         module_name :
         model_type :
+        prec :
 
         Returns
         -------
@@ -80,7 +81,8 @@ class BMC(BMCSpec):
         self.conversion_info = {}
 
         if model_type == 'dft':
-            self.sal_trans_sys = self.sal_module_dft(vs, pwa_model, init_state, safety_prop, module_name)
+            self.sal_trans_sys = self.sal_module_dft(
+                    vs, pwa_model, init_state, safety_prop, module_name, prec)
         elif model_type == 'dmt':
             dts = pwa_model.keys()
             self.sal_trans_sys = BMC.sal_module_dmt(
@@ -95,8 +97,8 @@ class BMC(BMCSpec):
 
         return
 
-    def sal_module_dft(self, vs, pwa_model, init_set, safety_prop, module_name):
-        sal_trans_sys = slt_rel.SALTransSysRel(module_name, vs, init_set, safety_prop)
+    def sal_module_dft(self, vs, pwa_model, init_set, safety_prop, module_name, prec):
+        sal_trans_sys = slt_rel.SALTransSysRel(module_name, vs, init_set, safety_prop, prec)
 
         for sub_model in pwa_model:
             Cid = sal_trans_sys.add_C(sub_model.p.ID)
