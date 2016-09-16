@@ -16,7 +16,31 @@ def factory(bmc_engine,
             final_states,
             sys_name,
             model_type,
+            prec,
             *args):
+    """factory
+
+    Parameters
+    ----------
+    bmc_engine : 
+    vs : 
+    pwa_model : 
+    init_state : 
+    final_states : 
+    sys_name : 
+    model_type : 
+    prec : number of digits after the decimal
+    *args : 
+
+    Returns
+    -------
+
+    Notes
+    ------
+    """
+
+    prec = str(float(prec)/10.)
+
     if bmc_engine == 'sal':
         import sal_bmc.salbmc
         return sal_bmc.salbmc.BMC(
@@ -26,6 +50,7 @@ def factory(bmc_engine,
              final_states,
              sys_name,
              model_type,
+             prec,
              *args)
     elif bmc_engine == 's3camsmt':
         from S3CAMSMT.s3camsmt.bmc.bmc_pwa import BMC_PWA
@@ -43,6 +68,7 @@ def factory(bmc_engine,
              final_states,
              sys_name,
              model_type,
+             prec,
              *args)
     else:
         raise NotImplementedError('Req. bmc engine: {}'.format(bmc_engine))
