@@ -43,7 +43,7 @@ def concretize_bmc_trace(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq):
     if trace:
         print(term.green('violation found'))
         print('violation found', file=SYS.stderr)
-        exit()
+        return True
     else:
         print('nothing found')
         print('nothing found', file=SYS.stderr)
