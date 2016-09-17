@@ -6,6 +6,7 @@ It defines the results (e.g. traces, status).
 
 import abc
 import itertools as it
+import numpy as np
 
 class InvarStatus:
     Safe, Unsafe, Unknown = range(3)
@@ -26,10 +27,19 @@ class BMCSpec():
         """Returns the last trace found or None if no trace exists."""
         return
 
+    @abc.abstractmethod
+    def get_new_disc_trace(self):
+        return
+
+    @abc.abstractmethod
+    def get_last_pwa_trace(self):
+        return
+
 
 class TraceSimple(object):
     """Simple Trace: provides minimal functionality"""
     def __init__(self, trace):
+        self.xvars = None
         self.trace = trace
 #         for step in trace:
 #             for ass in step.assignments:
@@ -48,7 +58,15 @@ class TraceSimple(object):
     def __iter__(self):
         return (step for step in self.trace)
 
-    def to_list(self, xvars):
+    def set_vars(self, vs):
+        self.vs = vs
+        return
+
+    def to_array(self):
+        # vars must have been set before this is called
+        assert(self.vs is not None)
+        xvars = self.vs
+
         x_array = []
         for step in self.trace:
             # jth step
@@ -57,7 +75,7 @@ class TraceSimple(object):
                 xival = step.assignments[xi]
                 xj.append(xival)
             x_array.append(xj)
-        return x_array
+        return np.array(x_array)
 
     def __len__(self):
         return len(self.trace)
