@@ -10,7 +10,7 @@ from modeling.pwa import pwa
 from modeling.pwa import simulator as pwa_sim
 from modeling.pwa import relational as rel
 import random_testing as rt
-from bmc import bmc
+from bmc import bmc as BMC
 from bmc.bmc_spec import InvarStatus
 from modeling.affinemodel import RegressionModel, RobustRegressionModel
 from cellmodels import Qxw, Qx
@@ -188,7 +188,7 @@ def refine_dft_model_based(
 #     if __debug__:
 #         qg.draw_graphviz()
 #         qg.draw_mplib()
-    draw_model(opts, pwa_model)
+    draw_model(opts, sys.sys_name, pwa_model)
 
     max_path_len = max([len(path) for path in error_paths])
     print('max_path_len:', max_path_len)
@@ -219,21 +219,38 @@ def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, opts):
     # Order is important
     vs = xs + ws
 
-    sal_bmc = bmc.factory(
+    bmc = BMC.factory(
             opts.bmc_engine,
             vs,
             pwa_model, init_cons, safety_prop,
             '{}_{}'.format(sys_name, model_type),
             model_type,
-            prec=3)
+            prec=4)
 
-    status = sal_bmc.check(depth)
+    status = bmc.check(depth)
     #if status == InvarStatus.Safe:
     #    print('Safe')
     if status == InvarStatus.Unsafe:
-        print('Unsafe...trying to concretize...')
-        #verify_bmc_trace(AA, sys, prop, sp, sal_bmc.trace, xs, ws)
-        verify_bmc_trace(AA, sys, prop, sp, opts, sal_bmc, xs, ws)
+
+        #from IPython import embed
+        #embed()
+
+        bmc_trace = bmc.get_last_trace()
+        print(bmc_trace)
+        print(bmc_trace.to_array())
+        while bmc_trace is not None:
+            pwa_trace = bmc.get_last_pwa_trace()
+            if __debug__:
+                print(pwa_trace)
+                print(bmc_trace)
+            print('Unsafe...trying to concretize...')
+            #verify_bmc_trace(AA, sys, prop, sp, bmc.trace, xs, ws)
+            verify_bmc_trace(AA, sys, prop, sp, opts, bmc_trace, pwa_trace)
+
+            bmc.get_new_disc_trace()
+            bmc_trace = bmc.get_last_trace()
+            #U.pause()
+
     elif status == InvarStatus.Unknown:
         print('Unknown...exiting')
         exit()
@@ -241,23 +258,22 @@ def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, opts):
         raise err.Fatal('Internal')
 
 
-def verify_bmc_trace(AA, sys, prop, sp, opts, sal_bmc, xs, ws):
+def verify_bmc_trace(AA, sys, prop, sp, opts, bmc_trace, pwa_trace):
     """Get multiple traces and send them for random testing
     """
-    bmc_trace = sal_bmc.get_last_trace()
-    #TODO: enclose this in plotMP
-    print(bmc_trace)
-    x_array = np.array(bmc_trace.to_list(xs))
 
+    xw_array = bmc_trace.to_array()
+    x_array, w_array = np.split(xw_array, [AA.num_dims.x], axis=1)
+    pi_seq = w_array
     #init_assignments = trace[0].assignments
     #x0_array = np.array([init_assignments[x] for x in xs])
     # Trace consists of transitions, but we want to interpret it as
     # locations (abs_states + wi). Hence, subtract 1 from trace.
     num_trace_states = len(bmc_trace)-1
-    pi_seq = [[step.assignments[w] for w in ws] for step in bmc_trace[:-1]]
-    res = rt.concretize_bmc_trace(sys, prop, AA, sp, opts, num_trace_states, x_array, pi_seq)
 
-    pwa_trace = sal_bmc.pwa_trace()
+    # TODO: fix inputs!!
+    #pi_seq = [[step.assignments[w] for w in ws] for step in bmc_trace[:-1]]
+    res = rt.concretize_bmc_trace(sys, prop, AA, sp, opts, num_trace_states, x_array, pi_seq)
     azp.overapprox_x0(AA, prop, opts, pwa_trace)
     return
 
@@ -297,11 +313,11 @@ def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, bmc_engine
 
     pwa_models = build_pwa_dt_model(AA, tas, sp, sys_sim)
 
-    sal_bmc = bmc.factory(bmc_engine)
+    bmc = BMC.factory(bmc_engine)
     prop = sp.final_cons
 
-    sal_bmc.init(AA.num_dims.x, pwa_models, sp.init_cons, prop, 'vdp_dmt', 'dmt')
-    sal_bmc.check()
+    bmc.init(AA.num_dims.x, pwa_models, sp.init_cons, prop, 'vdp_dmt', 'dmt')
+    bmc.check()
 
 
 def build_pwa_model(AA, qgraph, sp, opts, model_type):
@@ -358,7 +374,7 @@ def sub_model_status(s, status2str={KMAX_EXCEEDED: 'kamx exceeded', SUCCESS: 'su
     return status2str[s.status]
 
 
-def draw_model(opts, pwa_model):
+def draw_model(opts, sys_name, pwa_model):
     """Adds a 'label' attribute to the edges. This is useful for
     graphs rendered using graphviz, as it annotates the edges with the
     value of those attributes. Currently, the label's value is the
@@ -388,8 +404,9 @@ def draw_model(opts, pwa_model):
             #e_attr = {'label': np.round(sub_model.max_error_pc, 2)}
             error = np.round(sub_model.max_error_pc, 2)
             G.add_edge(sub_model.p.ID, p_.ID, label=error)
-    G.draw_graphviz()
-    G.draw_mplib()
+
+    G.draw_graphviz(sys_name)
+    #G.draw_mplib(sys_name)
 
 
 # TODO: it is a superset of build_pwa_dft_model
