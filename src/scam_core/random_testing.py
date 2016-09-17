@@ -20,6 +20,7 @@ import cellmanager as CM
 
 term = Terminal()
 
+
 def concretize_bmc_trace(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq):
     """
     Tries to concretize a BMC trace
@@ -112,7 +113,7 @@ def trace_violates(sys_sim, sys, prop, opts, trace_len, x_array, pi_seq):
     trace = simsys.simulate(sys_sim, concrete_states[0], sys.delta_t*num_segments)
 
     from matplotlib import pyplot as plt
-    print(trace)
+    #print(trace)
     opts.plotting.plot_trace_list([trace], x_vs_y=opts.plots)
     plt.plot(x_array[:, 0], x_array[:, 1], 'r*-')
     opts.plotting.show()
