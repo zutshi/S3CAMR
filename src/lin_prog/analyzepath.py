@@ -148,6 +148,8 @@ def overapprox_x0(AA, prop, opts, pwa_trace):
     C, d = part_constraints(pwa_trace)
     A, b = dyn_constraints(pwa_trace)
     pA, pb = prop_constraints(AA, prop, len(pwa_trace))
+    #from IPython import embed
+    #embed()
 
     # num vars are the same
     assert(C.shape[1] == A.shape[1])
@@ -155,25 +157,34 @@ def overapprox_x0(AA, prop, opts, pwa_trace):
     A_ub = np.vstack((C, A, pA))
     b_ub = np.hstack((d, b, pb))
 
-    num_vars = A.shape[1]
-    dim_x = AA.num_dims.x
-    #obj = np.ones(num_vars)
-    bounds = [(-np.inf, np.inf)] * num_vars
+    num_opt_vars = A.shape[1]
 
-    directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-    x_arr = np.array(sym.symbols(('x1', 'x2')))
+    nvars = AA.num_dims.x + AA.num_dims.pi
+    bounds = [(-np.inf, np.inf)] * num_opt_vars
+
+    #directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
+    I = np.eye(nvars, dtype=int)
+    directions = np.vstack((I, -I))
+    left_over_vars = num_opt_vars - nvars
+    directions_ext = np.pad(directions, [(0, 0), (0, left_over_vars)], 'constant')
+
+    x_arr = np.array(
+            sym.symbols(
+                ['x{}'.format(i) for i in range(nvars)]
+                ))
 
     res = []
+    disp_opt = True if __debug__ else False
 
-    for di in directions:
-        obj = np.array(di + (0.0,) * (num_vars - dim_x))
+    for obj in directions_ext:
+        #obj = np.array(di + (0.0,) * (num_opt_vars - nvars))
         res.append(spopt.linprog(
                 c=obj,
                 A_ub=A_ub,
                 b_ub=b_ub,
                 bounds=bounds,
                 method='simplex',
-                options={'disp': True}))
+                options={'disp': disp_opt}))
 
     for di, r in zip(directions, res):
         if r.success:
