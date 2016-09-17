@@ -77,6 +77,7 @@ class BMC(BMCSpec):
         self.prop_name = 'safety'
         self.module_name = module_name
         self.trace = None
+        self.vs = vs
         # stores info to convert the bmc back to pwa
         self.conversion_info = {}
 
@@ -177,6 +178,7 @@ class BMC(BMCSpec):
 
         print sal_op
         self.trace = sal_op_parser.parse_trace(sal_op)
+        self.trace.set_vars(self.vs)
         if self.trace is None:
             print 'BMC failed to find a CE'
             return InvarStatus.Unknown
@@ -197,7 +199,7 @@ class BMC(BMCSpec):
         """Returns the last trace found or None if no trace exists."""
         return self.trace
 
-    def pwa_trace(self):
+    def get_last_pwa_trace(self):
         """Converts a bmc trace to a sequence of sub_models in the original pwa.
 
         Parameters
@@ -241,3 +243,8 @@ class BMC(BMCSpec):
         return pwa_trace
         #print(pwa_trace)
         #exit()
+
+    def get_new_disc_trace(self):
+        """Makes trace = None, signifying no more traces..."""
+        self.trace = None
+        return
