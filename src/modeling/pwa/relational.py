@@ -49,6 +49,7 @@ class Relation(modelspec.PartitionedDiscreteAffineModel):
         """
         self.p1 = p1
         self.p2 = p2
+        self.pnext = p2
         self.m = m
         # make p = p1, i.e., check sat against p1 and ID is p1's ID
         super(Relation, self).__init__(p1, m)
