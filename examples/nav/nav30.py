@@ -12,6 +12,8 @@ from assimulo.solvers.sundials import CVode
 #from assimulo.solvers import RungeKutta34
 import pylab as plt
 
+import utils as U
+
 PLT = False
 
 
@@ -257,6 +259,7 @@ class SIM(object):
     def __init__(self, _, pvt_init_data):
         self.model = create_model()
 
+    @U.memoize2disk(U.memoize_hash_method)
     def sim(self, TT, X0, D, P, U, I, property_checker):
 
         m0 = x2mode(X0)
