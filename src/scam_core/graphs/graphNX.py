@@ -13,9 +13,9 @@ from blessed import Terminal
 #from networkx.drawing.nx_agraph import graphviz_layout
 from networkx.drawing.nx_agraph import write_dot
 
-GVIZ_GRAPH_PATH = './graph.dot'
-GRAPH_EPS_PATH = './graph.eps'
-MPLIB_GRAPH_PATH = './graph.png'
+GVIZ_GRAPH_PATH = '{}_graph.dot'
+GRAPH_EPS_PATH = '{}_graph.eps'
+MPLIB_GRAPH_PATH = '{}_graph.png'
 
 term = Terminal()
 
@@ -448,16 +448,18 @@ class GraphNX(object):
         nx.draw_networkx(self.G, pos=pos_dict, labels=pos_dict,
                          with_labels=True)
 
-    def draw_graphviz(self):
+    def draw_graphviz(self, fname):
         #pos = graphviz_layout(self.G)
         #nx.draw_graphviz(self.G, pos)
         #nx.draw(self.G, pos)
-        print 'generating graphs:', GVIZ_GRAPH_PATH, GRAPH_EPS_PATH
-        write_dot(self.G, GVIZ_GRAPH_PATH)
+        gdot_fname = GVIZ_GRAPH_PATH.format(fname)
+        geps_fname = GRAPH_EPS_PATH.format(fname)
+        print 'generating graphs:', gdot_fname, geps_fname
+        write_dot(self.G, gdot_fname)
         opts = ['-Efontsize=10', '-Gnodesep=1', '-Granksep=3', '-Tps']
-        subprocess.call(['dot'] + opts + [GVIZ_GRAPH_PATH, '-o', GRAPH_EPS_PATH])
+        subprocess.call(['dot'] + opts + [gdot_fname, '-o', geps_fname])
 
-    def draw_mplib(self):
+    def draw_mplib(self, fname):
         from matplotlib import pyplot as plt
         plt.figure()
         #pos = nx.spring_layout(self.G)
@@ -466,13 +468,14 @@ class GraphNX(object):
         # literal_eval evals strings: '(x1,x2)' -> (x1,x2)
         pos_dict = {n: ast.literal_eval(str(n)) for n in self.G.nodes()}
         # assert 2-dim
-        assert(len(ast.literal_eval(str(self.G.nodes()[0]))) == 2)
+        if not (len(ast.literal_eval(str(self.G.nodes()[0]))) == 2):
+            return
         nx.draw(self.G, pos=pos_dict, labels=node_labels)
 
         edge_labels = nx.get_edge_attributes(self.G, 'label')
         nx.draw_networkx_edge_labels(self.G, pos=pos_dict, edge_labels=edge_labels)
 
-        plt.savefig(MPLIB_GRAPH_PATH)
+        plt.savefig(MPLIB_GRAPH_PATH.format(fname))
         #plt.show()
 
     def __contains__(self, key):
