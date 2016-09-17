@@ -13,6 +13,8 @@ import utils as U
 PLOT = False
 
 
+# As it is created only once, all methods should be static
+# methods.
 class SIM(object):
 
     def __init__(self, plt, pvt_init_data):
@@ -33,7 +35,7 @@ class SIM(object):
 
         self.solver = ode(dyn).set_integrator('dopri5', rtol=rtol, max_step=max_step, nsteps=nsteps)  # (1)
 
-    @U.memoize2 #is as slow!
+    @U.memoize2disk(U.memoize_hash_method)
     def sim(self, TT, X0, D, P, U, I, property_checker):
         property_violated_flag = False
         num_dim_x = len(X0)
