@@ -136,6 +136,11 @@ def parse_trace(trace_data):
     """pre_process
     Quick check if SAL has failed to find any counter example.
     """
+
+    #TODO: quick fix
+    import re
+    trace_data = re.sub('trace.*\n', '', trace_data)
+
     yices_failed = 'The context is unsat. No model.'
     sal_failed = 'no counterexample between depths:'
 

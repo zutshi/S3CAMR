@@ -10,7 +10,9 @@ import cellmanager as CM
 import err
 from utils import print
 
-if __debug__:
+import settings
+
+if settings.debug_plot:
     import matplotlib.pyplot as plt
 
 
@@ -206,7 +208,7 @@ class Qx(Q):
             (t_, x_, s_, d_, pvt_, u_) = step_sim(t0, x, s, d, pvt, ci, pi)
             Yl.append(x_)
 
-        if __debug__:
+        if settings.debug_plot:
             print('plotting grids Qx')
             #fig, ax = plt.subplots()
             ax = plt.gca()
@@ -251,7 +253,9 @@ class Qx(Q):
         for x in x_array:
             (t_, x_, s_, d_, pvt_, u_) = sim(t0, x, s, d, pvt, ci, pi)
             Yl.append(x_)
-        if __debug__:
+        if settings.debug_plot:
+            # close intermediate plots which can not be switched off;
+            # as these are in the system model *.py
             #plt.title('ignore')
             #plt.show()
             plt.close()

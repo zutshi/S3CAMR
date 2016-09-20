@@ -23,11 +23,12 @@ from graphs.graph import factory as graph_factory
 from lin_prog import analyzepath as azp
 import state
 
+import settings
 
 #np.set_printoptions(suppress=True, precision=2)
 
 # multiply num samples with the
-MORE_FACTOR = 20
+MORE_FACTOR = 100
 TEST_FACTOR = 10
 
 MAX_TRAIN = 2000
@@ -37,7 +38,6 @@ MAX_TEST = 200
 KMAX = 1
 KMIN = 1
 
-NUM_SIMS = 100
 
 KMAX_EXCEEDED = 0
 SUCCESS = 1
@@ -68,6 +68,7 @@ def simulate_pwa(pwa_model, x_samples, N):
 
 
 def simulate(AA, s, sp, pwa_model, max_path_len, S0):
+    NUM_SIMS = 100
     # sample only initial abstract state
     x0_samples = (sp.sampler.sample_multiple(S0, AA, sp, NUM_SIMS)).x_array
     #print(x0_samples)
@@ -185,7 +186,7 @@ def refine_dft_model_based(
     qg = get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs)
     pwa_model = build_pwa_model(AA, qg, sp, opts, 'dft')
 
-#     if __debug__:
+#     if settings.debug:
 #         qg.draw_graphviz()
 #         qg.draw_mplib()
     draw_model(opts, sys.sys_name, pwa_model)
@@ -197,10 +198,10 @@ def refine_dft_model_based(
     depth = max(int(np.ceil(AA.T/AA.delta_t)), max_path_len - 1)
     print('depth :',  depth)
 
-    if __debug__:
+    if settings.debug_plot:
         # Need to define a new function to simulate inputs
         sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts)
-        pass
+
     check4CE(pwa_model, depth, sys.sys_name, 'dft', AA, sys, prop, sp, opts)
 
 
@@ -240,7 +241,7 @@ def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, opts):
         print(bmc_trace.to_array())
         while bmc_trace is not None:
             pwa_trace = bmc.get_last_pwa_trace()
-            if __debug__:
+            if settings.debug:
                 print(pwa_trace)
                 print(bmc_trace)
             print('Unsafe...trying to concretize...')
@@ -354,7 +355,7 @@ def build_pwa_model(AA, qgraph, sp, opts, model_type):
         # if the vertex has relation to another vertex
         #if qgraph.out_degree(q):
         if True:
-            if __debug__:
+            if settings.debug:
                 print('modeling: {}'.format(q))
             for sub_model in q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
                 assert(sub_model is not None)
@@ -461,44 +462,44 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
 #     return qmodels
 
 
-def mdl_old(tol, step_sim, qgraph, q, (X, Y), Y_, k):
-    assert(X.shape[1] == q.dim)
-    assert(Y_.shape[1] == q.dim)
-    assert(X.shape[0] == Y.shape[0] == Y_.shape[0])
+# def mdl_old(tol, step_sim, qgraph, q, (X, Y), Y_, k):
+#     assert(X.shape[1] == q.dim)
+#     assert(Y_.shape[1] == q.dim)
+#     assert(X.shape[0] == Y.shape[0] == Y_.shape[0])
 
-    if k == -1:
-        err.warn('max depth exceeded but the error > tol. Giving up!')
-        return []
+#     if k == -1:
+#         err.warn('max depth exceeded but the error > tol. Giving up!')
+#         return []
 
-    rm = RegressionModel(X, Y)
-    e_pc = rm.max_error_pc(X, Y)
-    err.imp('error%: {}'.format(e_pc))
-    error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
-    error_exceeds_tol = len(error_dims) > 0
-    #err.warn('e%:{}, |e%|:{}'.format(e_pc, np.linalg.norm(e_pc, 2)))
-    if error_exceeds_tol:
-        ms = []
-        for qi in qgraph.neighbors(q):
-            Y__ = qi.sim(step_sim, Y_)
-            sat = qi.sat(Y__)
-            # TODO: If we are out of samples, we can't do much. Need to
-            # handle this situation better? Not sure? Request for more
-            # samples? Give up?
-            if any(sat):
-                rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k-1)
-                l = [(rm_, [q]+qseq_, e_pc_) for rm_, qseq_, e_pc_ in rm_qseq]
-                ms.extend(l)
-            else:
-                err.warn('out of samples...Giving up!')
+#     rm = RegressionModel(X, Y)
+#     e_pc = rm.max_error_pc(X, Y)
+#     err.imp('error%: {}'.format(e_pc))
+#     error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
+#     error_exceeds_tol = len(error_dims) > 0
+#     #err.warn('e%:{}, |e%|:{}'.format(e_pc, np.linalg.norm(e_pc, 2)))
+#     if error_exceeds_tol:
+#         ms = []
+#         for qi in qgraph.neighbors(q):
+#             Y__ = qi.sim(step_sim, Y_)
+#             sat = qi.sat(Y__)
+#             # TODO: If we are out of samples, we can't do much. Need to
+#             # handle this situation better? Not sure? Request for more
+#             # samples? Give up?
+#             if any(sat):
+#                 rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k-1)
+#                 l = [(rm_, [q]+qseq_, e_pc_) for rm_, qseq_, e_pc_ in rm_qseq]
+#                 ms.extend(l)
+#             else:
+#                 err.warn('out of samples...Giving up!')
 
-        # The loop never ran due to q not having any neighbors,
-        # Or, no samples were left. We do the best with what we have
-        # then.
-        if not ms:
-            ms = [(rm, [q], e_pc)]
-        return ms
-    else:
-        return [(rm, [q], e_pc)]
+#         # The loop never ran due to q not having any neighbors,
+#         # Or, no samples were left. We do the best with what we have
+#         # then.
+#         if not ms:
+#             ms = [(rm, [q], e_pc)]
+#         return ms
+#     else:
+#         return [(rm, [q], e_pc)]
 
 
 def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
@@ -512,28 +513,25 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
         rm = RegressionModel(X, Y)
         #rm = RobustRegressionModel(X, Y)
         e_pc = rm.max_error_pc(X, Y)
-        if __debug__:
+        if settings.debug:
             err.imp('error%: {}'.format(e_pc))
         error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
         error_exceeds_tol = len(error_dims) > 0
         refine = error_exceeds_tol
         #err.warn('e%:{}, |e%|:{}'.format(e_pc, np.linalg.norm(e_pc, 2)))
-        if __debug__:
-            from matplotlib import pyplot as plt
-            # flush out the plot from the simulations
-            #plt.show()
+        if settings.debug_plot:
             rm.plot(X, Y, tol, 'q:{}, err:{}'.format(q, e_pc))
     else:
         refine = True
 
     if refine:
         ms = []
-        if __debug__:
+        if settings.debug:
             print('error exceeds...')
         if k >= KMAX:
             assert(k == KMAX)
             status = KMAX_EXCEEDED
-            if __debug__:
+            if settings.debug:
                 err.warn('max depth exceeded but the error > tol. Giving up!')
             ms = [(rm, [], e_pc, status)]
         else:
@@ -541,15 +539,18 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
             #if any(q.sat(Y)):
                 #err.imp('self loop exists')
             for qi in it.chain([q], qgraph.neighbors(q)):
+                if settings.debug:
+                    print('checking qi: ', qi)
                 Y__ = qi.sim(step_sim, Y_)
                 sat = qi.sat(Y__)
                 # TODO: If we are out of samples, we can't do much. Need to
                 # handle this situation better? Not sure? Request for more
                 # samples? Give up?
                 if any(sat):
-                    if __debug__:
+                    if settings.debug_plot:
                         from matplotlib import pyplot as plt
                         plt.plot(Y__[sat, 0], Y__[sat, 1], 'y*')
+
                     rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k+1)
                     l = [(rm_, [qi]+qseq_, e_pc_, status_)
                          for rm_, qseq_, e_pc_, status_ in rm_qseq]
@@ -565,7 +566,7 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
             err.Fatal('Very low prob. of happening. Check code')
     else:
         status = SUCCESS
-        if __debug__:
+        if settings.debug:
             print('error is under control...')
         ms = [(rm, [], e_pc, status)]
 
@@ -606,7 +607,8 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
     sub_models = []
     X, Y = q.get_rels(ntrain, step_sim)
     regression_models = mdl(tol, step_sim, qgraph, q, (X, Y), X, k=0)
-
+    
+    print(regression_models)
     assert(regression_models)
 #     # TODO: fix this messy handling...?
 #     if not regression_models:
@@ -734,7 +736,7 @@ def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
 #     rm = RegressionModel(X, Y)
 #     X, Y = q.getxy_ignoramous(ntest, step_sim)
 #     e_pc = rm.max_error_pc(X, Y) # error %
-#     if __debug__:
+#     if settings.debug:
 #         print('error%:', e_pc)
 #     #error = np.linalg.norm(e_pc, 2)
 #     # indices where error exceeds tol

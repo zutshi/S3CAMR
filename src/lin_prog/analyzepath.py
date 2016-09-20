@@ -5,6 +5,8 @@ import scipy.linalg as linalg
 import scipy.optimize as spopt
 import sympy as sym
 
+import settings
+
 
 def part_constraints(pwa_trace):
     """constraints due to partitions of the pwa model
@@ -174,7 +176,7 @@ def overapprox_x0(AA, prop, opts, pwa_trace):
                 ))
 
     res = []
-    disp_opt = True if __debug__ else False
+    disp_opt = True if settings.debug else False
 
     for obj in directions_ext:
         #obj = np.array(di + (0.0,) * (num_opt_vars - nvars))

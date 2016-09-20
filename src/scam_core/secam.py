@@ -32,6 +32,7 @@ import utils as U
 from utils import print
 
 import plot_hack as ph
+import settings
 
 #matplotlib.use('GTK3Agg')
 
@@ -737,13 +738,17 @@ def main():
                         'trace, instead of relying only on x(t_end).')
 
     parser.add_argument('--bmc-engine', type=str,
-                        choices=["sal","s3camsmt"],
+                        choices=["sal", "s3camsmt"],
                         default="s3camsmt",
                         help='Choose the bmc engine')
 
     # TODO: fix this hack
     parser.add_argument('--disable-plotting', action='store_true',
                         help='Disables showing/rendering of plots')
+
+    # TODO: fix this hack
+    parser.add_argument('--debug', action='store_true',
+                        help='Enables debug flag')
 
 #    argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -759,6 +764,7 @@ def main():
         np.random.seed(args.seed)
 
     ph.PLOT = not args.disable_plotting
+    settings.debug = args.debug
 
     # TODO:
     # dynamicall generate an opt class to mimic the same defined in

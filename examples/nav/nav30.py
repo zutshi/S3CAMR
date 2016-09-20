@@ -15,6 +15,7 @@ import pylab as plt
 import utils as U
 
 PLT = False
+debug = False
 
 
 def memodict(f):
@@ -110,10 +111,10 @@ class Bounds():
 @memodict
 def get_dyn(mode):
     i, j = modeToij(mode)
-    if __debug__:
+    if debug:
         print(i, j)
     A, b = AbMap(i, j)
-    if __debug__:
+    if debug:
         print(A)
         print(b)
     return A, b
@@ -161,7 +162,7 @@ def get_guard_vals(X, mode):
 
     bounds = Bounds(mode)
     pos = Pos(X[0], X[1])
-    if __debug__:
+    if debug:
         print('mode:', mode)
         print(bounds)
         print(pos)
@@ -174,7 +175,7 @@ def get_guard_vals(X, mode):
 @memodict
 def right(mode):
 #     if (mode+1) % NAV_SQ_DIM == 0:
-#         if __debug__:
+#         if debug:
 #             print('returning OUT')
 #         return OUT
 #     else:
@@ -184,7 +185,7 @@ def right(mode):
 @memodict
 def left(mode):
 #     if mode % NAV_SQ_DIM == 0:
-#         if __debug__:
+#         if debug:
 #             print('returning OUT')
 #         return OUT
 #     else:
@@ -195,7 +196,7 @@ def left(mode):
 def above(mode):
     mode_ = mode - NAV_SQ_DIM
 #     if mode_ < 0:
-#         if __debug__:
+#         if debug:
 #             print('returning OUT')
 #         return OUT
 #     else:
@@ -206,7 +207,7 @@ def above(mode):
 def below(mode):
     mode_ = mode + NAV_SQ_DIM
 #     if mode_ > NUM_MODES-1:
-#         if __debug__:
+#         if debug:
 #             print('returning OUT')
 #         return OUT
 #     else:
@@ -276,7 +277,7 @@ class SIM(object):
         ncp = 200     #Number of communication points
         sw0 = mode2sw(m0)
         self.model.re_init(TT[0], X0, sw0=sw0)
-        if __debug__:
+        if debug:
             print('re-init:', TT[0], TT[1], X0, x2mode(X0))
         t, y = self.model.simulate(TT[1], ncp) #Simulate
         #Print event information
@@ -333,7 +334,7 @@ def create_model():
         mode = sw2mode(sw)
         g = get_guard_vals(X, mode)
         G = [g[0], g[1], g[2], g[3]] # y == 0
-        if __debug__:
+        if debug:
             print(mode)
             print('G =', G)
         return G
@@ -344,13 +345,13 @@ def create_model():
         specified by the event functions.
         """
         state_info = event_info[0] #We are only interested in state events info
-        if __debug__:
+        if debug:
             print('############### EVENT DETECTED')
         g = state_info
         if g[0] <= 0 or g[1] <= 0 or g[2] <= 0 or g[3] <= 0:
             mode = sw2mode(solver.sw)
             mode_ = new_mode(g, mode)
-            if __debug__:
+            if debug:
                 print('############### new_mode =', mode_)
             solver.sw = mode2sw(mode_)
 

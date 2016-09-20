@@ -23,6 +23,8 @@ import graphs.graph as g
 import state as st
 import cellmanager as CM
 
+import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -502,7 +504,7 @@ class TopLevelAbs:
             pi_seq_list[idx] = pi_seq + [pi_cons] * missing_pi_len
 
 
-        if __debug__:
+        if settings.debug:
             print('path states, min_len:{}, max_len:{}'.format(min_len, max_len))
 
         # ##!!##logger.debug('init_list:{}\n'.format(init_list))

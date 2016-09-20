@@ -13,6 +13,8 @@ from blessed import Terminal
 import utils as U
 import err
 
+import settings
+
 term = Terminal()
 
 
@@ -124,7 +126,7 @@ class GraphGT(object):
                         source_list)
         G.add_edges_from(edge_list)
 
-        if __debug__:
+        if settings.debug:
             print >> sys.stderr, 'source -> list'
             for e in edge_list:
                 print >> sys.stderr, e
@@ -135,12 +137,12 @@ class GraphGT(object):
         edge_list = zip(sink_list, [dummy_super_sink_node] * num_sink_nodes)
         G.add_edges_from(edge_list)
 
-        if __debug__:
+        if settings.debug:
             print >> sys.stderr, 'sink -> list'
             for e in edge_list:
                 print >> sys.stderr, e
 
-        if __debug__:
+        if settings.debug:
             #print the graph first
             print >>sys.stderr,  'Printing graph...'
             for e in G.G.edges():
@@ -152,7 +154,7 @@ class GraphGT(object):
                                        dummy_super_sink_node,
                                        )
 
-        if __debug__:
+        if settings.debug:
             print >> sys.stderr, 'path list'
             paths = list(path_it)
             for path in paths[0:max_paths]:

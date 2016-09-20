@@ -2,6 +2,7 @@
 
 import ast
 import subprocess
+import logging
 
 import networkx as nx
 import utils as U
@@ -12,6 +13,10 @@ from blessed import Terminal
 
 #from networkx.drawing.nx_agraph import graphviz_layout
 from networkx.drawing.nx_agraph import write_dot
+
+import settings
+
+logger = logging.getLogger(__name__)
 
 GVIZ_GRAPH_PATH = '{}_graph.dot'
 GRAPH_EPS_PATH = '{}_graph.eps'
@@ -356,10 +361,9 @@ class GraphNX(object):
 
         H.add_edges_from(edge_list, weight=1)
 
-        if __debug__:
-            print 'source -> list'
-            for e in edge_list:
-                print e
+        logger.debug('source -> list')
+        for e in edge_list:
+            logger.debug(e)
 
         # Add edges:
         #   \forall sink \in sink_list. sink -> super sink node
@@ -367,10 +371,9 @@ class GraphNX(object):
         edge_list = zip(sink_list, [dummy_super_sink_node] * num_sink_nodes)
         H.add_edges_from(edge_list, weight=1)
 
-        if __debug__:
-            print 'sink -> list'
-            for e in edge_list:
-                print e
+        logger.debug('sink -> list')
+        for e in edge_list:
+            logger.debug(e)
 
 #        print '='*80
         # TODO: WHY?
@@ -383,7 +386,7 @@ class GraphNX(object):
         # TODO: how to do this with lambda?
         # Also, is this indeed correct?
 
-#         if __debug__:
+#         if settings.debug:
 #             # delete below lines till exit
 #             K = max_paths
 #             (len_list, path_list) = self.k_shortest_paths(H,

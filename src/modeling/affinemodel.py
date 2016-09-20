@@ -11,6 +11,7 @@ import constraints as cons
 import err
 
 import plot_hack as ph
+import settings
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class RegressionModel(object):
         # Copy must be on...arrays are getting reused!
         self.clf_ = skl_lm.LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=True)
         self.clf_.fit(x, y)
-        #if __debug__:
+        #if settings.debug:
         #    print clf_.coef_, clf_.intercept_
 
     @property
@@ -76,7 +77,7 @@ class RegressionModel(object):
         """
         '''computes relative error% along each dimension'''
         Y_ = self.predict(X)
-        #if __debug__:
+        #if settings.debug:
         #    print 'score: ', self.clf.score(X, Y)
         #    print abs((Y - Y_)/Y)*100
         return (abs((Y - Y_)/Y))*100
@@ -99,7 +100,7 @@ class RegressionModel(object):
         """
         '''computes relative error% along each dimension'''
         Y_ = self.predict(X)
-        #if __debug__:
+        #if settings.debug:
         #    print 'score: ', self.clf.score(X, Y)
         #    print abs((Y - Y_)/Y)*100
         return np.max((abs((Y - Y_)/Y))*100, axis=0)
@@ -273,7 +274,7 @@ class RobustRegressionModel(object):
         self.clf_ = skl_lm.RANSACRegressor(self.model)
         self.clf_.fit(x, y)
 
-        #if __debug__:
+        #if settings.debug:
         #    print clf_.coef_, clf_.intercept_
 
     @property
@@ -310,7 +311,7 @@ class RobustRegressionModel(object):
         """
         '''computes relative error% along each dimension'''
         Y_ = self.predict(X)
-        #if __debug__:
+        #if settings.debug:
         #    print 'score: ', self.clf.score(X, Y)
         #    print abs((Y - Y_)/Y)*100
         return np.max((abs((Y - Y_)/Y))*100, axis=0)
