@@ -28,12 +28,12 @@ import settings
 #np.set_printoptions(suppress=True, precision=2)
 
 # multiply num samples with the
-MORE_FACTOR = 100
-TEST_FACTOR = 10
+MORE_FACTOR = 20
+#TEST_FACTOR = 10
 
 MAX_TRAIN = 2000
 
-MAX_TEST = 200
+#MAX_TEST = 200
 
 KMAX = 1
 KMIN = 1
@@ -202,11 +202,46 @@ def refine_dft_model_based(
         # Need to define a new function to simulate inputs
         sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts)
 
-    check4CE(pwa_model, depth, sys.sys_name, 'dft', AA, sys, prop, sp, opts)
+    assert(settings.CE)
+    # TODO: The reason we need this is to encode the transitions which
+    # land to error states. This is required to discard bmc paths
+    # which do the below:
+    #
+    # p0 -m01-> p1 -m12-> p2
+    # Where p1->p2 is valid, but m12(x) \not-in p2(x)
+    # cell = p1 and p1(x) -->
+    # cell = p2 and x' = m12(x)
+    #
+    # Clearly, this does not enforce x' \in p2(x)
+    # Hence, even if x' \in prop, it did not reallty reach there by
+    # following the rules of evolution of the pwa system.
+    # Specifically, ignored: x' \in p2(x). And hence, it used m12 to
+    # go outside p2(x), but the map m12 was meant specifically to go
+    # to p2
+    #
+    # The real reason for this is, that the current BMC encoding is
+    # faulty. It encodes partitions, but instead, we should be
+    # encoding transitions. That is, each location of the sal
+    # transition system is actually a transitions pi --mij-->  pj
+    # Hence, we need to know the error locations, from where we add
+    # one more partition.
+
+    prop_cells = set(abs_state2cell(path[-1], AA) for path in error_paths)
+    # partitions do not have a has function. Hence, using a work
+    # around to avoid duplications
+    # Create a mapping from Q -> partitions
+    Q_p_map = {sm.p.ID.xcell: sm.p for sm in pwa_model if sm.p.ID.xcell in prop_cells}
+    # Q have a hash function
+    prop_partitions = Q_p_map.values()
+
+    check4CE(pwa_model, depth, prop_partitions, sys.sys_name, 'dft', AA, sys, prop, sp, opts)
 
 
-def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, opts):
+def check4CE(pwa_model, depth, prop_partitions, sys_name, model_type, AA, sys, prop, sp, opts):
 
+
+    # Remove prop_partitions
+    assert(settings.CE)
     # Extend both init set and final set to include inputs if any
     dummy_cons = top2ic(AA.num_dims.pi) # T <=> [-inf, inf]
     safety_prop = IntervalCons.concatenate(sp.final_cons, dummy_cons)
@@ -224,6 +259,7 @@ def check4CE(pwa_model, depth, sys_name, model_type, AA, sys, prop, sp, opts):
             opts.bmc_engine,
             vs,
             pwa_model, init_cons, safety_prop,
+            prop_partitions,
             '{}_{}'.format(sys_name, model_type),
             model_type,
             prec=4)
@@ -339,9 +375,10 @@ def build_pwa_model(AA, qgraph, sp, opts, model_type):
     include_err = opts.model_err
 
     # number of training samples
-    ntrain = min(AA.num_samples * MORE_FACTOR, MAX_TRAIN)
+    #TODO : should be min and not max!
+    ntrain = max(AA.num_samples * MORE_FACTOR, MAX_TRAIN)
     # number of test samples
-    ntest = min(ntrain * TEST_FACTOR, MAX_TEST)
+    #ntest = min(ntrain * TEST_FACTOR, MAX_TEST)
 
     dt = AA.plant_abs.delta_t
     step_sim = simsys.get_step_simulator(sp.controller_sim, sp.plant_sim, dt)
@@ -357,7 +394,7 @@ def build_pwa_model(AA, qgraph, sp, opts, model_type):
         if True:
             if settings.debug:
                 print('modeling: {}'.format(q))
-            for sub_model in q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
+            for sub_model in q_affine_models(ntrain, step_sim, tol, include_err, qgraph, q):
                 assert(sub_model is not None)
                 # sub_model.pnexts[0] = sub_model.p.ID to enforce self loops
                 print(U.colorize('{} -> {}, err:{}, status: {}'.format(
@@ -587,7 +624,7 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
 #     return np.vstack(Yl)
 
 
-def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
+def q_affine_models(ntrain, step_sim, tol, include_err, qgraph, q):
     """cell_affine_models
 
     Parameters
@@ -607,8 +644,7 @@ def q_affine_models(ntrain, ntest, step_sim, tol, include_err, qgraph, q):
     sub_models = []
     X, Y = q.get_rels(ntrain, step_sim)
     regression_models = mdl(tol, step_sim, qgraph, q, (X, Y), X, k=0)
-    
-    print(regression_models)
+
     assert(regression_models)
 #     # TODO: fix this messy handling...?
 #     if not regression_models:

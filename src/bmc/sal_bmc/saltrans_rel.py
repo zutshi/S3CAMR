@@ -83,9 +83,14 @@ class SALTransSysRel(saltrans.SALTransSys):
 
     @property
     def local_decls(self):
-        ld = super(SALTransSysRel, self).local_decls
-        return ld + '\nLOCAL\n\tcell:CELL'
+        return ''
+        #ld = super(SALTransSysRel, self).local_decls
+        #return ld + '\nLOCAL\n\tcell:CELL'
 
+    @property
+    def op_decls(self):
+        op = super(SALTransSysRel, self).op_decls
+        return op + ',\n\tcell:CELL'
 
 Transition = saltrans.Transition
 

@@ -38,6 +38,7 @@ import settings
 
 #precision=None, threshold=None, edgeitems=None, linewidth=None, suppress=True, nanstr=None, infstr=None, formatter=Nonu)
 np.set_printoptions(suppress=True)
+np.set_printoptions(linewidth=200)
 
 ###############################
 # terminal color printing compatibility for windows

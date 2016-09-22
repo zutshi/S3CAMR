@@ -1,6 +1,7 @@
 # TODO: Freeze the arg list if they are deemed the same for every bmc
 # engine
 
+import settings
 
 # def factory(bmc_engine_id,
 #             vars,
@@ -14,6 +15,7 @@ def factory(bmc_engine,
             pwa_model,
             init_state,
             final_states,
+            prop_partitions,
             sys_name,
             model_type,
             prec,
@@ -41,6 +43,9 @@ def factory(bmc_engine,
 
     prec = str(float(prec)/10.)
 
+    # remove prop_partitions
+    assert(settings.CE)
+
     if bmc_engine == 'sal':
         import sal_bmc.salbmc
         return sal_bmc.salbmc.BMC(
@@ -48,6 +53,7 @@ def factory(bmc_engine,
              pwa_model,
              init_state,
              final_states,
+             prop_partitions,
              sys_name,
              model_type,
              prec,

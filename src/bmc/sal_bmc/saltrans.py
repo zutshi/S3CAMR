@@ -10,7 +10,7 @@ from math import isinf
 from ..helpers.expr2str import Expr2Str #linexpr2str, float2str
 
 #import utils as U
-
+import settings
 
 class SALTransError(Exception):
     pass
@@ -66,6 +66,8 @@ class SALTransSys(object):
         TRANSITION
         [
         {trans}
+        % Always on transition: to overcome the in-complete pwa model
+        % from deadlocking
         {atran}
         ]
         END;
@@ -157,6 +159,8 @@ class SALTransSys(object):
              ]
         prop_str = ' AND '.join(ls + hs)
 
+        # Remove AND cell' = CE
+        assert(settings.CE)
         s = tw.dedent('''
         MONITOR: MODULE =
         BEGIN
@@ -169,7 +173,7 @@ class SALTransSys(object):
         TRANSITION
         [
         TRUE -->
-        unsafe' IN {{r : BOOLEAN | r <=> ({})}}
+        unsafe' IN {{r : BOOLEAN | r <=> ({} AND cell' = CE)}}
         ]
         END;''').format(self.op_decls, prop_str)
         return s

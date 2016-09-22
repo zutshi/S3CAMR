@@ -423,10 +423,12 @@ class GraphNX(object):
                 # Remove the first (super source)
                 # and the last element (super sink)
 
+            logger.debug('======== Paths =========')
             for p in path_list:
                 l = len(p)
                 #print l, max_depth
                 if l <= max_depth:
+                    logger.debug(p[1:-1])
                     yield p[1:-1]
 
         # return lambda: [yield i[1:-1] for i in nx.all_simple_paths(H,

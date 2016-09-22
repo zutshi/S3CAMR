@@ -146,12 +146,20 @@ def prop_constraints(AA, prop, trace_len):
     return A, b
 
 
+def truncate(prec, *args):
+    prec = prec/10.
+
+    # Round off to the same amount as the bmc query
+    def arr2str(n): return '{n:{p}f}'.format(n=n, p=prec)
+    trunc_array = np.vectorize(lambda x: np.float(arr2str(x)))
+
+    return (trunc_array(X) for X in args)
+
+
 def overapprox_x0(AA, prop, opts, pwa_trace):
     C, d = part_constraints(pwa_trace)
     A, b = dyn_constraints(pwa_trace)
     pA, pb = prop_constraints(AA, prop, len(pwa_trace))
-    #from IPython import embed
-    #embed()
 
     # num vars are the same
     assert(C.shape[1] == A.shape[1])
@@ -178,8 +186,10 @@ def overapprox_x0(AA, prop, opts, pwa_trace):
     res = []
     disp_opt = True if settings.debug else False
 
+    prec = 4
+    A_ub, b_ub = truncate(prec, A_ub, b_ub)
+
     for obj in directions_ext:
-        #obj = np.array(di + (0.0,) * (num_opt_vars - nvars))
         res.append(spopt.linprog(
                 c=obj,
                 A_ub=A_ub,
@@ -188,8 +198,18 @@ def overapprox_x0(AA, prop, opts, pwa_trace):
                 method='simplex',
                 options={'disp': disp_opt}))
 
-    for di, r in zip(directions, res):
-        if r.success:
-            print('{}: {}'.format(np.dot(di, x_arr), r.fun))
-        else:
-            print('status:', r.status)
+    l = len(res)
+    assert(l % 2 == 0)
+    #min_directions, max_directions = np.split(directions, l/2, axis=1)
+    min_res, max_res = res[:l/2], res[l/2:]
+
+    for di, rmin, rmax in zip(directions, min_res, max_res):
+        try:
+            assert(rmin.success)
+            assert(rmax.success)
+            print('{} \in [{}, {}]'.format(np.dot(di, x_arr), rmin.fun, -rmax.fun))
+
+        except AssertionError as e:
+            print('rminstatus:', rmin.status)
+            print('rmax status:', rmax.status)
+            raise e

@@ -11,6 +11,8 @@ import fileops as fops
 import utils as U
 import err
 
+import settings
+
 SAL_PATH = 'SAL_PATH'
 SAL_INF_BMC = '''/bin/sal-inf-bmc'''
 
@@ -54,7 +56,7 @@ def sal_run_cmd(sal_path, depth, module_name, prop_name, opts=SalOpts()):
 
 class BMC(BMCSpec):
     def __init__(self, vs, pwa_model, init_state, safety_prop,
-                 module_name, model_type, prec):
+                 prop_partitions, module_name, model_type, prec):
         """__init__
 
         Parameters
@@ -81,9 +83,13 @@ class BMC(BMCSpec):
         # stores info to convert the bmc back to pwa
         self.conversion_info = {}
 
+        # Remove prop_partitions
+        assert(settings.CE)
+
         if model_type == 'dft':
             self.sal_trans_sys = self.sal_module_dft(
-                    vs, pwa_model, init_state, safety_prop, module_name, prec)
+                    vs, pwa_model, init_state, safety_prop,
+                    prop_partitions, module_name, prec)
         elif model_type == 'dmt':
             dts = pwa_model.keys()
             self.sal_trans_sys = BMC.sal_module_dmt(
@@ -98,7 +104,10 @@ class BMC(BMCSpec):
 
         return
 
-    def sal_module_dft(self, vs, pwa_model, init_set, safety_prop, module_name, prec):
+    def sal_module_dft(self, vs, pwa_model, init_set, safety_prop,
+                       prop_partitions, module_name, prec):
+        # Remove prop_partitions
+        assert(settings.CE)
         sal_trans_sys = slt_rel.SALTransSysRel(module_name, vs, init_set, safety_prop, prec)
 
         for sub_model in pwa_model:
@@ -121,6 +130,34 @@ class BMC(BMCSpec):
             t = slt_rel.Transition('T_{}'.format(idx), g, r)
             sal_trans_sys.add_transition(t)
             self.conversion_info[t.name] = sub_model
+
+        #####################################################################
+        # TODO: This is the hack to fix the encoding issue.
+        # Here, we add the transitions from the error partitions -> CE
+        # The below code expemplifies bad practices by doing all kinds
+        # of shenanigans!
+        assert(settings.CE)
+        #####################################################################
+        idx += 1
+        import numpy as np
+        import constraints as cons
+        nvs = len(vs)
+        sal_trans_sys.partid2Cid['CE'] = 'CE'
+        for part in prop_partitions:
+            p = part
+            l = sal_trans_sys.get_C(p.ID)
+            g = slt_rel.Guard(l, p.C, p.d)
+            g.vs = vs
+            r = slt_rel.Reset(['CE'], np.eye(nvs), np.zeros(nvs), cons.zero2ic(nvs))
+            r.vs = vs
+            r.vs_ = vs
+            t = slt_rel.Transition('T_{}'.format(idx), g, r)
+            sal_trans_sys.add_transition(t)
+            # TODO: 'CE' is used as a placeholder. It should never
+            # happen that it is used.
+            self.conversion_info[t.name] = 'CE'
+            idx += 1
+        #####################################################################
         return sal_trans_sys
 
     @staticmethod
