@@ -31,7 +31,6 @@ import properties
 import utils as U
 from utils import print
 
-import plot_hack as ph
 import settings
 
 #matplotlib.use('GTK3Agg')
@@ -657,6 +656,13 @@ def main():
     LIST_OF_REFINEMENTS = ['init', 'trace', 'model-dft', 'model-dmt', 'model-dct']
     LIST_OF_GRAPH_LIBS = ['nx', 'gt', 'g']
     LIST_OF_PLOT_LIBS = ['mp', 'pg']
+    LIST_OF_BMC = ['sal', 's3camsmt']
+
+    DEF_BMC_PREC = 4
+    DEF_BMC = 'sal'
+    DEF_MAX_PATHS = 100
+    DEF_GRAPH_LIB = 'nx'
+    DEF_VIO_LOG = 'vio.log'
 
     parser = argparse.ArgumentParser(
             description='S3CAM',
@@ -699,17 +705,20 @@ def main():
     parser.add_argument('-t', '--trace-struct', type=str, default='tree',
                         choices=LIST_OF_TRACE_STRUCTS, help='structure for cntrl-rep')
 
-    parser.add_argument('--refine', type=str, default='init',
+    parser.add_argument('--refine', type=str, default=None,
                         choices=LIST_OF_REFINEMENTS, help='Refinement method')
 
     parser.add_argument('--incl-error', action='store_true',
                         help='Include errors in model for bmc')
 
-    parser.add_argument('-o', '--output', type=str, default='vio.log',
+    parser.add_argument('-o', '--output', type=str,
+                        default=DEF_VIO_LOG,
                         help='violation log')
 
-    parser.add_argument('-g', '--graph-lib', type=str, default='nx',
-                        choices=LIST_OF_GRAPH_LIBS, help='graph library')
+    parser.add_argument('-g', '--graph-lib', type=str,
+                        default=DEF_GRAPH_LIB,
+                        choices=LIST_OF_GRAPH_LIBS,
+                        help='graph library')
 
     parser.add_argument('-p', '--plot', type=str, nargs='?',
                         default=None, const='mp',
@@ -718,7 +727,7 @@ def main():
     parser.add_argument('--plots', type=plotting.plot_opts_parse, default='',
                         nargs='+', help='plots x vs y: t-x1 x0-x1')
 
-    parser.add_argument('--max-paths', type=int, default=100,
+    parser.add_argument('--max-paths', type=int, default=DEF_MAX_PATHS,
                         help='max number of paths to use for refinement')
 
     # TODO: remove this before thigns get too fancy.
@@ -739,17 +748,22 @@ def main():
                         'trace, instead of relying only on x(t_end).')
 
     parser.add_argument('--bmc-engine', type=str,
-                        choices=["sal", "s3camsmt"],
-                        default="s3camsmt",
+                        choices=LIST_OF_BMC,
+                        default=DEF_BMC,
                         help='Choose the bmc engine')
 
     # TODO: fix this hack
-    parser.add_argument('--disable-plotting', action='store_true',
-                        help='Disables showing/rendering of plots')
+    parser.add_argument('--enable-regression-plots', action='store_true',
+                        help='Disables showing/rendering of regression plots')
 
     # TODO: fix this hack
     parser.add_argument('--debug', action='store_true',
                         help='Enables debug flag')
+
+    parser.add_argument('--bmc-prec', type=int, default=DEF_BMC_PREC,
+                        help='number of decimals to retain when\
+                        translating the pwa system to the transitions\
+                        system for BMC.')
 
 #    argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -764,7 +778,8 @@ def main():
     if args.seed is not None:
         np.random.seed(args.seed)
 
-    ph.PLOT = not args.disable_plotting
+    # TODO put plot hack as a switch in settings
+    settings.debug_plot = args.enable_regression_plots
     settings.debug = args.debug
 
     # TODO:
@@ -801,6 +816,10 @@ def main():
     else:
         raise err.Fatal('no options passed. Check usage.')
 
+    if args.refine is None and opts.MODE == 'falsify':
+        print('No refinement strategy is specified!  Please use --help')
+        exit()
+
     #opts.plot = args.plot
     opts.dump_trace = args.dump
     opts.refine = args.refine
@@ -813,6 +832,8 @@ def main():
     opts.plots = args.plots
     opts.model_err = args.incl_error
     opts.bmc_engine = args.bmc_engine
+    # Default bmc prec
+    opts.bmc_prec = args.bmc_prec
 
     sys, prop = loadsystem.parse(filepath, args.pvt_init_data)
     if args.prop_check:
