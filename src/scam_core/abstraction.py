@@ -293,6 +293,8 @@ class TopLevelAbs:
         # Sending in self and the total abstract_state to plant and controller
         # abstraction!!
 
+        logger.debug('getting reachable states for: {}'.format(abs_state))
+
         intermediate_state = \
             self.controller_abs.get_reachable_abs_states(abs_state, self, system_params)
         abs2rchd_abs_state_ci_pi_list = \
@@ -304,6 +306,8 @@ class TopLevelAbs:
 
             self.add_relation(abs_state, rchd_abs_state, ci_cell, pi_cell)
             abs2rchd_abs_state_set.add(rchd_abs_state)
+
+        logger.debug('found reachable abs_states: {}'.format(abs2rchd_abs_state_set))
         return abs2rchd_abs_state_set
 
 #     def states_along_paths(self, paths):
