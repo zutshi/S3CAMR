@@ -40,9 +40,10 @@ class BMCSpec():
 
 class TraceSimple(object):
     """Simple Trace: provides minimal functionality"""
-    def __init__(self, trace):
+    def __init__(self, trace, vs):
         self.xvars = None
         self.trace = trace
+        self.vs = vs
 
         #############################################################
         assert(settings.CE)
@@ -85,9 +86,9 @@ class TraceSimple(object):
     def __iter__(self):
         return (step for step in self.trace)
 
-    def set_vars(self, vs):
-        self.vs = vs
-        return
+    #def set_vars(self, vs):
+        #self.vs = vs
+        #return
 
     def to_array(self):
         # vars must have been set before this is called
