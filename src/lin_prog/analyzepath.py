@@ -5,6 +5,8 @@ import scipy.linalg as linalg
 import scipy.optimize as spopt
 import sympy as sym
 
+import constraints as cons
+
 import settings
 
 
@@ -156,7 +158,7 @@ def truncate(prec, *args):
     return (trunc_array(X) for X in args)
 
 
-def overapprox_x0(AA, prop, opts, pwa_trace):
+def overapprox_x0(AA, prop, opts, pwa_trace, prec):
     C, d = part_constraints(pwa_trace)
     A, b = dyn_constraints(pwa_trace)
     pA, pb = prop_constraints(AA, prop, len(pwa_trace))
@@ -186,7 +188,6 @@ def overapprox_x0(AA, prop, opts, pwa_trace):
     res = []
     disp_opt = True if settings.debug else False
 
-    prec = 4
     A_ub, b_ub = truncate(prec, A_ub, b_ub)
 
     for obj in directions_ext:
@@ -203,13 +204,25 @@ def overapprox_x0(AA, prop, opts, pwa_trace):
     #min_directions, max_directions = np.split(directions, l/2, axis=1)
     min_res, max_res = res[:l/2], res[l/2:]
 
+
+    ranges = []
+
     for di, rmin, rmax in zip(directions, min_res, max_res):
         try:
             assert(rmin.success)
             assert(rmax.success)
             print('{} \in [{}, {}]'.format(np.dot(di, x_arr), rmin.fun, -rmax.fun))
+            ranges.append([rmin.fun, -rmax.fun])
 
         except AssertionError as e:
             print('rminstatus:', rmin.status)
             print('rmax status:', rmax.status)
-            raise e
+            #raise e
+
+    prompt = raw_input('load the prompt? (y/Y)')
+    if prompt.lower() == 'y':
+        import IPython
+        IPython.embed()
+
+    r = np.asarray(ranges)
+    return cons.IntervalCons(r[:, 0], r[:, 1])
