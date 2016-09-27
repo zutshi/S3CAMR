@@ -27,9 +27,13 @@ R = [[1., 6., -inf, -inf],
 S = [[22., 11., -inf, -inf],
      [23., 12., inf, inf]]
 
-error_set = P
+error_set = R
 
+# P, Q, R
 T = 20.0
+
+# S
+# T = 35.0
 
 # Abstraction params: P, Q, R, S
 #grid_eps = [0.2, 0.2, 0.4, 0.4]
@@ -57,3 +61,11 @@ controller_path = None
 controller_path_dir_path = None
 initial_discrete_state = []
 initial_private_state = []
+
+
+# Viloations
+#
+# S
+# x0=[  4.14327461  21.51742883   0.8471542    0.9884877 ] -> x=[ 22.44414369  11.999        0.22792075  -0.86384343], t=30.1382177243
+# x0=[  4.50024758  21.82478644   0.97146715   0.6993149 ] -> x=[ 22.4524101   11.999        0.22748131  -0.86401213], t=30.1798284278
+
