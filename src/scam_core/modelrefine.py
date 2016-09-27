@@ -28,10 +28,10 @@ import settings
 #np.set_printoptions(suppress=True, precision=2)
 
 # multiply num samples with the
-MORE_FACTOR = 20
+MORE_FACTOR = 100
 #TEST_FACTOR = 10
 
-MAX_TRAIN = 2000
+MAX_TRAIN = 1000
 
 #MAX_TEST = 200
 
@@ -196,6 +196,9 @@ def refine_dft_model_based(
     # depth = max_path_len - 1, because path_len = num_states along
     # path. This is 1 less than SAL depth and simulation length
     depth = max(int(np.ceil(AA.T/AA.delta_t)), max_path_len - 1)
+    assert(settings.CE) # adding a depth to accomodate the last
+    # transition which takes a location to the CE
+    depth += 1
     print('depth :',  depth)
 
     if settings.debug_plot:
@@ -262,16 +265,13 @@ def check4CE(pwa_model, depth, prop_partitions, sys_name, model_type, AA, sys, p
             prop_partitions,
             '{}_{}'.format(sys_name, model_type),
             model_type,
-            prec=4)
+            opts.bmc_prec)
 
     status = bmc.check(depth)
-    #if status == InvarStatus.Safe:
-    #    print('Safe')
-    if status == InvarStatus.Unsafe:
-
-        #from IPython import embed
-        #embed()
-
+    if status == InvarStatus.Safe:
+        print('Safe')
+        exit()
+    elif status == InvarStatus.Unsafe:
         bmc_trace = bmc.get_last_trace()
         print(bmc_trace)
         print(bmc_trace.to_array())
@@ -311,7 +311,8 @@ def verify_bmc_trace(AA, sys, prop, sp, opts, bmc_trace, pwa_trace):
     # TODO: fix inputs!!
     #pi_seq = [[step.assignments[w] for w in ws] for step in bmc_trace[:-1]]
     res = rt.concretize_bmc_trace(sys, prop, AA, sp, opts, num_trace_states, x_array, pi_seq)
-    azp.overapprox_x0(AA, prop, opts, pwa_trace)
+    init_cons_subset = azp.overapprox_x0(AA, prop, opts, pwa_trace, opts.bmc_prec)
+    rt.concretize_init_cons_subset(sys, prop, AA, sp, opts, num_trace_states, x_array, pi_seq, init_cons_subset)
     return
 
 
@@ -376,7 +377,7 @@ def build_pwa_model(AA, qgraph, sp, opts, model_type):
 
     # number of training samples
     #TODO : should be min and not max!
-    ntrain = max(AA.num_samples * MORE_FACTOR, MAX_TRAIN)
+    ntrain = min(AA.num_samples * MORE_FACTOR, MAX_TRAIN)
     # number of test samples
     #ntest = min(ntrain * TEST_FACTOR, MAX_TEST)
 
@@ -539,14 +540,14 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
 #         return [(rm, [q], e_pc)]
 
 
-def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
+def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k, kmin, kmax):
     assert(X.shape[1] == q.dim)
     assert(Y_.shape[1] == q.dim)
     assert(X.shape[0] == Y.shape[0] == Y_.shape[0])
 
     #print(U.colorize('# samples = {}'.format(X.shape[0])))
 
-    if k >= KMIN:
+    if k >= kmin:
         rm = RegressionModel(X, Y)
         #rm = RobustRegressionModel(X, Y)
         e_pc = rm.max_error_pc(X, Y)
@@ -565,8 +566,8 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
         ms = []
         if settings.debug:
             print('error exceeds...')
-        if k >= KMAX:
-            assert(k == KMAX)
+        if k >= kmax:
+            assert(k == kmax)
             status = KMAX_EXCEEDED
             if settings.debug:
                 err.warn('max depth exceeded but the error > tol. Giving up!')
@@ -588,12 +589,15 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k):
                         from matplotlib import pyplot as plt
                         plt.plot(Y__[sat, 0], Y__[sat, 1], 'y*')
 
-                    rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k+1)
+                    rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k+1, kmin, kmax)
                     l = [(rm_, [qi]+qseq_, e_pc_, status_)
                          for rm_, qseq_, e_pc_, status_ in rm_qseq]
                     ms.extend(l)
                 else:
-                    err.warn('out of samples...Giving up!')
+                    if(qi == q):
+                        pass # no self loop observed
+                    else:
+                        err.warn('out of samples...Giving up on the edge!')
 
         # TODO: this will happen when the last location fails? confirm
         if not ms:
@@ -641,11 +645,23 @@ def q_affine_models(ntrain, step_sim, tol, include_err, qgraph, q):
     Notes
     ------
     """
+    # Is non relational modeling being done? No, by default
+    pwa_non_relational = False
     sub_models = []
     X, Y = q.get_rels(ntrain, step_sim)
-    regression_models = mdl(tol, step_sim, qgraph, q, (X, Y), X, k=0)
+    regression_models = mdl(tol, step_sim, qgraph, q, (X, Y), X, k=0, kmin=KMIN, kmax=KMAX)
 
-    assert(regression_models)
+    #assert(regression_models)
+    # try again on failure, and settle with non relational models
+    if not regression_models:
+        err.warn('No model found for q: {}'.format(q))
+        regression_models = mdl(np.inf, step_sim, qgraph, q, (X, Y), X, k=0, kmin=0, kmax=1)
+        assert(regression_models)
+        # No model found, get a non-relational model as the worst case
+        pwa_non_relational = True
+        #import IPython
+        #IPython.embed()
+
 #     # TODO: fix this messy handling...?
 #     if not regression_models:
 #         # no model was found...node must be a sink node, otherwise
@@ -685,7 +701,8 @@ def q_affine_models(ntrain, step_sim, tol, include_err, qgraph, q):
         # if q_seq is empty, all its neighbours are reachable
         if not q_seq:
             # Relational modeling is currently forced as KMIN = 1
-            assert(False)
+            #assert(False)
+            assert(pwa_non_relational)
             # No relational modeling was done. Use the relations from
             # the graph. Add transitions to cell only seen in the
             # subgraph.
@@ -694,7 +711,13 @@ def q_affine_models(ntrain, step_sim, tol, include_err, qgraph, q):
             #err.warn('forcing self loops for every location!')
             for qi in it.chain([q], qgraph.neighbors(q)):
                 C, d = qi.ival_constraints.poly()
-                pnexts.append(pwa.Partition(C, d, qi))
+                #pnexts.append(pwa.Partition(C, d, qi))
+                pnexts = [pwa.Partition(C, d, qi)]
+
+                sub_model = rel.KPath(dmap, p, pnexts, future_partitions)
+                sub_model.max_error_pc = e_pc
+                sub_model.status = status
+                sub_models.append(sub_model)
 
         # Relational modeling is available. Add the edge which was
         # used to model this transition.
@@ -708,10 +731,10 @@ def q_affine_models(ntrain, step_sim, tol, include_err, qgraph, q):
                 C, d = qi.ival_constraints.poly()
                 future_partitions.append(pwa.Partition(C, d, qi))
 
-        sub_model = rel.KPath(dmap, p, pnexts, future_partitions)
-        sub_model.max_error_pc = e_pc
-        sub_model.status = status
-        sub_models.append(sub_model)
+            sub_model = rel.KPath(dmap, p, pnexts, future_partitions)
+            sub_model.max_error_pc = e_pc
+            sub_model.status = status
+            sub_models.append(sub_model)
     return sub_models
 
 
