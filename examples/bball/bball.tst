@@ -8,6 +8,12 @@ plant_pvt_init_data = None
 initial_set = [[-0.1, 3.0, 5.0, -5.0],
                [0.1, 4.0, 10.0, 5.0]]
 
+# initial_set = [[-0.1, 3.9, 9.8, 4.9],
+#                [-0.09, 4.0, 9.9, 5.0]]
+
+# Solves the original problem
+# x(0) = -0.09996, y(0) = 3.999, vx(0) = 9.8672, vy(0) = 4.968.
+
 # X0 leading to error set
 # initial_set = [[-0.1, 4, 9.87, 4.967],
 #                [-0.1, 4, 9.90, 4.969]]
@@ -26,9 +32,20 @@ error_set = [[330.0, 0.5, -inf, -inf],
 T = 40.0
 
 # Abstraction params used by matlabprot
-grid_eps = [1]*4
-delta_t = 2.0
-num_samples = 10
+#grid_eps = [1]*4
+
+# Does work at times...with delta_t = 40
+grid_eps = [1.1, 1.1, 1.1, 1.1]
+
+# Might work, but have not observed success yet.
+#grid_eps = [10, 1, 1, 1]
+
+delta_t = 40.0
+num_samples = 2
+
+# Specially confusing, since the BMC comes back with no results...
+# delta_t = 5.0
+# num_samples = 10
 
 # Abstraction params
 #grid_eps = [20, 2, 2, 2]
