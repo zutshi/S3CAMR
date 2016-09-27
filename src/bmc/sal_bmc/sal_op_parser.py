@@ -7,6 +7,8 @@ from fractions import Fraction as FR
 import fileops as fops
 import err
 
+import functools
+
 from ..bmc_spec import TraceSimple
 
 # global tokens
@@ -75,21 +77,21 @@ class Step(object):
         return '({})'.format(', '.join(str(i) for i in self.s[1:]))
 
 
-def Trace(s):
+def Trace(vs, s):
     trace_with_NOP = s[:-1]
     exec_time = s[-1]
 
     # remove NOPs
     trace = [step for step in trace_with_NOP if step.tid != 'NOP']
 
-    return TraceSimple(trace)
+    return TraceSimple(trace, vs)
 
 
 def extract_label(s):
     return s[1]
 
 
-def parse_ce(trace_data):
+def parse_ce(trace_data, vs):
     # lexer rules
     SEP = pp.Keyword('------------------------').suppress()
     STEP = pp.Keyword('Step').suppress()
@@ -126,13 +128,13 @@ def parse_ce(trace_data):
              )
 #                 ) +
 #             pp.SkipTo(EOF, True))
-    trace.setParseAction(Trace)
+    trace.setParseAction(functools.partial(Trace, vs))
 
     parsed = trace.parseString(trace_data, parseAll=True)
     return parsed[0]
 
 
-def parse_trace(trace_data):
+def parse_trace(trace_data, vs):
     """pre_process
     Quick check if SAL has failed to find any counter example.
     """
@@ -149,7 +151,7 @@ def parse_trace(trace_data):
     elif yices_failed in trace_data or sal_failed in trace_data:
         raise err.Fatal('unexpected trace data')
     else:
-        return parse_ce(trace_data)
+        return parse_ce(trace_data, vs)
 
 
 def main():
