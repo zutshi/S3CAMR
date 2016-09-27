@@ -214,12 +214,12 @@ class BMC(BMCSpec):
                 raise err.Fatal('unknown SAL error!')
 
         print sal_op
-        self.trace = sal_op_parser.parse_trace(sal_op)
-        self.trace.set_vars(self.vs)
+        self.trace = sal_op_parser.parse_trace(sal_op, self.vs)
         if self.trace is None:
             print 'BMC failed to find a CE'
             return InvarStatus.Unknown
         else:
+            #self.trace.set_vars(self.vs)
             print '#'*40
             print '# Cleaned up trace'
             print '#'*40
