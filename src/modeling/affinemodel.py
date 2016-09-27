@@ -10,7 +10,6 @@ import numpy as np
 import constraints as cons
 import err
 
-import plot_hack as ph
 import settings
 
 logger = logging.getLogger(__name__)
@@ -138,7 +137,7 @@ class RegressionModel(object):
         from matplotlib import pyplot as plt
         from mpl_toolkits.mplot3d import Axes3D
 
-        dimX = len(X.shape)
+        dimX = X.shape[1]
         assert(dimX == 2)
 
         # if 1 or less rows
@@ -229,7 +228,7 @@ class RegressionModel(object):
         ax.set_ylabel('x1')
         ax.set_zlabel('y1')
 
-        ph.plt_show()
+        settings.plt_show()
 
 # Old single figure plots
 #         fig = plt.figure()
