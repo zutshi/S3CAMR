@@ -80,48 +80,49 @@ def concretize_bmc_trace(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq):
 
 
 def trace_violates(sys_sim, sys, prop, opts, trace_len, x_array, pi_seq):
-    # THe property can be violated at t <= Time Horizon. In that case
+    x0_samples = [x_array[0, :]]
+    x_array_bmc = x_array
+    return traces_violates(sys_sim, sys, prop, opts, trace_len, x0_samples, x_array_bmc, pi_seq)
+
+
+def concretize_init_cons_subset(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq, init_cons_subset):
+    x0_samples = init_cons_subset.sample_UR(100)
+    sys_sim = simsys.get_system_simulator(sys)
+    return traces_violates(sys_sim, sys, prop, opts, trace_len, x0_samples, x_array, pi_seq)
+
+
+def traces_violates(sys_sim, sys, prop, opts, trace_len, x0_samples, x_array_bmc, pi_seq):
+    x_array = x_array_bmc
+    # The property can be violated at t <= Time Horizon. In that case
     # simulate only as much as the trace length allows.
     num_segments = trace_len
-    # num_segments = int(np.ceil(prop.T / sys.delta_t))
 
-    #num_segments = len(pi)
     z = np.array(np.empty((1, 0)))
     pvt = z
     ci_array = np.empty((1, num_segments, 0))
     s = z
     u = z
     t = np.array([[0]])
-    x0 = x_array[0, :]
-    x = np.array([x0])
     d = np.array([prop.initial_discrete_state])
     pi_array = np.array([pi_seq])
-    concrete_states = state.StateArray(
-            t, x, d,
-            pvt, s, u, pi_array, ci_array)
 
-#     print(concrete_states.n)
-#     print(concrete_states.t.shape)
-#     print(concrete_states.cont_states.shape)
-#     print(concrete_states.controller_extraneous_inputs.shape)
-#     print(concrete_states.controller_outputs.shape)
-#     print(concrete_states.discrete_states.shape)
-#     print(concrete_states.controller_states.shape)
-#     print(concrete_states.pvt_states.shape)
-#     print(concrete_states.plant_extraneous_inputs.shape)
+    traces = []
+    for x0 in x0_samples:
+        concrete_states = state.StateArray(
+                t, np.array([x0]), d,
+                pvt, s, u, pi_array, ci_array)
 
-    trace = simsys.simulate(sys_sim, concrete_states[0], sys.delta_t*num_segments)
+        traces.append(simsys.simulate(sys_sim, concrete_states[0], sys.delta_t*num_segments))
 
     from matplotlib import pyplot as plt
     #print(trace)
-    opts.plotting.plot_trace_list([trace], x_vs_y=opts.plots)
-    plt.plot(x_array[:, 0], x_array[:, 1], 'r*-')
+    opts.plotting.plot_trace_list(traces, x_vs_y=opts.plots)
+    plt.plot(x_array[:, 0], x_array[:, 1], 'r*-', linewidth=2)
+    plt.title('red: bmc trace, blue: sim() trace')
     opts.plotting.show()
 
-    if check_prop_violation(trace, prop):
-        return trace
-    else:
-        return None
+    vio_traces = [trace for trace in traces if check_prop_violation(trace, prop)]
+    return vio_traces
 
 
 def abstract_trace_violates(sys, sp, prop, AA, opts, x_array, pi_seq):
