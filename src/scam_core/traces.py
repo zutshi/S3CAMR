@@ -3,7 +3,7 @@
 import numpy as np
 from scipy import io
 
-import plot_hack as ph
+import settings
 
 ## commented off because matplotlib is not installed for python installation
 ## used with matlab
@@ -95,7 +95,7 @@ class Trace(object):
         # plt.legend([plt_x0, plt_x1, plt_s0, plt_s1], ['x0', 'x1', 's0', 's1'])
     # plt.plot(t_array, ref_signal, drawstyle='steps-post')
     # plt.autoscale()
-        ph.plt_show()
+        settings.plt_show()
 
     def dump_matlab(self):
         data = {'T': self.t_array,
