@@ -114,7 +114,7 @@ def dyn_constraints(pwa_trace):
     return A, b
 
 
-def prop_constraints(AA, prop, trace_len):
+def prop_constraints(AA, prop, pwa_trace):
     """constraints due to the initial set, final set and ci/pi
 
     Parameters
@@ -127,11 +127,30 @@ def prop_constraints(AA, prop, trace_len):
     Notes
     ------
     """
-
+    trace_len = len(pwa_trace)
     iA, ib = prop.init_cons.poly()
     fA, fb = prop.final_cons.poly()
 
     assert(iA.shape == fA.shape)
+
+    # find the dim(x) using any submodel's b vector
+    # This is the dim of total variables: dimX = dimW
+    dimX = pwa_trace[0].m.b.size
+
+    dimW = AA.num_dims.pi
+
+    # pad iA, ib, fA, fb with 0's to accomodate w/pi
+    # Remember: the state vector for pwa is: [x]
+    #                                        [w]
+    # Of course this much code is not required, and the intended
+    # operation can be done much succintly. But this is much easier to
+    # understand IMO.
+
+    # append 0s for wi: A -> [A 0 .. 0]
+    padding_scheme = ((0, 0), (0, dimW))
+
+    iA = np.pad(iA, padding_scheme, 'constant')
+    fA = np.pad(fA, padding_scheme, 'constant')
 
     # number of rows and coloumns of iA/fA
     nr, nc = iA.shape
@@ -139,12 +158,14 @@ def prop_constraints(AA, prop, trace_len):
 
     # Add 1, because trace captures transitions,
     # and num_states = num_trans + 1
-    A = np.zeros((num_cons, AA.num_dims.x * (trace_len + 1)))
+    A = np.zeros((num_cons, dimX * (trace_len + 1)))
     A[0:nr, 0:nc] = iA
     A[-nr:, -nc:] = fA
     b = np.hstack((ib, fb))
-    #print(A)
-    #print(b)
+    print(A)
+    print(b)
+    # Each constraint expression in A has a value in b
+    assert(A.shape[0] == b.size)
     return A, b
 
 
@@ -161,10 +182,11 @@ def truncate(prec, *args):
 def overapprox_x0(AA, prop, opts, pwa_trace, prec):
     C, d = part_constraints(pwa_trace)
     A, b = dyn_constraints(pwa_trace)
-    pA, pb = prop_constraints(AA, prop, len(pwa_trace))
+    pA, pb = prop_constraints(AA, prop, pwa_trace)
 
     # num vars are the same
     assert(C.shape[1] == A.shape[1])
+    assert(C.shape[1] == pA.shape[1])
 
     A_ub = np.vstack((C, A, pA))
     b_ub = np.hstack((d, b, pb))
