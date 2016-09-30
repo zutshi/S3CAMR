@@ -398,10 +398,12 @@ def build_pwa_model(AA, qgraph, sp, opts, model_type):
             for sub_model in q_affine_models(ntrain, step_sim, tol, include_err, qgraph, q):
                 assert(sub_model is not None)
                 # sub_model.pnexts[0] = sub_model.p.ID to enforce self loops
-                print(U.colorize('{} -> {}, err:{}, status: {}'.format(
+                print(U.colorize('{} -> {}, e%:{}, status: {}, e: {}'.format(
                     sub_model.p.ID,
                     [p.ID for p in sub_model.pnexts],
-                    sub_model.max_error_pc, sub_model_status(sub_model))))
+                    sub_model.max_error_pc,
+                    sub_model_status(sub_model),
+                    sub_model.m.error)))
                 pwa_model.add(sub_model)
                 #abs_state_models[abs_state] = sub_model
 
@@ -678,7 +680,7 @@ def q_affine_models(ntrain, step_sim, tol, include_err, qgraph, q):
 
     for rm, q_seq, e_pc, status in regression_models:
         A, b = q.modelQ(rm)
-        e = q.errorQ(include_err, X, Y, rm)
+        e = q.errorQ(include_err, rm)
         dmap = rel.DiscreteAffineMap(A, b, e)
 
         C, d = q.ival_constraints.poly()
