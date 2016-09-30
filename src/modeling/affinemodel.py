@@ -27,9 +27,9 @@ def factory(model_type):
 
 def warn_if_small_data_set(x):
     if len(x) <= 2:
-        err.warn_severe('Less than 2 training samples!')#: {}'.format(x))
-    elif len(x) <= 10:
-        err.warn('Less than 10 training samples!')#: {}'.format(x))
+        err.warn('Less than 2 training samples!')#: {}'.format(x))
+    #elif len(x) <= 10:
+        #err.warn('Less than 10 training samples!')#: {}'.format(x))
 
 
 class RegressionModel(object):
@@ -41,10 +41,15 @@ class RegressionModel(object):
         self.clf_.fit(x, y)
         #if settings.debug:
         #    print clf_.coef_, clf_.intercept_
+        self.fit_error = self.__error(x, y)
 
     @property
     def clf(self):
         return self.clf_
+
+    @property
+    def score(self):
+        return self.clf.score()
 
     @property
     def A(self):
@@ -104,7 +109,7 @@ class RegressionModel(object):
         #    print abs((Y - Y_)/Y)*100
         return np.max((abs((Y - Y_)/Y))*100, axis=0)
 
-    def error(self, X, Y):
+    def __error(self, X, Y):
         """error
 
         Parameters
@@ -128,9 +133,10 @@ class RegressionModel(object):
         the interval is sound w.r.t. to passed in test samples
         """
         Yp = self.predict(X)
+        assert(Y.shape == Yp.shape)
         delta = Y - Yp
-        max_e = np.max((delta), axis=0)
-        min_e = np.min((delta), axis=0)
+        max_e = np.max(delta, axis=0)
+        min_e = np.min(delta, axis=0)
         return cons.IntervalCons(min_e, max_e)
 
     def plot(self, X, Y, tol, title='unknown'):
