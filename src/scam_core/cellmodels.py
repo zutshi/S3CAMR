@@ -5,7 +5,7 @@ import abc
 
 import numpy as np
 
-from constraints import IntervalCons
+import constraints as cons
 import cellmanager as CM
 import err
 from utils import print
@@ -38,7 +38,7 @@ class Q(object):
         return
 
     @abc.abstractmethod
-    def errorQ(self, include_err, X, Y, rm):
+    def errorQ(self, include_err, rm):
         return
 
     @abc.abstractmethod
@@ -118,7 +118,7 @@ class Qxw(Q):
         x_array = self.sample_UR_x(N)
         pi_array = self.sample_UR_w(N)
         for x, pi in zip(x_array, pi_array):
-            print(pi)
+            #print(pi)
             (t_, x_, s_, d_, pvt_, u_) = sim(t0, x, s, d, pvt, ci, pi)
             Yl.append(x_)
 
@@ -162,12 +162,11 @@ class Qxw(Q):
             raise e
         return A, b
 
-    def errorQ(self, include_err, X, Y, rm):
-        q = self
-        xic = (rm.error(X, Y) if include_err
-               else IntervalCons([0.0]*q.xdim, [0.0]*q.xdim))
+    def errorQ(self, include_err, rm):
+        xic = (rm.fit_error if include_err
+               else cons.zero2ic(self.xdim))
 
-        e = IntervalCons.concatenate(xic, Qxw.wic)
+        e = cons.IntervalCons.concatenate(xic, Qxw.wic)
         return e
 
     def __hash__(self):
@@ -271,9 +270,9 @@ class Qx(Q):
         A, b = rm.A, rm.b
         return A, b
 
-    def errorQ(self, include_err, X, Y, rm):
-        e = (rm.error(X, Y) if include_err
-             else IntervalCons([0.0]*self.xdim, [0.0]*self.xdim))
+    def errorQ(self, include_err, rm):
+        e = (rm.fit_error if include_err
+             else cons.zero2ic(self.xdim))
         return e
 
     def __hash__(self):
@@ -368,6 +367,9 @@ class Qqxw(Q):
         # makes w' \in [el, eh]
         # We use this to incorporate error and reset w to new values,
         # which in the case of ZOH are just the ranges of w (or pi).
+        # The reason for this is to get by without modifying SAL's
+        # encoding. Might not be the best way to proceed in general,
+        # as we MIGHT be able to reduce the transitions system's size.
 
         q = self
         A = np.vstack((rm.A, np.zeros((q.wdim, q.xdim + q.wdim))))
@@ -386,7 +388,8 @@ class Qqxw(Q):
 
     def errorQ(self, *args):
         xic = self.qx.errorQ(*args)
-        e = IntervalCons.concatenate(xic, Qxw.wic)
+        # This is a hack to add the constraint wi \in [wl, wh]
+        e = cons.IntervalCons.concatenate(xic, Qxw.wic)
         return e
 
     def __hash__(self):
