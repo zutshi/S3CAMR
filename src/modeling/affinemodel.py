@@ -63,31 +63,39 @@ class RegressionModel(object):
         Y = self.clf.predict(X)
         return Y
 
-    def error_pc(self, X, Y):
-        """error_pc
-
-        Parameters
-        ----------
-        X : Test input
-        Y : Test Output
-
-        Returns
-        -------
-        error % vector
-
-        Notes
-        ------
-        Indicates model quality for debug purposes
-        """
-        '''computes relative error% along each dimension'''
+    def error_pc_old_wrong_useless(self, X, Y):
+        err.warn_severe('DEPRCATED. Use error_rel_scaled_pc')
         Y_ = self.predict(X)
         #if settings.debug:
         #    print 'score: ', self.clf.score(X, Y)
         #    print abs((Y - Y_)/Y)*100
         return (abs((Y - Y_)/Y))*100
 
+    def error_pc(self, X, Y):
+        """Relative error % scaled by estimated range
+
+        Parameters
+        ----------
+        X : Test input
+        Y : Test Output
+
+        Returns
+        -------
+        error % vector
+
+        Notes
+        ------
+        Can not really compute the exact range. Hence we just use the
+        range of Y to scale e%. Justification: It is a dynamical system,
+        and the next states Y are assumed to be close by.
+        """
+        '''computes relative error% along each dimension'''
+        Y_ = self.predict(X)
+        yrange = np.max(Y, axis=0) - np.min(Y, axis=0)
+        return (abs((Y - Y_)/yrange))*100
+
     def max_error_pc(self, X, Y):
-        """max_error_pc
+        """Maximum error %
 
         Parameters
         ----------
@@ -102,11 +110,10 @@ class RegressionModel(object):
         ------
         Indicates model quality for debug purposes
         """
-        '''computes relative error% along each dimension'''
+        return np.max(self.error_pc(X, Y), axis=0)
+
+    def max_error_pc_old_wrong(self, X, Y):
         Y_ = self.predict(X)
-        #if settings.debug:
-        #    print 'score: ', self.clf.score(X, Y)
-        #    print abs((Y - Y_)/Y)*100
         return np.max((abs((Y - Y_)/Y))*100, axis=0)
 
     def __error(self, X, Y):
