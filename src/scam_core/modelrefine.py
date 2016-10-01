@@ -12,7 +12,7 @@ from modeling.pwa import relational as rel
 import random_testing as rt
 from bmc import bmc as BMC
 from bmc.bmc_spec import InvarStatus
-from modeling.affinemodel import RegressionModel, RobustRegressionModel
+import modeling.affinemodel as AFM
 from cellmodels import Qxw, Qx
 import cellmanager as CM
 import utils as U
@@ -550,8 +550,9 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k, kmin, kmax):
     #print(U.colorize('# samples = {}'.format(X.shape[0])))
 
     if k >= kmin:
-        rm = RegressionModel(X, Y)
-        #rm = RobustRegressionModel(X, Y)
+        #rm = AFM.OLS(X, Y)
+        #rm = AFM.RobustRegressionModel(X, Y)
+        rm = AFM.TLS(X, Y)
         e_pc = rm.max_error_pc(X, Y)
         if settings.debug:
             err.imp('error%: {}'.format(e_pc))
