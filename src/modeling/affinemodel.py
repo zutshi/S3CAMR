@@ -35,33 +35,22 @@ def warn_if_small_data_set(x):
 class RegressionModel(object):
     def __init__(self, x, y):
         warn_if_small_data_set(x)
-        #self.clf_ = skl_lm.RidgeCV(alphas=[1.0, 1.0], fit_intercept=True)
-        # Copy must be on...arrays are getting reused!
-        self.clf_ = skl_lm.LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=True)
-        self.clf_.fit(x, y)
-        #if settings.debug:
-        #    print clf_.coef_, clf_.intercept_
-        self.fit_error = self.__error(x, y)
 
-    @property
-    def clf(self):
-        return self.clf_
+#     @property
+#     def score(self):
+#         return self.clf.score()
 
-    @property
-    def score(self):
-        return self.clf.score()
+#     @property
+#     def A(self):
+#         return self.model.coef_
 
-    @property
-    def A(self):
-        return self.clf.coef_
+#     @property
+#     def b(self):
+#         return self.model.intercept_
 
-    @property
-    def b(self):
-        return self.clf.intercept_
-
-    def predict(self, X):
-        Y = self.clf.predict(X)
-        return Y
+#     def predict(self, X):
+#         Y = self.model.predict(X)
+#         return Y
 
     def error_pc_old_wrong_useless(self, X, Y):
         err.warn_severe('DEPRCATED. Use error_rel_scaled_pc')
@@ -116,7 +105,7 @@ class RegressionModel(object):
         Y_ = self.predict(X)
         return np.max((abs((Y - Y_)/Y))*100, axis=0)
 
-    def __error(self, X, Y):
+    def error(self, X, Y):
         """error
 
         Parameters
@@ -276,88 +265,55 @@ class FlowStarModel(object):
         raise NotImplementedError
 
 
-class RobustRegressionModel(object):
+class OLS(RegressionModel):
     def __init__(self, x, y):
-        warn_if_small_data_set(x)
-        #self.clf_ = skl_lm.RidgeCV(alphas=[1.0, 1.0], fit_intercept=True)
+        super(self.__class__, self).__init__(x, y)
         # Copy must be on...arrays are getting reused!
         self.model = skl_lm.LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=True)
-        #self.clf_.fit(x, y)
-        self.clf_ = skl_lm.RANSACRegressor(self.model)
-        self.clf_.fit(x, y)
-
-        #if settings.debug:
-        #    print clf_.coef_, clf_.intercept_
-
-    @property
-    def clf(self):
-        return self.clf_
+        self.model.fit(x, y)
+        self.fit_error = self.error(x, y)
 
     @property
     def A(self):
-        return self.clf.estimator_.coef_
+        return self.model.coef_
 
     @property
     def b(self):
-        return self.clf.estimator_.intercept_
+        return self.model.intercept_
 
     def predict(self, X):
-        Y = self.clf.predict(X)
+        Y = self.model.predict(X)
         return Y
 
-    def max_error_pc(self, X, Y):
-        """max_error_pc
 
-        Parameters
-        ----------
-        X : Test input
-        Y : Test Output
+class RobustRegressionModel(RegressionModel):
+    def __init__(self, x, y, fit=True):
+        super(self.__class__, self).__init__(x, y)
 
-        Returns
-        -------
-        error % vector
+        self.ransac_model = skl_lm.RANSACRegressor(residual_threshold=0.01)
+        self.ransac_model.fit(x, y)
+        self.fit_error = self.error(x, y)
 
-        Notes
-        ------
-        Indicates model quality for debug purposes
-        """
-        '''computes relative error% along each dimension'''
-        Y_ = self.predict(X)
-        #if settings.debug:
-        #    print 'score: ', self.clf.score(X, Y)
-        #    print abs((Y - Y_)/Y)*100
-        return np.max((abs((Y - Y_)/Y))*100, axis=0)
+#         print('='*20)
+#         if np.any(self.model.coef_ != self.A):
+#             err.warn_severe('Different')
+#             print(self.model.coef_)
+#             print(self.A)
+#         print('='*20)
 
-    def error(self, X, Y):
-        """error
+    @property
+    def A(self):
+        return self.ransac_model.estimator_.coef_
 
-        Parameters
-        ----------
-        X : Test input
-        Y : Test Output
+    @property
+    def b(self):
+        return self.ransac_model.estimator_.intercept_
 
-        Returns
-        -------
-        Computes signed error against passed in test samples.
-        Sound error interval vector (non-symmeteric).
-        The interal must be added and NOT subtracted to make a sound
-        model. e.g. Y_sound = A*X + e
-        or,
-            predict(X) + e_l <= Y_sound <= predict(X) + e_h
-            Y_sound = predict(X) + [e_l, e_h]
+    def predict(self, X):
+        Y = self.ransac_model.predict(X)
+        return Y
 
-        Notes
-        ------
-        Computes interval vector e = Y_true - Y_predict, such that
-        the interval is sound w.r.t. to passed in test samples
-        """
-        Yp = self.predict(X)
-        delta = Y - Yp
-        max_e = np.max((delta), axis=0)
-        min_e = np.min((delta), axis=0)
-        return cons.IntervalCons(min_e, max_e)
-
-"""robust linear regression RANSAC: example"""
+# """robust linear regression RANSAC: example"""
 # n_samples = 1000
 # n_outliers = 50
 
