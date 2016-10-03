@@ -1,14 +1,18 @@
 from __future__ import print_function
 
 import logging
+import abc
 
 from sklearn import linear_model as skl_lm
 import numpy as np
 
 #from IPython import embed
 
+import fileops as fops
 import constraints as cons
 import err
+from utils import print_function
+import utils as U
 
 import settings
 
@@ -33,32 +37,36 @@ def warn_if_small_data_set(x):
 
 
 class RegressionModel(object):
+    __metaclass__ = abc.ABCMeta
+
     def __init__(self, x, y):
         warn_if_small_data_set(x)
 
-#     @property
-#     def score(self):
-#         return self.clf.score()
+    @abc.abstractproperty
+    def A(self):
+        return
 
-#     @property
-#     def A(self):
-#         return self.model.coef_
+    @abc.abstractproperty
+    def b(self):
+        return
 
-#     @property
-#     def b(self):
-#         return self.model.intercept_
+    @abc.abstractproperty
+    def fit_error(self):
+        """ return fit_error """
+        return
 
-#     def predict(self, X):
-#         Y = self.model.predict(X)
-#         return Y
+    @abc.abstractmethod
+    def predict(self, X):
+        """ return Y """
+        return
 
-    def error_pc_old_wrong_useless(self, X, Y):
-        err.warn_severe('DEPRCATED. Use error_rel_scaled_pc')
-        Y_ = self.predict(X)
-        #if settings.debug:
-        #    print 'score: ', self.clf.score(X, Y)
-        #    print abs((Y - Y_)/Y)*100
-        return (abs((Y - Y_)/Y))*100
+#     def error_pc_old_wrong_useless(self, X, Y):
+#         err.warn_severe('DEPRCATED. Use error_rel_scaled_pc')
+#         Y_ = self.predict(X)
+#         #if settings.debug:
+#         #    print 'score: ', self.clf.score(X, Y)
+#         #    print abs((Y - Y_)/Y)*100
+#         return (abs((Y - Y_)/Y))*100
 
     def error_pc(self, X, Y):
         """Relative error % scaled by estimated range
@@ -101,9 +109,9 @@ class RegressionModel(object):
         """
         return np.max(self.error_pc(X, Y), axis=0)
 
-    def max_error_pc_old_wrong(self, X, Y):
-        Y_ = self.predict(X)
-        return np.max((abs((Y - Y_)/Y))*100, axis=0)
+#     def max_error_pc_old_wrong(self, X, Y):
+#         Y_ = self.predict(X)
+#         return np.max((abs((Y - Y_)/Y))*100, axis=0)
 
     def error(self, X, Y):
         """error
@@ -271,7 +279,7 @@ class OLS(RegressionModel):
         # Copy must be on...arrays are getting reused!
         self.model = skl_lm.LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=True)
         self.model.fit(x, y)
-        self.fit_error = self.error(x, y)
+        self.fit_error_ = self.error(x, y)
 
     @property
     def A(self):
@@ -284,6 +292,47 @@ class OLS(RegressionModel):
     def predict(self, X):
         Y = self.model.predict(X)
         return Y
+
+    @property
+    def fit_error(self):
+        return self.fit_error_
+
+
+class TLS(RegressionModel):
+    def __init__(self, x, y):
+        super(self.__class__, self).__init__(x, y)
+        # Copy must be on...arrays are getting reused!
+        models, coefs, intercepts = [], [], []
+
+        # for each coloumn of y
+        for yi in y.T:
+            model = skl_lm.TheilSenRegressor(copy_X=True, fit_intercept=True, n_jobs=1)
+            #model = skl_lm.HuberRegressor(fit_intercept=True)
+            model.fit(x, yi)
+            models.append(model)
+            coefs.append(model.coef_)
+            intercepts.append(model.intercept_)
+
+        self.coef = np.array(coefs)
+        self.intercept = np.array(intercepts)
+
+        self.fit_error_ = self.error(x, y)
+
+    @property
+    def fit_error(self):
+        return self.fit_error_
+
+    def predict(self, X):
+        Y = np.dot(X, self.coef.T) + self.intercept
+        return Y
+
+    @property
+    def A(self):
+        return self.coef
+
+    @property
+    def b(self):
+        return self.intercept
 
 
 class RobustRegressionModel(RegressionModel):
@@ -313,41 +362,63 @@ class RobustRegressionModel(RegressionModel):
         Y = self.ransac_model.predict(X)
         return Y
 
-# """robust linear regression RANSAC: example"""
-# n_samples = 1000
-# n_outliers = 50
 
-# X, y, coef = datasets.make_regression(n_samples=n_samples, n_features=1,
-#                                       n_informative=1, noise=10,
-#                                       coef=True, random_state=0)
+class LinReg(RegressionModel):
+    def __init__(self, x, y):
+        super(self.__class__, self).__init__(x, y)
+    pass
 
-# # Add outlier data
-# np.random.seed(0)
-# X[:n_outliers] = 3 + 0.5 * np.random.normal(size=(n_outliers, 1))
-# y[:n_outliers] = -3 + 10 * np.random.normal(size=n_outliers)
 
-# # Fit line using all data
-# model = linear_model.LinearRegression()
-# model.fit(X, y)
+class KLinReg():
 
-# # Robustly fit linear model with RANSAC algorithm
-# model_ransac = linear_model.RANSACRegressor(linear_model.LinearRegression())
-# model_ransac.fit(X, y)
-# inlier_mask = model_ransac.inlier_mask_
-# outlier_mask = np.logical_not(inlier_mask)
+    IFILE = 'ip.data'
+    MODELFILE = 'out.model'
+    KLINREG = '/home/zutshi/work/RA/tools/klinreg/klinreg'
+    K = 4
 
-# # Predict data of estimated models
-# line_X = np.arange(-5, 5)
-# line_y = model.predict(line_X[:, np.newaxis])
-# line_y_ransac = model_ransac.predict(line_X[:, np.newaxis])
+    def __init__(self, x, y):
+        C = self.__class__
+        models = []
+        # for each coloumn of y
+        for yi in y.T:
 
-# # Compare estimated coefficients
-# print("Estimated coefficients (true, normal, RANSAC):")
-# print(coef, model.coef_, model_ransac.estimator_.coef_)
+            # write the file
+            xy = np.column_stack((x, np.ones(yi.size), yi))
+            hdr = str(xy.shape).replace('(', '').replace(')', '').replace(',', '')
+            s = str(xy).replace('[', '').replace(']', '')
+            fops.write_data(C.IFILE, hdr+'\n'+s)
+            # run klinreg
+            U.strict_call([C.KLINREG, C.IFILE, C.K, '-d'])
+            # read the output
+            affine_funs = np.loadtxt(C.MODELFILE)
 
-# plt.plot(X[inlier_mask], y[inlier_mask], '.g', label='Inliers')
-# plt.plot(X[outlier_mask], y[outlier_mask], '.r', label='Outliers')
-# plt.plot(line_X, line_y, '-k', label='Linear regressor')
-# plt.plot(line_X, line_y_ransac, '-b', label='RANSAC regressor')
-# plt.legend(loc='lower right')
-# plt.show()
+
+        for yi in y.T:
+            model = skl_lm.TheilSenRegressor(copy_X=True, fit_intercept=True, n_jobs=1)
+            #model = skl_lm.HuberRegressor(fit_intercept=True)
+            model.fit(x, yi)
+            models.append(model)
+            coefs.append(model.coef_)
+            intercepts.append(model.intercept_)
+
+        self.coef = np.array(coefs)
+        self.intercept = np.array(intercepts)
+
+        # TODO: hack!
+        self.fit_error_ = cons.zero2ic(x.ndim)
+
+    @property
+    def fit_error(self):
+        return self.fit_error_
+
+    def predict(self, X):
+        Y = np.dot(X, self.coef.T) + self.intercept
+        return Y
+
+    @property
+    def A(self):
+        return self.coef
+
+    @property
+    def b(self):
+        return self.intercept
