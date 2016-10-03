@@ -40,9 +40,6 @@ class SIM(object):
         property_violated_flag = False
         num_dim_x = len(X0)
 
-        if PLOT:
-            plt.plot(X0[0], X0[1], 'r*')
-
         plot_data = ([np.empty(0, dtype=float), np.empty((0, num_dim_x), dtype=float)]
                      if PLOT else None)
 
