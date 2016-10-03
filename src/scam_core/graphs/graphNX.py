@@ -92,6 +92,11 @@ class GraphNX(object):
     def nodes(self):
         return self.G.nodes()
 
+    def edges(self, node):
+        """Get edges of a node
+        """
+        return self.G.edges(node)
+
     def nodes_iter(self):
         return self.G.nodes_iter()
 
