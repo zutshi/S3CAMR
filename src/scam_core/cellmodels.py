@@ -107,7 +107,7 @@ class Qxw(Q):
         # return yw_array
         return np.hstack((np.vstack(Yl), w_array))
 
-    def get_rels(self, N, sim):
+    def get_rels(self, prop, sim, N):
         """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
         """
         d, pvt, s = [np.array([])]*3
@@ -233,10 +233,9 @@ class Qx(Q):
             ax.axvline(-1, linestyle='-', color='r')
             ax.axvline(-0.7, linestyle='-', color='r')
 
-
         return np.vstack(Yl)
 
-    def get_rels(self, N, sim):
+    def get_rels(self, prop, sim, N):
         """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
         """
         d, pvt, s = [np.array([])]*3
@@ -246,7 +245,12 @@ class Qx(Q):
 
         #plt.figure()
 
-        x_array = self.xcell.sample_UR(N)
+        x_array_ = self.xcell.sample_UR(N)
+        # remove any sample drawn from the property box
+        x_array = x_array_[~prop.final_cons.contains(x_array_), :]
+        if x_array.size == 0:
+            print(prop.final_cons)
+            print(self.xcell.ival_constraints)
         #print(t0)
         #print(x_array)
         for x in x_array:
@@ -259,7 +263,11 @@ class Qx(Q):
             #plt.show()
             plt.close()
 
-        return x_array, np.vstack(Yl)
+        # return empty arrays
+        if x_array.size == 0:
+            return x_array, x_array
+        else:
+            return x_array, np.vstack(Yl)
 
     def sat(self, X):
         """returns a sat array, whose elements are false when unsat
@@ -329,7 +337,7 @@ class Qqxw(Q):
         qsplits = self.qx.splits(*args)
         return [Qxw(qsplits, self.wcell) for q in qsplits]
 
-    def get_rels(self, N, sim):
+    def get_rels(self, prop, sim, N):
         """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
         """
         d, pvt, s = [np.array([])]*3
