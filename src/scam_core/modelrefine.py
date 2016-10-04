@@ -18,7 +18,7 @@ import cellmanager as CM
 import utils as U
 from utils import print
 import err
-from constraints import IntervalCons, top2ic
+from constraints import IntervalCons, top2ic, zero2ic
 from graphs.graph import factory as graph_factory
 from lin_prog import analyzepath as azp
 import state
@@ -41,6 +41,7 @@ KMIN = 1
 
 KMAX_EXCEEDED = 0
 SUCCESS = 1
+TERMINAL = 2
 
 def abs_state2cell(abs_state, AA):
     return CM.Cell(abs_state.plant_state.cell_id, AA.plant_abs.eps)
@@ -184,7 +185,7 @@ def refine_dft_model_based(
         Qxw.init(sp.pi_ref.i_cons)
 
     qg = get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs)
-    pwa_model = build_pwa_model(AA, qg, sp, opts, 'dft')
+    pwa_model = build_pwa_model(AA, prop, qg, sp, opts, 'dft')
 
 #     if settings.debug:
 #         qg.draw_graphviz()
@@ -358,7 +359,7 @@ def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, bmc_engine
     bmc.check()
 
 
-def build_pwa_model(AA, qgraph, sp, opts, model_type):
+def build_pwa_model(AA, prop, qgraph, sp, opts, model_type):
     """build_pwa_model
     Builds both dft and rel models
 
@@ -395,13 +396,13 @@ def build_pwa_model(AA, qgraph, sp, opts, model_type):
         if True:
             if settings.debug:
                 print('modeling: {}'.format(q))
-            for sub_model in q_affine_models(ntrain, step_sim, tol, include_err, qgraph, q):
+            for sub_model in q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
                 assert(sub_model is not None)
                 # sub_model.pnexts[0] = sub_model.p.ID to enforce self loops
                 print(U.colorize('{} -> {}, e%:{}, status: {}, e: {}'.format(
                     sub_model.p.ID,
                     [p.ID for p in sub_model.pnexts],
-                    sub_model.max_error_pc,
+                    np.trunc(sub_model.max_error_pc),
                     sub_model_status(sub_model),
                     sub_model.m.error)))
                 pwa_model.add(sub_model)
@@ -411,7 +412,7 @@ def build_pwa_model(AA, qgraph, sp, opts, model_type):
 
 
 # TODO: fix this mess and move it to pwa models
-def sub_model_status(s, status2str={KMAX_EXCEEDED: 'kamx exceeded', SUCCESS: 'success'}):
+def sub_model_status(s, status2str={KMAX_EXCEEDED: 'kamx exceeded', SUCCESS: 'success', TERMINAL: 'terminal'}):
     return status2str[s.status]
 
 
@@ -443,8 +444,9 @@ def draw_model(opts, sys_name, pwa_model):
     for sub_model in pwa_model:
         for p_ in sub_model.pnexts:
             #e_attr = {'label': np.round(sub_model.max_error_pc, 2)}
-            error = np.round(sub_model.max_error_pc, 2)
-            G.add_edge(sub_model.p.ID, p_.ID, label=error)
+            error = np.trunc(sub_model.max_error_pc)
+            color = 'red' if sub_model.status == KMAX_EXCEEDED else 'black'
+            G.add_edge(sub_model.p.ID, p_.ID, label=error, color=color)
 
     G.draw_graphviz(sys_name)
     #G.draw_mplib(sys_name)
@@ -550,9 +552,7 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k, kmin, kmax):
     #print(U.colorize('# samples = {}'.format(X.shape[0])))
 
     if k >= kmin:
-        #rm = AFM.OLS(X, Y)
-        #rm = AFM.RobustRegressionModel(X, Y)
-        rm = AFM.TLS(X, Y)
+        rm = AFM.OLS(X, Y)
         e_pc = rm.max_error_pc(X, Y)
         if settings.debug:
             err.imp('error%: {}'.format(e_pc))
@@ -591,6 +591,7 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k, kmin, kmax):
                     if settings.debug_plot:
                         from matplotlib import pyplot as plt
                         plt.plot(Y__[sat, 0], Y__[sat, 1], 'y*')
+                        plt.plot(Y_[sat, 0], Y_[sat, 1], 'r*')
 
                     rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k+1, kmin, kmax)
                     l = [(rm_, [qi]+qseq_, e_pc_, status_)
@@ -631,8 +632,28 @@ def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k, kmin, kmax):
 #     return np.vstack(Yl)
 
 
-def q_affine_models(ntrain, step_sim, tol, include_err, qgraph, q):
-    """cell_affine_models
+def dummy_sub_model(q):
+    # stationary dynamics
+    A, b = np.eye(q.dim), np.zeros(q.dim)
+    # no error
+    e = zero2ic(q.dim)
+    dmap = rel.DiscreteAffineMap(A, b, e)
+
+    C, d = q.ival_constraints.poly()
+    p = pwa.Partition(C, d, q)
+
+    future_partitions = []
+    # self loop
+    pnexts = [p]
+
+    sub_model = rel.KPath(dmap, p, pnexts, future_partitions)
+    sub_model.max_error_pc = np.zeros(q.dim)
+    sub_model.status = TERMINAL
+    return sub_model
+
+
+def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
+    """Find affine models for a given Q
 
     Parameters
     ----------
@@ -651,10 +672,39 @@ def q_affine_models(ntrain, step_sim, tol, include_err, qgraph, q):
     # Is non relational modeling being done? No, by default
     pwa_non_relational = False
     sub_models = []
-    X, Y = q.get_rels(ntrain, step_sim)
-    regression_models = mdl(tol, step_sim, qgraph, q, (X, Y), X, k=0, kmin=KMIN, kmax=KMAX)
 
-    #assert(regression_models)
+    try_again = True
+    while try_again:
+        X, Y = q.get_rels(prop, step_sim, ntrain)
+        assert(not X.size == 0 or Y.size == 0)
+        assert(not Y.size == 0 or X.size == 0)
+        if X.size == 0:
+            # make sure it is the last node: had no edges
+            assert(not qgraph.edges(q))
+            # The cell is completely inside the property
+            # If not, it means that the volume of Cell - prop is very
+            # small and a sample wasnt found in there.
+            assert(prop.final_cons.contains(q.ival_constraints))
+            return [dummy_sub_model(q)]
+
+        try:
+            regression_models = mdl(tol, step_sim, qgraph, q, (X, Y), X, k=0, kmin=KMIN, kmax=KMAX)
+            # we are done!
+            if regression_models:
+                try_again = False
+            # else try again
+            else:
+                err.warn('no model found')
+                from IPython import embed
+                embed()
+        except AFM.UdetError:
+            print('trying again')
+            #from IPyhon import embed
+            #embed()
+        # double the number of samples and try again
+        ntrain *= 2
+        # repeat!
+
     # try again on failure, and settle with non relational models
     if not regression_models:
         err.warn('No model found for q: {}'.format(q))
@@ -688,15 +738,6 @@ def q_affine_models(ntrain, step_sim, tol, include_err, qgraph, q):
         p = pwa.Partition(C, d, q)
 
         future_partitions = []
-        #assert(len(q_seq) >= 1)
-
-        # If the cell has no neighbhors in the qgraph, it must be a
-        # sink node. Make them self loop
-
-#         if not pnexts:  Self loops are forced now
-#             pnexts = [p]
-#         else:
-#             pnexts = []
 
         pnexts = []
 
