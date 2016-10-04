@@ -197,7 +197,7 @@ def check_prop_violation(trace, prop):
     ------
     """
     # check using random sims
-    idx = prop.final_cons.contains(trace.x_array+0.0001)
+    idx = prop.final_cons.sat(trace.x_array+0.0001)
     sat_x, sat_t = trace.x_array[idx], trace.t_array[idx]
     if sat_x.size != 0:
         print('x0={} -> x={}, t={}'.format(
