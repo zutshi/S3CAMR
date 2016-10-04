@@ -1,5 +1,6 @@
 import os
 import collections
+import logging
 
 import saltrans as slt_dft
 import saltrans_rel as slt_rel
@@ -12,6 +13,8 @@ import utils as U
 import err
 
 import settings
+
+logger = logging.getLogger(__name__)
 
 SAL_PATH = 'SAL_PATH'
 SAL_INF_BMC = '''/bin/sal-inf-bmc'''
@@ -158,6 +161,8 @@ class BMC(BMCSpec):
             self.conversion_info[t.name] = 'CE'
             idx += 1
         #####################################################################
+        logger.debug('================ bmc - pwa conversion dict ==================')
+        logger.debug(self.conversion_info)
         return sal_trans_sys
 
     @staticmethod
