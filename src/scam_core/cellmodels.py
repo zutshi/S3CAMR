@@ -247,7 +247,7 @@ class Qx(Q):
 
         x_array_ = self.xcell.sample_UR(N)
         # remove any sample drawn from the property box
-        x_array = x_array_[~prop.final_cons.contains(x_array_), :]
+        x_array = x_array_[~prop.final_cons.sat(x_array_), :]
         if x_array.size == 0:
             print(prop.final_cons)
             print(self.xcell.ival_constraints)
