@@ -36,10 +36,10 @@ T = 20.0
 # T = 35.0
 
 # Abstraction params: P, Q, R, S
-#grid_eps = [0.2, 0.2, 0.4, 0.4]
-grid_eps = [0.51]*4
+grid_eps = [0.2, 0.2, 0.4, 0.4]
+#grid_eps = [0.51]*4
 delta_t = 5.0
-num_samples = 5
+num_samples = 10
 
 MAX_ITER = 4
 
