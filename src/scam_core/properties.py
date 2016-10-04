@@ -12,10 +12,8 @@ class PropertyChecker():
         T : Time Vector of the trace
         Y : Array of state vectors of the trace
         """
-        # XXX: any() seems to work although np.any will be the right
-        # function. Looks like any() just works on the array as an
-        # iterator.
-        return any(self.final_cons.contains(Y))
+        #return any(self.final_cons.contains(Y))
+        return self.final_cons.any_sat(Y)
         #return np.any(self.final_cons.contains(Y))
 
     def first_sat_value_or_end(self, T, Y):
@@ -27,7 +25,7 @@ class PropertyChecker():
         T : Time Vector of the trace
         Y : Array of state vectors of the trace
         """
-        sat = self.final_cons.contains(Y)
+        sat = self.final_cons.sat(Y)
         if any(sat):
             return (T[sat][0], Y[sat][0]), True
         else:
