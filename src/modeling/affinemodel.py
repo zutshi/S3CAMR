@@ -29,18 +29,29 @@ def factory(model_type):
         raise NotImplementedError
 
 
-def warn_if_small_data_set(x):
-    if len(x) <= 2:
-        err.warn('Less than 2 training samples!')#: {}'.format(x))
+def small_data_set(x):
+    num_samples, ndim = x.shape
+    if num_samples <= ndim:
+        err.warn('regression is underdetermined!')#: {}'.format(x))
+        return True
+    else:
+        return False
+
     #elif len(x) <= 10:
         #err.warn('Less than 10 training samples!')#: {}'.format(x))
+
+
+class UdetError(Exception):
+    pass
 
 
 class RegressionModel(object):
     __metaclass__ = abc.ABCMeta
 
     def __init__(self, x, y):
-        warn_if_small_data_set(x)
+        self.udet = small_data_set(x)
+        if self.udet:
+            raise UdetError
 
     @abc.abstractproperty
     def A(self):
