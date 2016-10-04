@@ -85,8 +85,9 @@ def init(
         #print('---------------------------------------------')
         #print(_A.plant_abs.get_ival_constraints(abs_state.ps))
         #print('---------------------------------------------')
-        return _A.plant_abs.get_ival_cons_abs_state(abs_state.plant_state) & final_cons \
-            is not None
+        pabs_ic = _A.plant_abs.get_ival_cons_abs_state(abs_state.plant_state)
+        intersection = pabs_ic & final_cons
+        return not(intersection is None or intersection.zero_measure)
 
     # ##!!##logger.debug('{0}initial{0}\n{1}'.format('=' * 10, plant_initial_state_set))
 
