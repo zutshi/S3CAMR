@@ -39,7 +39,7 @@ T = 20.0
 grid_eps = [0.2, 0.2, 0.4, 0.4]
 #grid_eps = [0.51]*4
 delta_t = 5.0
-num_samples = 10
+num_samples = 5
 
 MAX_ITER = 4
 
