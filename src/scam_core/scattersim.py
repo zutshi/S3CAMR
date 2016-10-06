@@ -26,17 +26,33 @@ def init(
         controller_init_state,
         ):
 
-    PA = A.plant_abs
-    CA = A.controller_abs
-    plant_initial_state_list = []
-    d = init_d
-    pvt = (0, )
-    n = 0
+    PA, CA = A.plant_abs, A.controller_abs
+    d, pvt, n = init_d, (0, ), 0
+
+    plant_initial_state_set = set()
+
+    def f(init_cons_): return PA.get_abs_state_set_from_ival_constraints(init_cons_, n, d, pvt)
 
     for init_cons in init_cons_list_plant:
-        plant_initial_state_list += \
-            PA.get_abs_state_set_from_ival_constraints(init_cons, n, d, pvt)
-    plant_initial_state_set = set(plant_initial_state_list)
+        init_abs_states = f(init_cons)
+
+        # filters away zero measure sets
+        def fnzm(as_):
+            intsec = PA.get_ival_cons_abs_state(as_) & init_cons
+            return (intsec is not None) and not intsec.zero_measure
+
+        filt_init_abs_states = filter(fnzm, init_abs_states)
+
+        plant_initial_state_set.update(filt_init_abs_states)
+
+
+# Old code to compute plant_initial_state_set
+#     plant_initial_state_list = []
+#     for init_cons in init_cons_list_plant:
+#         plant_initial_state_list += \
+#             PA.get_abs_state_set_from_ival_constraints(init_cons, n, d, pvt)
+#     plant_initial_state_set = set(plant_initial_state_list)
+
 
     # The below can be very very expensive in time and memory for large final
     # sets!
@@ -457,7 +473,7 @@ def filter_invalid_abs_states(state_list, pi_seq_list, ci_seq_list, A, init_cons
         # print('init_cons', init_cons)
 
         ic = ival_cons & init_cons
-        if ic is not None:
+        if (ic is not None) and (not ic.zero_measure):
             valid_idx_list.append(idx)
             #valid_state_list.append(abs_state)
 
