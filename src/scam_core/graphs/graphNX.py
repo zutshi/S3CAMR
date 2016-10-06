@@ -19,7 +19,7 @@ import settings
 logger = logging.getLogger(__name__)
 
 GVIZ_GRAPH_PATH = '{}_graph.dot'
-GRAPH_EPS_PATH = '{}_graph.eps'
+GRAPH_SVG_PATH = '{}_graph.svg'
 MPLIB_GRAPH_PATH = '{}_graph.png'
 
 term = Terminal()
@@ -91,6 +91,9 @@ class GraphNX(object):
 
     def nodes(self):
         return self.G.nodes()
+
+    def node_attrs(self, node):
+        return self.G.node[node]
 
     def edges(self, node):
         """Get edges of a node
@@ -463,11 +466,11 @@ class GraphNX(object):
         #nx.draw_graphviz(self.G, pos)
         #nx.draw(self.G, pos)
         gdot_fname = GVIZ_GRAPH_PATH.format(fname)
-        geps_fname = GRAPH_EPS_PATH.format(fname)
-        print 'generating graphs:', gdot_fname, geps_fname
+        gsvg_fname = GRAPH_SVG_PATH.format(fname)
+        print 'generating graphs:', gdot_fname, gsvg_fname
         write_dot(self.G, gdot_fname)
-        opts = ['-Efontsize=10', '-Gnodesep=1', '-Granksep=3', '-Tps']
-        subprocess.call(['dot'] + opts + [gdot_fname, '-o', geps_fname])
+        opts = ['-Efontsize=10', '-Nfontsize=10', '-Gnodesep=1', '-Granksep=3', '-Tsvg']
+        subprocess.call(['dot'] + opts + [gdot_fname, '-o', gsvg_fname])
 
     def draw_mplib(self, fname):
         from matplotlib import pyplot as plt
