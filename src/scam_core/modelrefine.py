@@ -447,6 +447,8 @@ def draw_model(opts, sys_name, pwa_model):
             error = np.trunc(sub_model.max_error_pc)
             color = 'red' if sub_model.status == KMAX_EXCEEDED else 'black'
             G.add_edge(sub_model.p.ID, p_.ID, label=error, color=color)
+        G.node_attrs(sub_model.p.ID)['label'] = sub_model.p.ID
+        G.node_attrs(sub_model.p.ID)['tooltip'] = sub_model.p.ID.ival_constraints
 
     G.draw_graphviz(sys_name)
     #G.draw_mplib(sys_name)
@@ -695,12 +697,9 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
             # else try again
             else:
                 err.warn('no model found')
-                from IPython import embed
-                embed()
         except AFM.UdetError:
-            print('trying again')
-            #from IPyhon import embed
-            #embed()
+            pass
+        print('trying again')
         # double the number of samples and try again
         ntrain *= 2
         # repeat!
