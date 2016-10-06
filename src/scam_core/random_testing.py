@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import sys as SYS
+import logging
 
 import numpy as np
 import tqdm
@@ -18,6 +19,7 @@ import simulatesystem as simsys
 import state
 import cellmanager as CM
 
+logger = logging.getLogger(__name__)
 term = Terminal()
 
 
@@ -242,6 +244,7 @@ def random_test(
         ):
 
     # ##!!##logger.debug('random testing...')
+    logger.debug('initial states :\n{}'.format('\n'.join([str(A.plant_abs.get_ival_cons_abs_state(s0.ps)) for s0 in initial_state_list])))
     init_cons = system_params.init_cons
     A.prog_bar = False
 
@@ -262,7 +265,7 @@ def random_test(
 
     #print(ci_seq_array.shape)
     #print(pi_seq_array.shape)
-    x_array = np.empty((0.0, A.num_dims.x), dtype=float)
+    x_array = np.empty((0, A.num_dims.x), dtype=float)
 
     print('checking initial states')
 
@@ -277,7 +280,7 @@ def random_test(
         # print('init_cons', init_cons)
 
         ic = ival_cons & init_cons
-        if ic is not None:
+        if (ic is not None) and (not ic.zero_measure):
 
             # scatter the continuous states
             x_samples = ic.sample_UR(A.num_samples)
