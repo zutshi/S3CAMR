@@ -517,6 +517,8 @@ def refine_init(
             SS.init(current_abs, init_cons_list, final_cons,
                     initial_discrete_state, initial_controller_state)
 
+        logger.debug('initial state set:\n{}'.format('\n'.join([str(current_abs.plant_abs.get_ival_cons_abs_state(s0.ps)) for s0 in initial_state_set])))
+
         system_params = SystemParams(
             initial_state_set,
             final_state_set,
