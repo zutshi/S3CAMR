@@ -5,6 +5,8 @@ import scipy.linalg as linalg
 import scipy.optimize as spopt
 import sympy as sym
 
+import pyglpklp
+
 import constraints as cons
 
 import settings
@@ -179,7 +181,7 @@ def truncate(prec, *args):
     return (trunc_array(X) for X in args)
 
 
-def overapprox_x0(AA, prop, opts, pwa_trace, prec):
+def overapprox_x0(AA, prop, opts, pwa_trace, prec, solver='glpk'):
     C, d = part_constraints(pwa_trace)
     A, b = dyn_constraints(pwa_trace)
     pA, pb = prop_constraints(AA, prop, pwa_trace)
@@ -197,7 +199,7 @@ def overapprox_x0(AA, prop, opts, pwa_trace, prec):
     bounds = [(-np.inf, np.inf)] * num_opt_vars
 
     #directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
-    I = np.eye(nvars, dtype=int)
+    I = np.eye(nvars)
     directions = np.vstack((I, -I))
     left_over_vars = num_opt_vars - nvars
     directions_ext = np.pad(directions, [(0, 0), (0, left_over_vars)], 'constant')
@@ -207,25 +209,25 @@ def overapprox_x0(AA, prop, opts, pwa_trace, prec):
                 ['x{}'.format(i) for i in range(nvars)]
                 ))
 
-    res = []
-    disp_opt = True if settings.debug else False
-
     A_ub, b_ub = truncate(prec, A_ub, b_ub)
 
-    for obj in directions_ext:
-        res.append(spopt.linprog(
-                c=obj,
-                A_ub=A_ub,
-                b_ub=b_ub,
-                bounds=bounds,
-                method='simplex',
-                options={'disp': disp_opt}))
+    if solver == 'glpk':
+        res = [pyglpklp.linprog(obj, A_ub, b_ub) for obj in directions_ext]
+
+    elif solver == 'scipy':
+        disp_opt = True if settings.debug else False
+        res = [
+               spopt.linprog(obj, A_ub=A_ub, b_ub=b_ub,
+                             bounds=bounds, method='simplex',
+                             options={'disp': disp_opt})
+               for obj in directions_ext]
+    else:
+        raise NotImplementedError
 
     l = len(res)
     assert(l % 2 == 0)
     #min_directions, max_directions = np.split(directions, l/2, axis=1)
     min_res, max_res = res[:l/2], res[l/2:]
-
 
     ranges = []
 
@@ -236,7 +238,7 @@ def overapprox_x0(AA, prop, opts, pwa_trace, prec):
             print('{} \in [{}, {}]'.format(np.dot(di, x_arr), rmin.fun, -rmax.fun))
             ranges.append([rmin.fun, -rmax.fun])
 
-        except AssertionError as e:
+        except AssertionError:
             print('rminstatus:', rmin.status)
             print('rmax status:', rmax.status)
             #raise e
