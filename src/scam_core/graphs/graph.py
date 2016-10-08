@@ -1,5 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 
 import err
 import heapq
@@ -8,8 +13,6 @@ import heapq
 import random as rand
 
 #  FIX heap duplicates used by different ksp!
-
-
 
 
 def factory(graph_lib):
@@ -91,8 +94,8 @@ def csg1():
     return Graph(G, 'test_csg1')
 
 
-#    print G.nodes()
-#    print G.edges()
+#    print(G.nodes())
+#    print(G.edges())
 #    plt.figure()
 #    Graph(G).draw_2d()
 #    plt.show()
@@ -344,7 +347,7 @@ class WeightedPath(object):
         self.cost = 0.0
         self.capacity = float('inf')
 
-        # print "WtPath pathNodeList: {}".format(pathNodeList)
+        # print("WtPath pathNodeList: {}".format(pathNodeList))
 
         for i in range(len(pathNodeList) - 1):
             self.cost = self.cost + g[pathNodeList[i]][pathNodeList[i + 1]][wt]
@@ -453,7 +456,7 @@ class ModifiedDijkstra(object):
 
             currentMin = self._findMinNode(s)
 
-            # print "Current min node {}, s = {}".format(currentMin, s)
+            # print("Current min node {}, s = {}".format(currentMin, s))
 
             if currentMin == None:
                 return None
@@ -491,5 +494,3 @@ class ModifiedDijkstra(object):
                 minVal = self.dist[vertex]
                 minNode = vertex
         return minNode
-
-

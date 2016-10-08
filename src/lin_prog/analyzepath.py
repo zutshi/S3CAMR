@@ -1,4 +1,7 @@
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import numpy as np
 import scipy.linalg as linalg
@@ -227,7 +230,7 @@ def overapprox_x0(AA, prop, opts, pwa_trace, prec, solver='glpk'):
     l = len(res)
     assert(l % 2 == 0)
     #min_directions, max_directions = np.split(directions, l/2, axis=1)
-    min_res, max_res = res[:l/2], res[l/2:]
+    min_res, max_res = res[:l//2], res[l//2:]
 
     ranges = []
 

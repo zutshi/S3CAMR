@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 #global nx
 
 import ast
@@ -47,19 +52,17 @@ class GraphNX(object):
         G1_in_G2 = G1_in_G2_nodes and G1_in_G2_edges
         G2_in_G1 = G2_in_G1_nodes and G2_in_G1_edges
 
-        print 'G1_in_G2_nodes: {}, G1_in_G2_edges: {}'.format(G1_in_G2_nodes,
-                G1_in_G2_edges)
-        print 'G2_in_G1_nodes: {}, G2_in_G1_edges: {}'.format(G2_in_G1_nodes,
-                G2_in_G1_edges)
+        print('G1_in_G2_nodes: {}, G1_in_G2_edges: {}'.format(G1_in_G2_nodes, G1_in_G2_edges))
+        print('G2_in_G1_nodes: {}, G2_in_G1_edges: {}'.format(G2_in_G1_nodes, G2_in_G1_edges))
 
-        print '''G1_nodes_set - G2_nodes_set
+        print('''G1_nodes_set - G2_nodes_set)
 {}
 '''.format(G1_nodes_set
                 - G2_nodes_set)
 
         G1_and_G2_are_equal = G1_in_G2 and G2_in_G1
 
-        print 'G1_in_G2: {}, G2_in_G1: {}\n'.format(G1_in_G2, G2_in_G1)
+        print('G1_in_G2: {}, G2_in_G1: {}\n'.format(G1_in_G2, G2_in_G1))
 
         return G1_and_G2_are_equal
 
@@ -105,7 +108,7 @@ class GraphNX(object):
 
     def add_edge(self, v1, v2, **attr_dict_arg):#ci=None, pi=None, weight=1):
         attrs = {'ci': None, 'pi': None, 'weight': 1}
-        #print 'nx:', v1, v2
+        #print('nx:', v1, v2)
         attrs.update(attr_dict_arg)
         self.G.add_edge(v1, v2, attrs)
 
@@ -216,13 +219,13 @@ class GraphNX(object):
 
         ######################################
         #TODO: wrap this up somehow
-        print ''
-        print term.move_up + term.move_up
+        print('')
+        print(term.move_up + term.move_up)
         ######################################
-        print 'getting K:{} paths...'.format(k),
+        print('getting K:{} paths...'.format(k),)
         for i in range(1, k):
             with term.location():
-                print i
+                print(i)
             for j in range(len(paths[-1]) - 1):
                 spur_node = paths[-1][j]
                 root_path = (paths[-1])[:j + 1]
@@ -244,7 +247,7 @@ class GraphNX(object):
 
                     for (u, v, edge_attr) in G.edges_iter(node, data=True):
 
-                        # print 'lala1: {} -> {}'.format(u,v)
+                        # print('lala1: {} -> {}'.format(u,v))
 
                         G.remove_edge(u, v)
                         edges_removed.append((u, v, edge_attr))
@@ -256,7 +259,7 @@ class GraphNX(object):
                         for (u, v, edge_attr) in G.in_edges_iter(node,
                                 data=True):
 
-                            # print 'lala2: {} -> {}'.format(u,v)
+                            # print('lala2: {} -> {}'.format(u,v))
 
                             G.remove_edge(u, v)
                             edges_removed.append((u, v, edge_attr))
@@ -317,16 +320,16 @@ class GraphNX(object):
         p0 = wp0.nodeList
         path_list.append(p0)
 
-        print 'getting K:{} paths...'.format(k)
+        print('getting K:{} paths...'.format(k))
         for i in range(k):
             wpi = YKSP.getNextShortestPath()
             if wpi is None:
                 break
             pi = wpi.nodeList
             path_list.append(pi)
-            print i, ' '
+            print(i, ' ')
 
-        # print path_list
+        # print(path_list)
 
         return path_list
 
@@ -383,13 +386,13 @@ class GraphNX(object):
         for e in edge_list:
             logger.debug(e)
 
-#        print '='*80
+#        print('='*80)
         # TODO: WHY?
         # Switching this on with def path_gen(), results in empty path and no further results!!
         # #xplanation required!
 #        for path in nx.all_simple_paths(H, dummy_super_source_node, dummy_super_sink_node):
-#            print path
-#        print '='*80
+#            print(path)
+#        print('='*80)
 
         # TODO: how to do this with lambda?
         # Also, is this indeed correct?
@@ -402,7 +405,7 @@ class GraphNX(object):
 #                                                           dummy_super_sink_node,
 #                                                           k=K)
 #             for p in path_list:
-#                 print p
+#                 print(p)
 
         def path_gen():
 
@@ -434,7 +437,7 @@ class GraphNX(object):
             logger.debug('======== Paths =========')
             for p in path_list:
                 l = len(p)
-                #print l, max_depth
+                #print(l, max_depth)
                 if l <= max_depth:
                     logger.debug(p[1:-1])
                     yield p[1:-1]
@@ -467,7 +470,7 @@ class GraphNX(object):
         #nx.draw(self.G, pos)
         gdot_fname = GVIZ_GRAPH_PATH.format(fname)
         gsvg_fname = GRAPH_SVG_PATH.format(fname)
-        print 'generating graphs:', gdot_fname, gsvg_fname
+        print('generating graphs:', gdot_fname, gsvg_fname)
         write_dot(self.G, gdot_fname)
         opts = ['-Efontsize=10', '-Nfontsize=10', '-Gnodesep=1', '-Granksep=3', '-Tsvg']
         subprocess.call(['dot'] + opts + [gdot_fname, '-o', gsvg_fname])

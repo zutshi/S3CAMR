@@ -1,8 +1,12 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import os
-import collections
 import logging
 
-import saltrans as slt_dft
+#import saltrans as slt_dft
 import saltrans_rel as slt_rel
 import saltrans_dmt as slt_dmt
 from ..bmc_spec import BMCSpec, InvarStatus
@@ -52,7 +56,7 @@ def sal_run_cmd(sal_path, depth, module_name, prop_name, opts=SalOpts()):
     if opts.iterative:
         cmd.append('-it')
 
-    print ' '.join(cmd)
+    print(' '.join(cmd))
 
     return cmd
 
@@ -205,7 +209,7 @@ class BMC(BMCSpec):
             sal_op = U.strict_call_get_op(sal_cmd)
         except U.CallError as e:
             if yices2_not_found in e.message:
-                print 'SAL can not find yices2. Trying with yices...'
+                print('SAL can not find yices2. Trying with yices...')
                 opts = SalOpts()
                 opts.yices = 1
                 sal_cmd = sal_run_cmd(
@@ -218,18 +222,18 @@ class BMC(BMCSpec):
             else:
                 raise err.Fatal('unknown SAL error!')
 
-        print sal_op
+        print(sal_op)
         self.trace = sal_op_parser.parse_trace(sal_op, self.vs)
         if self.trace is None:
-            print 'BMC failed to find a CE'
+            print('BMC failed to find a CE')
             return InvarStatus.Unknown
         else:
             #self.trace.set_vars(self.vs)
-            print '#'*40
-            print '# Cleaned up trace'
-            print '#'*40
-            print self.trace
-            print '#'*40
+            print('#'*40)
+            print('# Cleaned up trace')
+            print('#'*40)
+            print(self.trace)
+            print('#'*40)
             return InvarStatus.Unsafe
 
     def dump(self):

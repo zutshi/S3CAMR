@@ -1,6 +1,10 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import graphGT
 import graphNX
-import sys
 
 #grid_eps = [0.50, 0.04]
 #delta_t = 0.4
@@ -18,7 +22,7 @@ class Graph(object):
     def add_edge(self, n1, n2, ci=None, pi=None):
         #n1 = n1.plant_state.cell_id
         #n2 = n2.plant_state.cell_id
-        #print '{}, {}'.format(n1, n2)
+        #print('{}, {}'.format(n1, n2))
 
         self.Ggt.add_edge(n1, n2)
         self.Gnx.add_edge(n1, n2)

@@ -1,6 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
+
 #import matplotlib
 # Force GTK3 backend. By default GTK2 gets loaded and conflicts with
 # graph-tool
@@ -28,7 +32,7 @@ from plot import plotting
 import random_testing as RT
 import properties
 
-import utils as U
+#import utils as U
 from utils import print
 
 import settings

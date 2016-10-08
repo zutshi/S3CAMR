@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 '''parses yices output'''
 
 import pyparsing as pp
@@ -162,11 +167,11 @@ def main():
     parsed_trace = parse_trace(fops.get_data(args.trace_file))
 
     if parsed_trace is None:
-        print 'No CE found!'
+        print('No CE found!')
     else:
-        #print parsed_trace
+        #print(parsed_trace)
         for ass in parsed_trace:
-            print ass
+            print(ass)
 
 if __name__ == '__main__':
     main()

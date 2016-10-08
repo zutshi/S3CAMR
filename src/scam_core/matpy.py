@@ -12,6 +12,11 @@
 # simulate_system_external.m
 ###############################################################################
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import array
 import numpy as np
 
@@ -38,7 +43,7 @@ def load_system(file_path):
     init_cons = serialize_array(prop.init_cons.to_numpy_array())
     final_cons = serialize_array(prop.final_cons.to_numpy_array())
     ci = serialize_array(prop.ci.to_numpy_array())
-    print init_cons, final_cons, ci
+    print(init_cons, final_cons, ci)
     #num_segments = prop.num_segments
     mat_prop = MatProp(prop.T,
                        init_cons,

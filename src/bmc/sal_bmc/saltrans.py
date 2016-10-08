@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 '''
 Creates a SAL transition system: DFT
 '''
@@ -11,6 +16,7 @@ from ..helpers.expr2str import Expr2Str #linexpr2str, float2str
 
 #import utils as U
 import settings
+
 
 class SALTransError(Exception):
     pass

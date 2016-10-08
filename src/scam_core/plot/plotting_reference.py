@@ -4,7 +4,10 @@ This example demonstrates many of the 2D plotting capabilities
 in pyqtgraph. All of the plots may be panned/scaled by dragging with 
 the left/right mouse buttons. Right click on any plot to show a context menu.
 """
-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
 
 from pyqtgraph.Qt import QtGui, QtCore

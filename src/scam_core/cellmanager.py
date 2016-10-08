@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import numpy as np
 import constraints as cons
 import itertools as it
@@ -115,7 +120,7 @@ def parent_of(cell):
     """
     # as i is an int, i/2 is equivalent to int(floor(i/2.0))
     # return tuple(int(floor(i/2.0)) for i in cell_id) # for clarity
-    return tuple(i/2 for i in cell) # same as above
+    return tuple(i//2 for i in cell) # same as above
 
 
 class Cell(object):
@@ -137,11 +142,11 @@ class Cell(object):
 #     def split(self, axes=None):
 #         '''verbose override of split_()'''
 #         cells = self.split_(axes)
-#         print '='*10
-#         print 'splitting cell: {}'.format(self.ival_constraints)
+#         print('='*10)
+#         print('splitting cell: {}'.format(self.ival_constraints))
 #         for c in cells:
-#             print c.ival_constraints
-#         print '='*10
+#             print(c.ival_constraints)
+#         print('='*10)
 #         return cells
 
     def split(self, axes=None):

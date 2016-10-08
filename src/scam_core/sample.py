@@ -1,6 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
+
 
 import numpy as np
 import logging
@@ -175,11 +179,11 @@ class IntervalSampler(Sampler):
             random_arr = np.random.rand(n, A.num_dims.ci)
             #reduce(lambda x,y:np.concatenate((x,y)), map(lambda x: np.tile(x,(2,1)), [a1,a2,a3]))
             #print(ci_cons_list)
-            ci_cons_l_list = [np.tile(ci_cons.l, (n/ci_sample_per_state, 1)) for ci_cons in ci_cons_list]
+            ci_cons_l_list = [np.tile(ci_cons.l, (n//ci_sample_per_state, 1)) for ci_cons in ci_cons_list]
             #print(ci_cons_l_list)
             ci_cons_l = reduce(lambda x_arr, y_arr: np.concatenate((x_arr, y_arr)), ci_cons_l_list)
             #print(ci_cons_l)
-            ci_cons_h_list = [np.tile(ci_cons.h, (n/ci_sample_per_state, 1)) for ci_cons in ci_cons_list]
+            ci_cons_h_list = [np.tile(ci_cons.h, (n//ci_sample_per_state, 1)) for ci_cons in ci_cons_list]
             ci_cons_h = reduce(lambda x_arr, y_arr: np.concatenate((x_arr, y_arr)), ci_cons_h_list)
             #print(random_arr)
             ci_array = ci_cons_l + random_arr * (ci_cons_h - ci_cons_l)
@@ -374,14 +378,13 @@ def test_case2sample(test_case):
 
 class Samples(object):
 
-    def __init__(
-        self,
-        s_array=None,
-        x_array=None,
-        ci_array=None,
-        pi_array=None,
-        t_array=None,
-        ):
+    def __init__(self,
+                 s_array=None,
+                 x_array=None,
+                 ci_array=None,
+                 pi_array=None,
+                 t_array=None,
+                 ):
 
         # s: controller states
 
