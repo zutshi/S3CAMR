@@ -113,7 +113,7 @@ def get_system_simulator(sys):
         #    print('assertion failed: ci_array.shape[0]-1 == num_segments: {},{}'.format(ci_array.shape[0], num_segments))
         #    print(ci_array.shape)
         #    raise e
-        for i in xrange(num_segments):
+        for i in range(num_segments):
             ci = ci_array[i]
             pi = pi_array[i]
             (t_, x_, s_, d_, pvt_, u_) = step_sim(t, x, s, d, pvt, ci, pi)

@@ -1,16 +1,17 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-from __future__ import unicode_literals
-
 """Generic interfaces to perform BMC.
 
 It defines the results (e.g. traces, status).
 
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import abc
 import numpy as np
+import six
 
 import settings
 
@@ -19,10 +20,11 @@ class InvarStatus:
     Safe, Unsafe, Unknown = range(3)
 
 
+@six.add_metaclass(abc.ABCMeta)
 class BMCSpec():
     """BMCSpec
     Defines the spec for a BMC engine"""
-    __metaclass__ = abc.ABCMeta
+    #__metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def check(self, depth):

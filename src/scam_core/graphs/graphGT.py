@@ -127,8 +127,8 @@ class GraphGT(object):
         # Add edges:
         #   \forall source \in source_list. super source node -> source
 
-        edge_list = zip([dummy_super_source_node] * num_source_nodes,
-                        source_list)
+        edge_list = list(zip([dummy_super_source_node] * num_source_nodes,
+                        source_list))
         G.add_edges_from(edge_list)
 
         if settings.debug:
@@ -139,7 +139,8 @@ class GraphGT(object):
         # Add edges:
         #   \forall sink \in sink_list. sink -> super sink node
 
-        edge_list = zip(sink_list, [dummy_super_sink_node] * num_sink_nodes)
+        edge_list = list(zip(sink_list, [dummy_super_sink_node] *
+                             num_sink_nodes))
         G.add_edges_from(edge_list)
 
         if settings.debug:
@@ -227,8 +228,8 @@ class GraphGT(object):
         # Add edges:
         #   \forall source \in source_list. super source node -> source
 
-        edge_list = zip([dummy_super_source_node] * num_source_nodes,
-                        source_list)
+        edge_list = list(zip([dummy_super_source_node] * num_source_nodes,
+                         source_list))
         H.add_edges_from(edge_list)
 
 #        print(edge_list)
@@ -236,7 +237,8 @@ class GraphGT(object):
         # Add edges:
         #   \forall sink \in sink_list. sink -> super sink node
 
-        edge_list = zip(sink_list, [dummy_super_sink_node] * num_sink_nodes)
+        edge_list = list(zip(sink_list, [dummy_super_sink_node] *
+                             num_sink_nodes))
         H.add_edges_from(edge_list)
 
 #        print(edge_list)
@@ -464,11 +466,13 @@ class GraphGT(object):
         super_source_vertex = 'super_source_vertex'
         super_sink_vertex = 'super_sink_vertex'
 
-        edge_list = zip([super_source_vertex] * num_source_nodes, source_list)
+        edge_list = list(zip([super_source_vertex] * num_source_nodes,
+                             source_list))
         for e in edge_list:
             self.add_edge(*e)
 
-        edge_list = zip(sink_list, [super_sink_vertex] * num_sink_nodes)
+        edge_list = list(zip(sink_list, [super_sink_vertex] *
+                             num_sink_nodes))
         for e in edge_list:
             self.add_edge(*e)
 
@@ -487,7 +491,8 @@ class GraphGT(object):
         # Add edges:
         #   \forall sink \in sink_list. sink -> super sink node
 
-        edge_list = zip(sink_list, [dummy_super_sink_node] * num_sink_nodes)
+        edge_list = list(zip(sink_list, [dummy_super_sink_node] *
+                             num_sink_nodes))
         H.add_edges_from(edge_list)
 
 #        print(edge_list)

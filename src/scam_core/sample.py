@@ -6,6 +6,7 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 
+import functools as ft
 import numpy as np
 import logging
 
@@ -165,11 +166,11 @@ class IntervalSampler(Sampler):
             #reduce(lambda x,y:np.concatenate((x,y)), map(lambda x: np.tile(x,(2,1)), [a1,a2,a3]))
             pi_cons_l_rep_list = [np.repeat([pi_cons.l], ci_sample_per_state, axis=0) for pi_cons in pi_cons_list]
             pi_cons_l_list = [np.tile(pi_cons_l_rep, (num_samples, 1)) for pi_cons_l_rep in pi_cons_l_rep_list]
-            pi_cons_l = reduce(lambda x_arr, y_arr: np.concatenate((x_arr, y_arr)), pi_cons_l_list)
+            pi_cons_l = ft.reduce(lambda x_arr, y_arr: np.concatenate((x_arr, y_arr)), pi_cons_l_list)
 
             pi_cons_h_rep_list = [np.repeat([pi_cons.h], ci_sample_per_state, axis=0) for pi_cons in pi_cons_list]
             pi_cons_h_list = [np.tile(pi_cons_h_rep, (num_samples, 1)) for pi_cons_h_rep in pi_cons_h_rep_list]
-            pi_cons_h = reduce(lambda x_arr, y_arr: np.concatenate((x_arr, y_arr)), pi_cons_h_list)
+            pi_cons_h = ft.reduce(lambda x_arr, y_arr: np.concatenate((x_arr, y_arr)), pi_cons_h_list)
 #             print(random_arr.shape, pi_cons_l.shape, pi_cons_h.shape)
             pi_array = pi_cons_l + random_arr * (pi_cons_h - pi_cons_l)
         else:
@@ -181,10 +182,10 @@ class IntervalSampler(Sampler):
             #print(ci_cons_list)
             ci_cons_l_list = [np.tile(ci_cons.l, (n//ci_sample_per_state, 1)) for ci_cons in ci_cons_list]
             #print(ci_cons_l_list)
-            ci_cons_l = reduce(lambda x_arr, y_arr: np.concatenate((x_arr, y_arr)), ci_cons_l_list)
+            ci_cons_l = ft.reduce(lambda x_arr, y_arr: np.concatenate((x_arr, y_arr)), ci_cons_l_list)
             #print(ci_cons_l)
             ci_cons_h_list = [np.tile(ci_cons.h, (n//ci_sample_per_state, 1)) for ci_cons in ci_cons_list]
-            ci_cons_h = reduce(lambda x_arr, y_arr: np.concatenate((x_arr, y_arr)), ci_cons_h_list)
+            ci_cons_h = ft.reduce(lambda x_arr, y_arr: np.concatenate((x_arr, y_arr)), ci_cons_h_list)
             #print(random_arr)
             ci_array = ci_cons_l + random_arr * (ci_cons_h - ci_cons_l)
         else:

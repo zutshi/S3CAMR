@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 #import itertools as it
 import abc
+import six
 
 import numpy as np
 
@@ -19,8 +20,9 @@ if settings.debug_plot:
     import matplotlib.pyplot as plt
 
 
+@six.add_metaclass(abc.ABCMeta)
 class Q(object):
-    __metaclass__ = abc.ABCMeta
+    #__metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def split(self, *args):

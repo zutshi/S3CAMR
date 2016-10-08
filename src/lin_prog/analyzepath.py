@@ -246,7 +246,7 @@ def overapprox_x0(AA, prop, opts, pwa_trace, prec, solver='glpk'):
             print('rmax status:', rmax.status)
             #raise e
 
-    prompt = raw_input('load the prompt? (y/Y)')
+    prompt = input('load the prompt? (y/Y)')
     if prompt.lower() == 'y':
         import IPython
         IPython.embed()

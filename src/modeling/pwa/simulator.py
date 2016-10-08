@@ -17,7 +17,7 @@ class SimError(Exception):
 def simulate(sys, x0, n):
     x = x0
     x_trace = [x0]
-    t_trace = range(n)
+    t_trace = list(range(n))
     for i in range(n - 1):
         x_ = sys.predict(x)
         x_trace.append(x_)

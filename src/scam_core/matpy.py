@@ -97,7 +97,7 @@ def deserialize_array(x_ser):
         x = np.array(flat_x)
     else:
         #s.reverse()
-        s = map(int, s)
+        s = list(map(int, s))
         #x = np.reshape(flat_x, s).T
         x = np.reshape(flat_x, s)
     #print x

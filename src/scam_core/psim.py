@@ -885,7 +885,7 @@ class TestSim(Simulator):
 
 #        for concrete_state in sim_state_array.iterable():
 
-        for i in xrange(sim_state_array.n):
+        for i in range(sim_state_array.n):
             cont_state = sim_state_array.cont_states[i, :]
             abs_state = self.A.get_abstract_state(cont_state)
 

@@ -83,7 +83,7 @@ class SALTransSysRel(saltrans.SALTransSys):
     @property
     def type_decls(self):
         tp = super(SALTransSysRel, self).type_decls
-        s = tp + '\nCELL: TYPE = {' + ', '.join(self.partid2Cid.itervalues()) + '};'
+        s = tp + '\nCELL: TYPE = {' + ', '.join(self.partid2Cid.values()) + '};'
         return s
 
     @property

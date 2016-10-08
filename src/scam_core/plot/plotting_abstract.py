@@ -4,11 +4,13 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import abc
+import six
 
 
 # SPEC: Any plotting lib must implement these functions
+@six.add_metaclass(abc.ABCMeta)
 class PlottingBase():
-    __metaclass__ = abc.ABCMeta
+    #__metaclass__ = abc.ABCMeta
 
     ######################################
     # #### Debatable methods

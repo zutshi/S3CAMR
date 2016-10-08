@@ -7,6 +7,7 @@ from __future__ import unicode_literals
 import sys as SYS
 import logging
 
+import functools as ft
 import numpy as np
 import tqdm
 from blessed import Terminal
@@ -368,8 +369,8 @@ def random_test(
                 ci_lb_list = [np.tile(ci_cons.l, (A.num_samples, 1)) for ci_cons in ci_cons_list]
                 ci_ub_list = [np.tile(ci_cons.h, (A.num_samples, 1)) for ci_cons in ci_cons_list]
 
-                ci_cons_lb = reduce(lambda acc_arr, arr: np.concatenate((acc_arr, arr)), ci_lb_list)
-                ci_cons_ub = reduce(lambda acc_arr, arr: np.concatenate((acc_arr, arr)), ci_ub_list)
+                ci_cons_lb = ft.reduce(lambda acc_arr, arr: np.concatenate((acc_arr, arr)), ci_lb_list)
+                ci_cons_ub = ft.reduce(lambda acc_arr, arr: np.concatenate((acc_arr, arr)), ci_ub_list)
 
                 random_arr = np.random.rand(num_samples, A.num_dims.ci)
 
@@ -389,8 +390,8 @@ def random_test(
             pi_lb_list = [np.tile(pi_cons.l, (A.num_samples, 1)) for pi_cons in pi_cons_list]
             pi_ub_list = [np.tile(pi_cons.h, (A.num_samples, 1)) for pi_cons in pi_cons_list]
 
-            pi_cons_lb = reduce(lambda acc_arr, arr: np.concatenate((acc_arr, arr)), pi_lb_list)
-            pi_cons_ub = reduce(lambda acc_arr, arr: np.concatenate((acc_arr, arr)), pi_ub_list)
+            pi_cons_lb = ft.reduce(lambda acc_arr, arr: np.concatenate((acc_arr, arr)), pi_lb_list)
+            pi_cons_ub = ft.reduce(lambda acc_arr, arr: np.concatenate((acc_arr, arr)), pi_ub_list)
 
             #print(pi_cons_lb)
             #print(pi_cons_ub)
@@ -471,7 +472,7 @@ def random_test(
         # u_array =
 
     if return_vio_only:
-        return map(trace_list.__getitem__, res)
+        return list(map(trace_list.__getitem__, res))
     else:
         #for trace in trace_list:
             #print(trace.x_array[0, :])

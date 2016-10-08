@@ -61,7 +61,8 @@ def random_graph(
     # add edges to abstract_G
 
     edge_list = G.edges()
-    edge_list_ = map(lambda e: (graph_map[e[0]], graph_map[e[1]]), edge_list)
+    edge_list_ = list(map(lambda e: (graph_map[e[0]],
+                      graph_map[e[1]]), edge_list))
     abstract_G.add_edges_from(edge_list_)
 
 #    nx.draw_networkx(abstract_G, pos=pos_dict, with_labels=True)

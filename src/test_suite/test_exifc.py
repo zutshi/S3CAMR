@@ -46,7 +46,7 @@ def main():
 
         trace_list = []
         tic = time.time()
-        for i in xrange(NUM_SIMS):
+        for i in range(NUM_SIMS):
             trace = one_shot_sim(x0[i], 0.0, prop.T, w0)
             trace_list.append(trace)
         toc = time.time()

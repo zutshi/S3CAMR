@@ -21,7 +21,7 @@ def ival_cons_to_cell_list(cons, eps):
 
         # x_range_list.append(np.arange(cons.l[i], cons.h[i], eps[i]))
 
-        x_range = range(Al[i], Ah[i], 1)
+        x_range = list(range(Al[i], Ah[i], 1))
 
         # make the range inclusive of the last element,  because we want things to be sound
 
@@ -70,8 +70,8 @@ def cell_from_concrete(X, eps):
 
     # get the cell into integers...easier to do operations!
 
-    cell_id = map(int, cell)
-    return tuple(cell_id)
+    cell_id = tuple(map(int, cell))
+    return cell_id
 
 
 def ival_constraints(cell, eps):

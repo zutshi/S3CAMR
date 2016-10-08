@@ -121,7 +121,7 @@ class Plotting(PlottingBase):
                     (b) state vs time, t    vs x[0]: t0x0 \n
                ########################################## \n'''
         print(plot_cmd_format)
-        corrected_plot_cmd = raw_input('please type the correct command:')
+        corrected_plot_cmd = input('please type the correct command:')
         return corrected_plot_cmd
 
     def plot_trace_list_slow(self, trace_list):
