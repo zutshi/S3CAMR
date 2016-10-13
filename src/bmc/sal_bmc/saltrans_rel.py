@@ -11,7 +11,7 @@ Creates a SAL transition system: Relational
 import itertools
 import collections
 
-import saltrans
+from . import saltrans
 
 
 # Make classes out of every header, prop, init, etc
