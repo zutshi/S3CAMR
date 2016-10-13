@@ -17,13 +17,13 @@ import random as rand
 
 def factory(graph_lib):
     if graph_lib == 'nx':
-        from graphNX import GraphNX
+        from .graphNX import GraphNX
         return GraphNX()
     elif graph_lib == 'gt':
-        from graphGT import GraphGT
+        from .graphGT import GraphGT
         return GraphGT()
     elif graph_lib == 'g':
-        from graph_generic import Graph
+        from .graph_generic import Graph
         return Graph()
     else:
         raise err.Fatal('unknown graph library requested: {}'.format(graph_lib))
