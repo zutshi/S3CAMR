@@ -168,7 +168,8 @@ class ModelGeneric(ModelSpec):
 
     # Make the class iterable
     def __iter__(self):
-        return self.sub_models.values()
+        #return self.sub_models.values()
+        return six.itervalues(self.sub_models)
 
     def __repr__(self):
         return repr(self.sub_models)
