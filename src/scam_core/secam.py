@@ -792,7 +792,7 @@ def main():
     # dynamicall generate an opt class to mimic the same defined in
     # loadsystem.py
     # switch this to a reg class later.
-    Options = type('Options', (), {})
+    Options = type(str('Options'), (), {})
     opts = Options()
     if args.simulate is not None:
         opts.MODE = 'simulate'
