@@ -12,7 +12,7 @@ Creates a SAL transition system: DFT
 import textwrap as tw
 from math import isinf
 
-from ..helpers.expr2str import Expr2Str #linexpr2str, float2str
+from bmc.helpers.expr2str import Expr2Str
 
 #import utils as U
 import settings
