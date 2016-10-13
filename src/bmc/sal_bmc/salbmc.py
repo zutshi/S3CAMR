@@ -7,10 +7,10 @@ import os
 import logging
 
 #import saltrans as slt_dft
-import saltrans_rel as slt_rel
-import saltrans_dmt as slt_dmt
-from ..bmc_spec import BMCSpec, InvarStatus
-import sal_op_parser
+from . import saltrans_rel as slt_rel
+from . import saltrans_dmt as slt_dmt
+from bmc.bmc_spec import BMCSpec, InvarStatus
+from . import sal_op_parser
 
 import fileops as fops
 import utils as U
