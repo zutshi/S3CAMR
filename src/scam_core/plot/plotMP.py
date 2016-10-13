@@ -13,7 +13,7 @@ import matplotlib.patches as patches
 #import matplotlib.cm as cm
 import numpy as np
 
-from plotting_abstract import PlottingBase
+from .plotting_abstract import PlottingBase
 import err
 
 plot_figure_for_paper = False
@@ -121,6 +121,12 @@ class Plotting(PlottingBase):
                     (b) state vs time, t    vs x[0]: t0x0 \n
                ########################################## \n'''
         print(plot_cmd_format)
+
+        # For python2/3 compatibility
+        try:
+            input = raw_input
+        except NameError:
+            pass
         corrected_plot_cmd = input('please type the correct command:')
         return corrected_plot_cmd
 
