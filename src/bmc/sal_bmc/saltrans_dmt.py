@@ -8,7 +8,7 @@ from __future__ import unicode_literals
 Creates a SAL transition system
 '''
 
-import saltrans
+from . import saltrans
 
 
 class SALTransSysDMT(saltrans.SALTransSys):
