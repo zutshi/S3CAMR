@@ -55,10 +55,7 @@ class GraphNX(object):
         print('G1_in_G2_nodes: {}, G1_in_G2_edges: {}'.format(G1_in_G2_nodes, G1_in_G2_edges))
         print('G2_in_G1_nodes: {}, G2_in_G1_edges: {}'.format(G2_in_G1_nodes, G2_in_G1_edges))
 
-        print('''G1_nodes_set - G2_nodes_set)
-{}
-'''.format(G1_nodes_set
-                - G2_nodes_set)
+        print('G1_nodes_set - G2_nodes_set: {}').format(G1_nodes_set - G2_nodes_set)
 
         G1_and_G2_are_equal = G1_in_G2 and G2_in_G1
 
@@ -222,7 +219,7 @@ class GraphNX(object):
         print('')
         print(term.move_up + term.move_up)
         ######################################
-        print('getting K:{} paths...'.format(k),)
+        print('getting K:{} paths...'.format(k), end='')
         for i in range(1, k):
             with term.location():
                 print(i)
