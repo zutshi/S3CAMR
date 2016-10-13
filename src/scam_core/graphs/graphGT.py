@@ -376,7 +376,7 @@ class GraphGT(object):
         print('')
         print(term.move_up + term.move_up)
         ######################################
-        print('getting K:{} paths...'.format(k),)
+        print('getting K:{} paths...'.format(k), end='')
         for i in range(1, k):
             with term.location():
                 print(i)
