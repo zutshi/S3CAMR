@@ -8,7 +8,7 @@ import scipy.linalg as linalg
 import scipy.optimize as spopt
 import sympy as sym
 
-import pyglpklp
+from . import pyglpklp
 
 import constraints as cons
 
@@ -246,6 +246,11 @@ def overapprox_x0(AA, prop, opts, pwa_trace, prec, solver='glpk'):
             print('rmax status:', rmax.status)
             #raise e
 
+    # For python2/3 compatibility
+    try:
+        input = raw_input
+    except NameError:
+        pass
     prompt = input('load the prompt? (y/Y)')
     if prompt.lower() == 'y':
         import IPython
