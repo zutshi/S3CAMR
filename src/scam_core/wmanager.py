@@ -113,7 +113,6 @@ class WMap_old(object):
         #print(self.pi_cons, pa.pi_eps)
         pi_cells = CM.get_cells_from_ival_constraints(self.pi_cons, pa.pi_eps)
         #print(pi_cells)
-        #raw_input('..')
         #return [c for c in zip(*pi_cells)]
         return pi_cells
 
