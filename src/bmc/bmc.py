@@ -46,8 +46,6 @@ def factory(bmc_engine,
     ------
     """
 
-    prec = str(float(prec)/10.)
-
     # remove prop_partitions
     assert(settings.CE)
 
