@@ -14,7 +14,7 @@ import err
 
 import functools
 
-from ..bmc_spec import TraceSimple
+from bmc.bmc_spec import TraceSimple
 
 # global tokens
 SEMI = pp.Literal(";").suppress()
