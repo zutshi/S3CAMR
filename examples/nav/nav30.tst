@@ -10,10 +10,8 @@ plant_pvt_init_data = None
 
 # Property
 initial_set = [[4.0, 21.0, -1.0, -1.0],
-               [5.0, 22.0, 1.0, 1.0]]
+                [5.0, 22.0, 1.0, 1.0]]
 
-#initial_set = [[5.,          21.22936519,  -0.959,   0.],
-#               [5.,          21.22936519,  -0.959,   0.078]]
 
 P = [[6., 7., -inf, -inf],
      [7., 8., inf, inf]]
@@ -27,21 +25,36 @@ R = [[1., 6., -inf, -inf],
 S = [[22., 11., -inf, -inf],
      [23., 12., inf, inf]]
 
-error_set = P
+error_set = S
 
 # P, Q, R
-T = 20.0
+#T = 20.0
 
 # S
-# T = 35.0
+T = 35.0
 
 # Abstraction params: P, Q, R, S
 #grid_eps = [0.2, 0.2, 0.4, 0.4]
 #grid_eps = [0.21, 0.21, 0.41, 0.41]
 #grid_eps = [0.51]*4
-grid_eps = [1.1]*4
+
+
+# Working set for P, Q
+# ./scamr.py -f ../examples/nav/nav30.tst -cn  --refine model-dft --prop-check --incl-error --seed 0 --max-model-error 10 --max-paths 1000
+# grid_eps = [1.1]*4
+# delta_t = 5.0
+# num_samples = 100
+
+# Worked for R
+# grid_eps = [0.6]*4
+# delta_t = 5.0
+# num_samples = 20
+
+# [1.1]*4 did not work for S
+# Trying below
+grid_eps = [0.6]*4
 delta_t = 5.0
-num_samples = 20
+num_samples = 200
 
 MAX_ITER = 4
 

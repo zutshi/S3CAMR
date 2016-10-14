@@ -8,23 +8,25 @@ plant_pvt_init_data = None
 initial_set = [[-0.1, 3.0, 5.0, -5.0],
                [0.1, 4.0, 10.0, 5.0]]
 
-# initial_set = [[-0.1, 3.9, 9.8, 4.9],
-#                [-0.09, 4.0, 9.9, 5.0]]
 
-# Solves the original problem
+# Solves the original problem (in matlab atlaest)
 # x(0) = -0.09996, y(0) = 3.999, vx(0) = 9.8672, vy(0) = 4.968.
+# example error
+# random_testing.py:208::
+# x0=[ 0.04264138  3.48107684  9.99909701  4.98550744] ->
+# x=[ 330.01284287    1.06944299    9.99909701   -1.0229609 ], t=33.0
 
 # X0 leading to error set
-# initial_set = [[-0.1, 4, 9.87, 4.967],
-#                [-0.1, 4, 9.90, 4.969]]
+initial_set = [[-0.04308, 3.4704, 9.9862, 4.9871],
+               [-0.04300, 3.4705, 9.9863, 4.9872]]
 
 
-#error_set = [[330.0, 1.0, -inf, -inf],
-#             [330.1, 1.1, inf, inf]]
+error_set = [[330.0, 1.0, -inf, -inf],
+            [330.1, 1.1, inf, inf]]
 
 # Easier
-error_set = [[330.0, 0.5, -inf, -inf],
-             [330.1, 1.1, inf, inf]]
+# error_set = [[330.0, 0.5, -inf, -inf],
+#              [330.1, 1.1, inf, inf]]
 
 # error_set = [[330.0, -inf, -inf, -inf],
 #              [inf, inf, inf, inf]]
@@ -35,7 +37,7 @@ T = 40.0
 #grid_eps = [1]*4
 
 # Does work at times...with delta_t = 40
-grid_eps = [1.1, 1.1, 1.1, 1.1]
+#grid_eps = [1.1, 1.1, 1.1, 1.1]
 
 # Might work, but have not observed success yet.
 #grid_eps = [10, 1, 1, 1]
@@ -58,9 +60,10 @@ num_samples = 2
 # num_samples = 20
 
 # Abstraction params: coarse
-# grid_eps = [50, 10, 10, 10]
-# delta_t = 5.0
-# num_samples = 20
+#grid_eps = [50.1, 10.1, 10.1, 10.1]
+grid_eps = [0.001]*4
+delta_t = 5.0
+num_samples = 20
 
 MAX_ITER = 4
 
