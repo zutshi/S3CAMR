@@ -8,6 +8,8 @@ class Expr2Str(object):
 
     @staticmethod
     def set_prec(prec):
+        assert(type(prec) == int)
+        prec = '.' + str(prec)
         Expr2Str.PREC = prec
 
     @staticmethod
