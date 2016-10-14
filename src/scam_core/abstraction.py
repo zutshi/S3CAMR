@@ -32,6 +32,8 @@ import settings
 
 logger = logging.getLogger(__name__)
 
+class DummyControllerAbs(object):
+    pass
 
 # def abstraction_factory(des, plant_sim, T, sampler, init_cons, final_cons):
 #    return GridBasedAbstraction(des, plant_sim, T, sampler, init_cons, final_cons)
@@ -128,7 +130,7 @@ class TopLevelAbs:
             from . import CAConcolic as CA
             controller_abs = CA.ControllerCollectionAbstraction(self.num_dims)
         elif controller_abstraction_type == 'concrete_no_controller':
-            DummyControllerAbs = type(str('DummyControllerAbs'), (), {})
+            #DummyControllerAbs = type(str('DummyControllerAbs'), (), {})
             controller_abs = DummyControllerAbs()
             controller_abs.is_symbolic = False
 
