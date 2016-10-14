@@ -28,10 +28,10 @@ import settings
 #np.set_printoptions(suppress=True, precision=2)
 
 # multiply num samples with the
-MORE_FACTOR = 100
+MORE_FACTOR = 10
 #TEST_FACTOR = 10
 
-MAX_TRAIN = 1000
+MAX_TRAIN = 500
 
 #MAX_TEST = 200
 
@@ -676,13 +676,16 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
     sub_models = []
 
     try_again = True
+    ntries = 1
+    MAX_TRIES = 2
     while try_again:
+        last_node = not qgraph.edges(q)
         X, Y = q.get_rels(prop, step_sim, ntrain)
         assert(not X.size == 0 or Y.size == 0)
         assert(not Y.size == 0 or X.size == 0)
         if X.size == 0:
             # make sure it is the last node: had no edges
-            assert(not qgraph.edges(q))
+            assert(last_node)
             # The cell is completely inside the property
             # If not, it means that the volume of Cell - prop is very
             # small and a sample wasnt found in there.
@@ -697,12 +700,19 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
             # else try again
             else:
                 err.warn('no model found')
+                if ntries > MAX_TRIES:
+                    if last_node:
+                        err.warn('giving up')
+                        try_again = False
+                    else:
+                        err.warn('can happen rarely...')
         except AFM.UdetError:
             pass
         print('trying again')
         # double the number of samples and try again
         ntrain *= 2
         # repeat!
+        ntries += 1
 
     # try again on failure, and settle with non relational models
     if not regression_models:
