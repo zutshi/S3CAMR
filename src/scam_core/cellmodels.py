@@ -1,13 +1,17 @@
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
-import itertools as it
+#import itertools as it
 import abc
+import six
 
 import numpy as np
 
 import constraints as cons
 import cellmanager as CM
-import err
+#import err
 from utils import print
 
 import settings
@@ -16,8 +20,9 @@ if settings.debug_plot:
     import matplotlib.pyplot as plt
 
 
+@six.add_metaclass(abc.ABCMeta)
 class Q(object):
-    __metaclass__ = abc.ABCMeta
+    #__metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def split(self, *args):

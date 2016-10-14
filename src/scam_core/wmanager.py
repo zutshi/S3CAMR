@@ -1,7 +1,13 @@
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
+
 from collections import defaultdict
 import itertools
-#from utils import print
+
+from utils import print
+
 import cellmanager as CM
 
 
@@ -107,7 +113,6 @@ class WMap_old(object):
         #print(self.pi_cons, pa.pi_eps)
         pi_cells = CM.get_cells_from_ival_constraints(self.pi_cons, pa.pi_eps)
         #print(pi_cells)
-        #raw_input('..')
         #return [c for c in zip(*pi_cells)]
         return pi_cells
 
@@ -144,4 +149,4 @@ class WMap_old(object):
         cell_id = abs_state.cell_id
         # as i is an int, i/2 is equivalent to int(floor(i/2.0))
         # return tuple(int(floor(i/2.0)) for i in cell_id) # for clarity
-        return tuple(i/2 for i in cell_id) # same as above
+        return tuple(i//2 for i in cell_id) # same as above

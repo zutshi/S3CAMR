@@ -1,6 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
+
 import logging
 import Queue
 import numpy as np
@@ -260,7 +264,7 @@ def discover_batch(A, budget=None):
             # TODO: abstract away the graph maybe??
             # Hide the call behind add_relation(A1, A2)
 
-            for (abs_state, rchd_abs_state_set) in abs2rch_abs_state_dict.iteritems():
+            for (abs_state, rchd_abs_state_set) in abs2rch_abs_state_dict.items():
                 for rchd_abs_state in rchd_abs_state_set:
                     A.add_relation(abs_state, rchd_abs_state)
 

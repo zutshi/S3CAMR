@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 '''
 Creates a SAL transition system: DFT
 '''
@@ -7,10 +12,11 @@ Creates a SAL transition system: DFT
 import textwrap as tw
 from math import isinf
 
-from ..helpers.expr2str import Expr2Str #linexpr2str, float2str
+from bmc.helpers.expr2str import Expr2Str
 
 #import utils as U
 import settings
+
 
 class SALTransError(Exception):
     pass

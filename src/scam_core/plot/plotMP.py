@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import matplotlib
 # Force GTK3 backend. By default GTK2 gets loaded and conflicts with
 # graph-tool
@@ -8,7 +13,7 @@ import matplotlib.patches as patches
 #import matplotlib.cm as cm
 import numpy as np
 
-from plotting_abstract import PlottingBase
+from .plotting_abstract import PlottingBase
 import err
 
 plot_figure_for_paper = False
@@ -81,15 +86,15 @@ class Plotting(PlottingBase):
 
     def parse_plot_cmd(self, plot_cmd, trace_obj):
         if len(plot_cmd) != 4:
-            print 'plot command NOT of length 4: {}'.format(plot_cmd)
+            print('plot command NOT of length 4: {}'.format(plot_cmd))
             return None
         x_axis_str, x_idx, y_axis_str, y_idx = plot_cmd
         try:
             x_axis = getattr(trace_obj, x_axis_str)
             y_axis = getattr(trace_obj, y_axis_str)
         except AttributeError, e:
-            print 'unexpected plot command received: {}'.format(plot_cmd)
-            print e
+            print('unexpected plot command received: {}'.format(plot_cmd))
+            print(e)
             return None
         x_idx = int(x_idx)
         y_idx = int(y_idx)
@@ -97,13 +102,13 @@ class Plotting(PlottingBase):
             if x_axis_str != 't':
                 x = x_axis[x_idx, :]
         except:
-            print 'unexpected indices for the first var: {}'.format(plot_cmd)
+            print('unexpected indices for the first var: {}'.format(plot_cmd))
             return None
         try:
             if y_axis_str != 't':
                 y = y_axis[y_idx, :]
         except:
-            print 'unexpected indices for the second var: {}'.format(plot_cmd)
+            print('unexpected indices for the second var: {}'.format(plot_cmd))
             return None
 
         return x, y
@@ -115,8 +120,14 @@ class Plotting(PlottingBase):
                e.g. (a) phase plot,    x[1] vs x[0]: x0x1 \n
                     (b) state vs time, t    vs x[0]: t0x0 \n
                ########################################## \n'''
-        print plot_cmd_format
-        corrected_plot_cmd = raw_input('please type the correct command:')
+        print(plot_cmd_format)
+
+        # For python2/3 compatibility
+        try:
+            input = raw_input
+        except NameError:
+            pass
+        corrected_plot_cmd = input('please type the correct command:')
         return corrected_plot_cmd
 
     def plot_trace_list_slow(self, trace_list):
@@ -138,8 +149,6 @@ class Plotting(PlottingBase):
     #         ax = plt.gca()
     #         AX_list.append(ax)
     #         plt.title('x{}'.format(i))
-
-
 
     #     for trace in trace_list:
     #         x_array = trace.x_array
@@ -219,7 +228,7 @@ class Plotting(PlottingBase):
 
         # Would be good to handle errors in the x Vs y string
         #sanity_check_xVsy()
-        print 'plotting...'
+        print('plotting...')
 
         def prep_t_trace(trace_list):
             N = np.array([None])
@@ -273,7 +282,7 @@ class Plotting(PlottingBase):
         # Would be good to handle errors in the x Vs y string
         #sanity_check_xVsy()
 
-        print 'plotting...'
+        print('plotting...')
 
         def prep_t_trace(trace_list):
             return [trace.t_array for trace in trace_list]

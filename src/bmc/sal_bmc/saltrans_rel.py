@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 
 '''
 Creates a SAL transition system: Relational
@@ -6,7 +11,7 @@ Creates a SAL transition system: Relational
 import itertools
 import collections
 
-import saltrans
+from . import saltrans
 
 
 # Make classes out of every header, prop, init, etc
@@ -78,7 +83,7 @@ class SALTransSysRel(saltrans.SALTransSys):
     @property
     def type_decls(self):
         tp = super(SALTransSysRel, self).type_decls
-        s = tp + '\nCELL: TYPE = {' + ', '.join(self.partid2Cid.itervalues()) + '};'
+        s = tp + '\nCELL: TYPE = {' + ', '.join(self.partid2Cid.values()) + '};'
         return s
 
     @property

@@ -4,20 +4,27 @@ It defines the results (e.g. traces, status).
 
 """
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import abc
-import itertools as it
 import numpy as np
+import six
 
 import settings
+
 
 class InvarStatus:
     Safe, Unsafe, Unknown = range(3)
 
 
+@six.add_metaclass(abc.ABCMeta)
 class BMCSpec():
     """BMCSpec
     Defines the spec for a BMC engine"""
-    __metaclass__ = abc.ABCMeta
+    #__metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def check(self, depth):
@@ -71,7 +78,7 @@ class TraceSimple(object):
 
 #         for step in trace:
 #             for ass in step.assignments:
-#                 print ass.lhs, ass.rhs
+#                 print(ass.lhs, ass.rhs)
         return
 
     def __getitem__(self, idx):

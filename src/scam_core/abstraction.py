@@ -2,6 +2,10 @@
 # -*- coding: utf-8 -*-
 
 from __future__ import print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import unicode_literals
+
 
 # S: Controller States
 # X: Plant states
@@ -123,7 +127,7 @@ class TopLevelAbs:
             import CAConcolic as CA
             controller_abs = CA.ControllerCollectionAbstraction(self.num_dims)
         elif controller_abstraction_type == 'concrete_no_controller':
-            DummyControllerAbs = type('DummyControllerAbs', (), {})
+            DummyControllerAbs = type(str('DummyControllerAbs'), (), {})
             controller_abs = DummyControllerAbs()
             controller_abs.is_symbolic = False
 

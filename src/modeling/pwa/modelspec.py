@@ -1,3 +1,9 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import six
 import abc
 import logging
 
@@ -12,8 +18,9 @@ class ModelError(Exception):
     pass
 
 
+@six.add_metaclass(abc.ABCMeta)
 class ModelSpec(object):
-    __metaclass__ = abc.ABCMeta
+    #__metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def __init__(self):
@@ -45,8 +52,9 @@ class ModelSpec(object):
         return
 
 
+@six.add_metaclass(abc.ABCMeta)
 class SubModelSpec():
-    __metaclass__ = abc.ABCMeta
+    #__metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
     def sat(self, x):
@@ -144,7 +152,7 @@ class ModelGeneric(ModelSpec):
     # to
     # TODO: Brute force search, very inefficient
     def find_sub_model(self, x):
-        for sub_model in self.sub_models.itervalues():
+        for sub_model in self.sub_models.values():
             if sub_model.sat(x):
                 return sub_model
         raise ModelError('No appropriate submodel found')
@@ -160,7 +168,8 @@ class ModelGeneric(ModelSpec):
 
     # Make the class iterable
     def __iter__(self):
-        return self.sub_models.itervalues()
+        #return self.sub_models.values()
+        return six.itervalues(self.sub_models)
 
     def __repr__(self):
         return repr(self.sub_models)

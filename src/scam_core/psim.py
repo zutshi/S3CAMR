@@ -1,5 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 
 import logging
 import numpy as np
@@ -260,11 +265,11 @@ class MEngPy(Simulator):
 
         #TAG:MSH
         if shared_engine is None:
-            print 'starting matlab...'
+            print('starting matlab...')
             self.eng = matlab_engine.start_matlab()
-            print 'done'
+            print('done')
         else:
-            print 'attempting to connect to an existing matlab session'
+            print('attempting to connect to an existing matlab session')
             self.eng = matlab_engine.connect_matlab(shared_engine)
 
         self.m_file = m_file_path
@@ -289,10 +294,10 @@ class MEngPy(Simulator):
         # classy = 8 if class else is 0 (function or a script)
         classy = self.eng.exist(self.m_fun_str, 'class')
         if classy == 0.0:
-            print 'maltab file is a function'
+            print('maltab file is a function')
             self.sim_is_class = False
         elif classy == 8.0:
-            print 'maltab file is a class'
+            print('maltab file is a class')
             self.sim_is_class = True
             self.sim_obj = self.eng.init_plant(self.m_fun_str)
         else:
@@ -311,9 +316,9 @@ class MEngPy(Simulator):
             property_violated_flag=None,
             ):
 
-        #print '='*100
-        #print sim_states
-        #print '='*100
+        #print('='*100)
+        #print(sim_states)
+        #print('='*100)
 
         if property_checker is None:
             property_check = 0
@@ -363,8 +368,8 @@ class MEngPy(Simulator):
         X_ = np.array(X__)
         D_ = np.array(D__)
         P_ = np.array(P__)
-        #print T__, X__
-        #print T_, X_
+        #print(T__, X__)
+        #print(T_, X_)
 
         pvf = pvf_
 
@@ -393,9 +398,9 @@ class MEngPy(Simulator):
             pi=sim_states.plant_extraneous_inputs,
             ci=sim_states.controller_extraneous_inputs,
             )
-        #print '='*100
-        #print statearray
-        #print '='*100
+        #print('='*100)
+        #print(statearray)
+        #print('='*100)
         return statearray
 
 
@@ -528,9 +533,9 @@ class MatlabSim(Simulator):
             property_violated_flag=None,
             ):
 
-        # print sim_states.cont_states
-        # print sim_states.discrete_states
-        # print sim_states.pvt_states
+        # print(sim_states.cont_states)
+        # print(sim_states.discrete_states)
+        # print(sim_states.pvt_states)
 
         T_array = np.array([T])
         comm = self.communicator
@@ -566,7 +571,7 @@ class MatlabSim(Simulator):
             ]
 
         if self.parallel:
-            print 'unhandled..modify signature to include time first'
+            print('unhandled..modify signature to include time first')
             exit()
             fun_name_str = 'simulate_system_par'
             [X_, D_, P_] = comm.call_function_retVal(ret_val_str_list, fun_name_str, arg_str_list)
@@ -574,18 +579,18 @@ class MatlabSim(Simulator):
             fun_name_str = 'simulate_system'
             [T_, X_, D_, P_, pvf] = comm.call_function_retVal(ret_val_str_list, fun_name_str, arg_str_list)
 
-        # print 'output'
-        # print X_
-        # print D_
-        # print P_
-        # print '='*20
+        # print('output')
+        # print(X_)
+        # print(D_)
+        # print(P_)
+        # print('='*20)
         # t_array = np.tile(T, (sim_states.n))
         # property_violated_flag = property_checker
 
         if property_checker is not None:
             property_violated_flag[0] = bool(pvf)
 
-            # print pvf, property_violated_flag[0]
+            # print(pvf, property_violated_flag[0])
         # return st.StateArray(t_array, X_, D_, P_)
         # TODO: fix this weird matlab-numpy interfacing
 
@@ -643,7 +648,7 @@ class MatlabSim(Simulator):
         # quick sanity check
 
         if len(idx_arr.shape) != 1 or idx_arr[0] != 0:
-            print 'idx_arr: ', idx_arr
+            print('idx_arr: ', idx_arr)
             raise err.Fatal('sanity check on idx_arr fails!')
 
         # get a pairwise iterator for the index array
@@ -680,7 +685,7 @@ class MatlabSim(Simulator):
         # quick sanity check
 
         if len(idx_arr.shape) != 1 or idx_arr[0] != 0:
-            print 'idx_arr: ', idx_arr
+            print('idx_arr: ', idx_arr)
             raise err.Fatal('sanity check on idx_arr fails!')
 
         # get a pairwise iterator for the index array
@@ -880,7 +885,7 @@ class TestSim(Simulator):
 
 #        for concrete_state in sim_state_array.iterable():
 
-        for i in xrange(sim_state_array.n):
+        for i in range(sim_state_array.n):
             cont_state = sim_state_array.cont_states[i, :]
             abs_state = self.A.get_abstract_state(cont_state)
 

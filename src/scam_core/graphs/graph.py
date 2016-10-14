@@ -1,5 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 
 import err
 import heapq
@@ -10,17 +15,15 @@ import random as rand
 #  FIX heap duplicates used by different ksp!
 
 
-
-
 def factory(graph_lib):
     if graph_lib == 'nx':
-        from graphNX import GraphNX
+        from .graphNX import GraphNX
         return GraphNX()
     elif graph_lib == 'gt':
-        from graphGT import GraphGT
+        from .graphGT import GraphGT
         return GraphGT()
     elif graph_lib == 'g':
-        from graph_generic import Graph
+        from .graph_generic import Graph
         return Graph()
     else:
         raise err.Fatal('unknown graph library requested: {}'.format(graph_lib))
@@ -58,7 +61,8 @@ def random_graph(
     # add edges to abstract_G
 
     edge_list = G.edges()
-    edge_list_ = map(lambda e: (graph_map[e[0]], graph_map[e[1]]), edge_list)
+    edge_list_ = list(map(lambda e: (graph_map[e[0]],
+                      graph_map[e[1]]), edge_list))
     abstract_G.add_edges_from(edge_list_)
 
 #    nx.draw_networkx(abstract_G, pos=pos_dict, with_labels=True)
@@ -91,8 +95,8 @@ def csg1():
     return Graph(G, 'test_csg1')
 
 
-#    print G.nodes()
-#    print G.edges()
+#    print(G.nodes())
+#    print(G.edges())
 #    plt.figure()
 #    Graph(G).draw_2d()
 #    plt.show()
@@ -344,7 +348,7 @@ class WeightedPath(object):
         self.cost = 0.0
         self.capacity = float('inf')
 
-        # print "WtPath pathNodeList: {}".format(pathNodeList)
+        # print("WtPath pathNodeList: {}".format(pathNodeList))
 
         for i in range(len(pathNodeList) - 1):
             self.cost = self.cost + g[pathNodeList[i]][pathNodeList[i + 1]][wt]
@@ -453,7 +457,7 @@ class ModifiedDijkstra(object):
 
             currentMin = self._findMinNode(s)
 
-            # print "Current min node {}, s = {}".format(currentMin, s)
+            # print("Current min node {}, s = {}".format(currentMin, s))
 
             if currentMin == None:
                 return None
@@ -491,5 +495,3 @@ class ModifiedDijkstra(object):
                 minVal = self.dist[vertex]
                 minNode = vertex
         return minNode
-
-

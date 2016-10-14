@@ -4,6 +4,11 @@ This example demonstrates many of the 2D plotting capabilities
 in pyqtgraph. All of the plots may be panned/scaled by dragging with
 the left/right mouse buttons. Right click on any plot to show a context menu.
 """
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 
 from pyqtgraph.Qt import QtGui, QtCore
 import pyqtgraph as pg
@@ -75,4 +80,3 @@ class Plotting(PlottingBase):
 
 # p3 = win.addPlot(title="Drawing with points")
 # p3.plot(np.random.normal(size=100), pen=(200, 200, 200), symbolBrush=(255, 0, 0), symbolPen='w')
-

@@ -1,4 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
+
 import itertools as it
 
 #from collections import defaultdict
@@ -546,7 +550,8 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
 #         return [(rm, [q], e_pc)]
 
 
-def mdl(tol, step_sim, qgraph, q, (X, Y), Y_, k, kmin, kmax):
+def mdl(tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
+    X, Y = XY
     assert(X.shape[1] == q.dim)
     assert(Y_.shape[1] == q.dim)
     assert(X.shape[0] == Y.shape[0] == Y_.shape[0])

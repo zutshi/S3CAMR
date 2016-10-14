@@ -1,8 +1,13 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 from collections import defaultdict
 import time
 from heapq import heappush, heappop
 from itertools import count
-import sys
+#import sys
 
 import graph_tool.all as gt
 # can not import sub modules for some reasons!!
@@ -50,7 +55,7 @@ class GraphGT(object):
 
     def add_edge(self, n1, n2, **attr_dict_arg):#ci=None, pi=None
         attrs = {'ci': None, 'pi': None}
-        #print >> sys.stderr, 'gt:', n1, n2
+        #U.eprint('gt:', n1, n2)
 
         #v1 = self.vd[n1]
         #v2 = self.vd[n2]
@@ -71,7 +76,7 @@ class GraphGT(object):
         self.v_attr[v1] = n1
         self.v_attr[v2] = n2
 
-        #print v1, v2
+        #print(v1, v2)
         e = self.G.edge(v1, v2, add_missing=True)
         #TODO: The attributes of an existing edge will be updated.
         # Should this be the intended behavior?
@@ -122,44 +127,45 @@ class GraphGT(object):
         # Add edges:
         #   \forall source \in source_list. super source node -> source
 
-        edge_list = zip([dummy_super_source_node] * num_source_nodes,
-                        source_list)
+        edge_list = list(zip([dummy_super_source_node] * num_source_nodes,
+                        source_list))
         G.add_edges_from(edge_list)
 
         if settings.debug:
-            print >> sys.stderr, 'source -> list'
+            U.eprint('source -> list')
             for e in edge_list:
-                print >> sys.stderr, e
+                U.eprint(e)
 
         # Add edges:
         #   \forall sink \in sink_list. sink -> super sink node
 
-        edge_list = zip(sink_list, [dummy_super_sink_node] * num_sink_nodes)
+        edge_list = list(zip(sink_list, [dummy_super_sink_node] *
+                             num_sink_nodes))
         G.add_edges_from(edge_list)
 
         if settings.debug:
-            print >> sys.stderr, 'sink -> list'
+            U.eprint('sink -> list')
             for e in edge_list:
-                print >> sys.stderr, e
+                U.eprint(e)
 
         if settings.debug:
-            #print the graph first
-            print >>sys.stderr,  'Printing graph...'
+            #print(the graph first)
+            U.eprint('Printing graph...')
             for e in G.G.edges():
                 s, t = e
-                print >>sys.stderr, '{}, {}'.format(G.v_attr[s], G.v_attr[t])
-            print >>sys.stderr,  'Printing graph...done'
+                U.eprint('{}, {}'.format(G.v_attr[s], G.v_attr[t]))
+            U.eprint('Printing graph...done')
 
         path_it = G.all_shortest_paths(dummy_super_source_node,
                                        dummy_super_sink_node,
                                        )
 
         if settings.debug:
-            print >> sys.stderr, 'path list'
+            U.eprint('path list')
             paths = list(path_it)
             for path in paths[0:max_paths]:
                 p = [G.v_attr[v] for v in path]
-                print >> sys.stderr, p
+                U.eprint(p)
             path_it = (i for i in paths)
 
 #############################################################
@@ -168,6 +174,7 @@ class GraphGT(object):
         paths = list(U.bounded_iter(path_it, max_paths))
         num_paths = len(paths)
         err.warn('counting paths...found: {}'.format(num_paths))
+
         def path_gen():
             for path in paths:
                 p = [G.v_attr[v] for v in path]
@@ -221,27 +228,28 @@ class GraphGT(object):
         # Add edges:
         #   \forall source \in source_list. super source node -> source
 
-        edge_list = zip([dummy_super_source_node] * num_source_nodes,
-                        source_list)
+        edge_list = list(zip([dummy_super_source_node] * num_source_nodes,
+                         source_list))
         H.add_edges_from(edge_list)
 
-#        print edge_list
+#        print(edge_list)
 
         # Add edges:
         #   \forall sink \in sink_list. sink -> super sink node
 
-        edge_list = zip(sink_list, [dummy_super_sink_node] * num_sink_nodes)
+        edge_list = list(zip(sink_list, [dummy_super_sink_node] *
+                             num_sink_nodes))
         H.add_edges_from(edge_list)
 
-#        print edge_list
+#        print(edge_list)
 
-#        print '='*80
+#        print('='*80)
         # TODO: WHY?
         # Switching this on with def path_gen(), results in empty path and no further results!!
         # #xplanation required!
 #        for path in nx.all_simple_paths(H, dummy_super_source_node, dummy_super_sink_node):
-#            print path
-#        print '='*80
+#            print(path)
+#        print('='*80)
 
         # TODO: how to do this with lambda?
         # Also, is this indeed correct?
@@ -275,7 +283,7 @@ class GraphGT(object):
 
             for p in path_list:
                 l = len(p)
-                #print l, max_depth
+                #print(l, max_depth)
                 if l <= max_depth:
                     yield p[1:-1]
 
@@ -365,13 +373,13 @@ class GraphGT(object):
 
         ######################################
         #TODO: wrap this up somehow
-        print ''
-        print term.move_up + term.move_up
+        print('')
+        print(term.move_up + term.move_up)
         ######################################
-        print 'getting K:{} paths...'.format(k),
+        print('getting K:{} paths...'.format(k), end='')
         for i in range(1, k):
             with term.location():
-                print i
+                print(i)
 
             for j in range(len(paths[-1]) - 1):
                 spur_node = paths[-1][j]
@@ -394,7 +402,7 @@ class GraphGT(object):
 
                     for (u, v, edge_attr) in G.edges_iter(node, data=True):
 
-                        # print 'lala1: {} -> {}'.format(u,v)
+                        # print('lala1: {} -> {}'.format(u,v))
 
                         G.remove_edge(u, v)
                         edges_removed.append((u, v, edge_attr))
@@ -405,7 +413,7 @@ class GraphGT(object):
 
                         for (u, v, edge_attr) in G.in_edges_iter(node, data=True):
 
-                            # print 'lala2: {} -> {}'.format(u,v)
+                            # print('lala2: {} -> {}'.format(u,v))
 
                             G.remove_edge(u, v)
                             edges_removed.append((u, v, edge_attr))
@@ -447,7 +455,7 @@ class GraphGT(object):
             max_paths
             ):
 
-        print 'WARNING: This is actually a plotting function!!!'
+        print('WARNING: This is actually a plotting function!!!')
 
         num_source_nodes = len(source_list)
         num_sink_nodes = len(sink_list)
@@ -458,11 +466,13 @@ class GraphGT(object):
         super_source_vertex = 'super_source_vertex'
         super_sink_vertex = 'super_sink_vertex'
 
-        edge_list = zip([super_source_vertex] * num_source_nodes, source_list)
+        edge_list = list(zip([super_source_vertex] * num_source_nodes,
+                             source_list))
         for e in edge_list:
             self.add_edge(*e)
 
-        edge_list = zip(sink_list, [super_sink_vertex] * num_sink_nodes)
+        edge_list = list(zip(sink_list, [super_sink_vertex] *
+                             num_sink_nodes))
         for e in edge_list:
             self.add_edge(*e)
 
@@ -476,23 +486,24 @@ class GraphGT(object):
         gt.graph_draw(self.G, vertex_text=self.G.vertex_index)
         time.sleep(1000)
 
-#        print edge_list
+#        print(edge_list)
 
         # Add edges:
         #   \forall sink \in sink_list. sink -> super sink node
 
-        edge_list = zip(sink_list, [dummy_super_sink_node] * num_sink_nodes)
+        edge_list = list(zip(sink_list, [dummy_super_sink_node] *
+                             num_sink_nodes))
         H.add_edges_from(edge_list)
 
-#        print edge_list
+#        print(edge_list)
 
-#        print '='*80
+#        print('='*80)
         # TODO: WHY?
         # Switching this on with def path_gen(), results in empty path and no further results!!
         # #xplanation required!
 #        for path in nx.all_simple_paths(H, dummy_super_source_node, dummy_super_sink_node):
-#            print path
-#        print '='*80
+#            print(path)
+#        print('='*80)
 
         # TODO: how to do this with lambda?
         # Also, is this indeed correct?

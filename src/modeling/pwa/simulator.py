@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 
 class SimError(Exception):
     pass
@@ -12,7 +17,7 @@ class SimError(Exception):
 def simulate(sys, x0, n):
     x = x0
     x_trace = [x0]
-    t_trace = range(n)
+    t_trace = list(range(n))
     for i in range(n - 1):
         x_ = sys.predict(x)
         x_trace.append(x_)

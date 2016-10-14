@@ -1,5 +1,10 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 import numpy as np
 from scipy import io
 
@@ -15,6 +20,7 @@ import settings
 #import matplotlib.pyplot as plt
 
 plot_figure_for_paper = False
+
 
 class Trace(object):
 
@@ -90,7 +96,7 @@ class Trace(object):
         # plt_s1 = plt.plot(t_array, trace.s_array[:, 1], label='ref')
         # plt_u = AU.plot(t_array, trace.u_array[:, 0], label='u')
         # plt_ci = AC.plot(t_array, trace.ci[:, 0], label='ci')
-        # print trace.s_array
+        # print(trace.s_array)
         # plt.legend()
         # plt.legend([plt_x0, plt_x1, plt_s0, plt_s1], ['x0', 'x1', 's0', 's1'])
     # plt.plot(t_array, ref_signal, drawstyle='steps-post')
@@ -117,5 +123,3 @@ class Trace(object):
             self.pi,
             )
         return s
-
-

@@ -1,7 +1,11 @@
+from __future__ import absolute_import
+from __future__ import division
 from __future__ import print_function
+from __future__ import unicode_literals
 
 import logging
 import abc
+import six
 
 from sklearn import linear_model as skl_lm
 import numpy as np
@@ -45,8 +49,9 @@ class UdetError(Exception):
     pass
 
 
+@six.add_metaclass(abc.ABCMeta)
 class RegressionModel(object):
-    __metaclass__ = abc.ABCMeta
+    #__metaclass__ = abc.ABCMeta
 
     def __init__(self, x, y):
         self.udet = small_data_set(x)
