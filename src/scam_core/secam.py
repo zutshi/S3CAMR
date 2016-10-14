@@ -19,6 +19,8 @@ import argparse
 import time
 import sys as SYS
 
+import dill
+
 from . import abstraction
 from . import sample
 from . import simulatesystem as simsys
@@ -407,8 +409,8 @@ def falsify_using_model(
     SS.discover(current_abs, system_params)
 
     opts.plotting.show()
-    #current_abs.G.dump('{}_graph.dump'.format(sys.sys_name))
-    import pickle
+    print('dumping abstraction')
+    fp.write_data('{}_graph.dump'.format(sys.sys_name), dill.dumps(current_abs))
 
     if not system_params.final_state_set:
         print('did not find any abstract counter example!', file=SYS.stderr)
