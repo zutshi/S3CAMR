@@ -9,8 +9,9 @@ import logging
 import Queue
 import numpy as np
 
-import abstraction as AA
-import sample as SaMpLe
+from . import abstraction as AA
+from . import sample as SaMpLe
+
 from utils import print
 #from utils import print
 

@@ -8,17 +8,15 @@ from __future__ import unicode_literals
 import logging
 import numpy as np
 
+import err
 from utils import print
-from properties import PropertyChecker
 
 # import matplotlib.pyplot as plt
-
-import err
 #TAG:Z3_IND
-# Comment out below import
-#import smtSolver as smt
-import concretePlant as cp
-import cellmanager as CM
+
+from . import concretePlant as cp
+from . import cellmanager as CM
+from .properties import PropertyChecker
 
 logger = logging.getLogger(__name__)
 

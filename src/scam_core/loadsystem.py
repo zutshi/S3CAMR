@@ -19,12 +19,13 @@ import numpy as np
 import sys as SYS
 import imp
 
-from numdims import NumDims
-import psim
-import constraints as cns
+from .numdims import NumDims
+from . import psim
+
 import utils as U
 from utils import print
 import fileops as fp
+import constraints as cns
 
 
 class MissingSystemDefError(Exception):

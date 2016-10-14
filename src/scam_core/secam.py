@@ -19,19 +19,19 @@ import argparse
 import time
 import sys as SYS
 
-import abstraction
-import sample
-import fileops as fp
-import simulatesystem as simsys
-import scattersim as SS
-import err
-import loadsystem
+from . import abstraction
+from . import sample
+from . import simulatesystem as simsys
+from . import scattersim as SS
+from . import loadsystem
 #import traces
-import wmanager
-from plot import plotting
-import random_testing as RT
-import properties
+from . import wmanager
+from .plot import plotting
+from . import random_testing as RT
+from . import properties
 
+import err
+import fileops as fp
 #import utils as U
 from utils import print
 
@@ -382,6 +382,7 @@ def falsify_using_model(
         sys,
         prop):
 
+    from . import modelrefine as MR
     # TODO: temp function ss.init()
 
     (initial_state_set, final_state_set, is_final) = \
@@ -424,7 +425,6 @@ def falsify_using_model(
                                                 opts.max_paths)
     print('Refining...')
     if opts.refine == 'model-dft':
-        import modelrefine as MR
         MR.refine_dft_model_based(current_abs,
                                   error_paths,
                                   pi_seq_list,
@@ -434,7 +434,6 @@ def falsify_using_model(
                                   sys,
                                   prop)
     elif opts.refine == 'model-dmt':
-        import modelrefine as MR
         MR.refine_dmt_model_based(current_abs,
                                   error_paths,
                                   pi_seq_list,
@@ -444,7 +443,6 @@ def falsify_using_model(
                                   sys,
                                   prop)
     elif opts.refine == 'model-dct':
-        import modelrefine as MR
         raise NotImplementedError
     else:
         assert(False)

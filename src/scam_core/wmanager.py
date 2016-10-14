@@ -8,7 +8,7 @@ import itertools
 
 from utils import print
 
-import cellmanager as CM
+from . import cellmanager as CM
 
 
 class WMap(object):

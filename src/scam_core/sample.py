@@ -10,8 +10,8 @@ import functools as ft
 import numpy as np
 import logging
 
-import state
-import cellmanager as CM
+from . import state
+from . import cellmanager as CM
 
 from utils import print
 

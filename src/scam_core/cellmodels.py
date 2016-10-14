@@ -10,11 +10,12 @@ import six
 import numpy as np
 
 import constraints as cons
-import cellmanager as CM
 #import err
 from utils import print
 
 import settings
+
+from . import cellmanager as CM
 
 if settings.debug_plot:
     import matplotlib.pyplot as plt

@@ -4,9 +4,9 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import numpy as np
-import constraints as cons
 import itertools as it
 
+import constraints as cons
 
 # TODO: change cons to cons_object which has cons in addition to all states
 # a concrete state has

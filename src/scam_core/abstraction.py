@@ -23,9 +23,10 @@ import numpy as np
 import utils as U
 from utils import print
 import err
-import graphs.graph as g
-import state as st
-import cellmanager as CM
+
+from .graphs import graph as g
+from . import state as st
+from . import cellmanager as CM
 
 import settings
 
@@ -111,20 +112,20 @@ class TopLevelAbs:
         # requeseted controller abstraction
 
         if controller_abstraction_type == 'symbolic_pathcrawler':
-            import smtSolver as smt
+            from . import smtSolver as smt
             smt_solver = smt.smt_solver_factory('z3')
-            import CASymbolicPCrawler as CA
+            from . import CASymbolicPCrawler as CA
             controller_abs = CA.ControllerSymbolicAbstraction(self.num_dims,
                     controller_sym_path_obj, min_smt_sample_dist, smt_solver)
         elif controller_abstraction_type == 'symbolic_klee':
-            import CASymbolicKLEE as CA
+            from . import CASymbolicKLEE as CA
             controller_abs = CA.ControllerSymbolicAbstraction(self.num_dims,
                     controller_sym_path_obj, min_smt_sample_dist)
         #elif controller_abstraction_type == 'concolic':
         #    import CAConcolic as CA
         #    controller_abs = CA.ControllerCollectionAbstraction(self.num_dims)
         elif controller_abstraction_type == 'concrete':
-            import CAConcolic as CA
+            from . import CAConcolic as CA
             controller_abs = CA.ControllerCollectionAbstraction(self.num_dims)
         elif controller_abstraction_type == 'concrete_no_controller':
             DummyControllerAbs = type(str('DummyControllerAbs'), (), {})
@@ -146,7 +147,7 @@ class TopLevelAbs:
 
         if plant_abstraction_type == 'cell':
             #from PACell import *
-            import PACell as PA
+            from . import PACell as PA
         else:
             raise NotImplementedError
         # Overriding the passed in plant and conctroller abstractions

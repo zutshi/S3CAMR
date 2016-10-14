@@ -50,8 +50,8 @@ def factory(bmc_engine,
     assert(settings.CE)
 
     if bmc_engine == 'sal':
-        import sal_bmc.salbmc
-        return sal_bmc.salbmc.BMC(
+        from .sal_bmc import salbmc
+        return salbmc.BMC(
              vs,
              pwa_model,
              init_state,

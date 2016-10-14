@@ -16,13 +16,13 @@ import err
 import utils as U
 from utils import print
 
-import sample
-import traces
-import state as st
-from properties import PropertyChecker
-import simulatesystem as simsys
-import state
-import cellmanager as CM
+from . import sample
+from . import traces
+from . import state as st
+from . import state
+from . import cellmanager as CM
+from . import simulatesystem as simsys
+from .properties import PropertyChecker
 
 logger = logging.getLogger(__name__)
 term = Terminal()

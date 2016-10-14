@@ -6,8 +6,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import state as st
-import traces
+from . import state as st
+from . import traces
+
 import err
 import utils as U
 #import progBar as pb

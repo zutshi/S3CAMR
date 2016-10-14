@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 
 import logging
 import numpy as np
+import random
 
 # TODO: This is not clearly understood, and is deprecated!!
 
@@ -16,15 +17,14 @@ import imp
 import utils
 import err
 import fileops as fp
-import state as st
 
 # only for testing
 # import importlib
 # A = importlib.import_module('abstraction')
 # S = importlib.import_module('sample')
 
-import sample as S
-import random
+from . import state as st
+from . import sample as S
 
 np.set_printoptions(threshold=10000)
 

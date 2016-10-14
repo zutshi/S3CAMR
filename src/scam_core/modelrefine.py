@@ -9,25 +9,26 @@ import itertools as it
 
 import numpy as np
 
-import simulatesystem as simsys
+from . import simulatesystem as simsys
 from modeling.pwa import pwa
 from modeling.pwa import simulator as pwa_sim
 from modeling.pwa import relational as rel
-import random_testing as rt
+from . import random_testing as rt
 from bmc import bmc as BMC
 from bmc.bmc_spec import InvarStatus
 import modeling.affinemodel as AFM
-from cellmodels import Qxw, Qx
-import cellmanager as CM
+from .cellmodels import Qxw, Qx
+from . import cellmanager as CM
+from .graphs.graph import factory as graph_factory
+from lin_prog import analyzepath as azp
+from . import state
+
+import settings
+
 import utils as U
 from utils import print
 import err
 from constraints import IntervalCons, top2ic, zero2ic
-from graphs.graph import factory as graph_factory
-from lin_prog import analyzepath as azp
-import state
-
-import settings
 
 #np.set_printoptions(suppress=True, precision=2)
 
