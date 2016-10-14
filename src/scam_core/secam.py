@@ -407,6 +407,8 @@ def falsify_using_model(
     SS.discover(current_abs, system_params)
 
     opts.plotting.show()
+    #current_abs.G.dump('{}_graph.dump'.format(sys.sys_name))
+    import pickle
 
     if not system_params.final_state_set:
         print('did not find any abstract counter example!', file=SYS.stderr)

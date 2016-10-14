@@ -133,6 +133,11 @@ class GraphNX(object):
                 attr_map[attr].append(self.G[v1][v2][attr])
         return attr_map
 
+    def dump(self, fname):
+        print('saving graph')
+        nx.write_gpickle(self.G, fname)
+        return
+
     # ###################### KSP 1 ##################################################
     # https://gist.github.com/guilhermemm/d4623c574d4bccb6bf0c
     # __author__ = 'Guilherme Maia <guilhermemm@gmail.com>'
