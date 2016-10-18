@@ -9,8 +9,22 @@ from scipy.integrate import ode
 import matplotlib.pyplot as plt
 
 import utils as U
+import copy_reg as cr
+import types
 
 PLOT = False
+
+
+def _pickle_method(m):
+    """_pickle_method
+    Required for successfull pickling of sim()
+    """
+    if m.im_self is None:
+        return getattr, (m.im_class, m.im_func.func_name)
+    else:
+        return getattr, (m.im_self, m.im_func.func_name)
+
+cr.pickle(types.MethodType, _pickle_method)
 
 
 # As it is created only once, all methods should be static
@@ -35,7 +49,7 @@ class SIM(object):
 
         self.solver = ode(dyn).set_integrator('dopri5', rtol=rtol, max_step=max_step, nsteps=nsteps)  # (1)
 
-    @U.memoize2disk(U.memoize_hash_method)
+    #@U.memoize2disk(U.memoize_hash_method)
     def sim(self, TT, X0, D, P, U, I, property_checker):
         property_violated_flag = False
         num_dim_x = len(X0)
