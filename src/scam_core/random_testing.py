@@ -11,10 +11,12 @@ import functools as ft
 import numpy as np
 import tqdm
 from blessed import Terminal
+import cPickle as cP
 
 import err
 import utils as U
 from utils import print
+import fileops as fops
 
 from . import sample
 from . import traces
@@ -24,8 +26,13 @@ from . import cellmanager as CM
 from . import simulatesystem as simsys
 from .properties import PropertyChecker
 
+import multiprocessing as mp
+
 logger = logging.getLogger(__name__)
 term = Terminal()
+
+# mpl = mp.log_to_stderr()
+# mpl.setLevel(logging.INFO)
 
 
 def concretize_bmc_trace(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq):
@@ -119,7 +126,7 @@ def traces_violates(sys_sim, sys, prop, opts, trace_len, x0_samples, x_array_bmc
                 t, np.array([x0]), d,
                 pvt, s, u, pi_array, ci_array)
 
-        traces.append(simsys.simulate(sys_sim, concrete_states[0], sys.delta_t*num_segments))
+        traces.append(simsys.simulate(sys_sim, sys.delta_t*num_segments, concrete_states[0]))
 
     from matplotlib import pyplot as plt
     #print(trace)
@@ -217,6 +224,41 @@ def check_prop_violation(trace, prop):
         return False
 
 
+def pickle_res(f, arg):
+    return cP.dumps(f(arg), protocol=cP.HIGHEST_PROTOCOL)
+
+
+def simulate_par(sys, prop, opts):
+    pool = mp.Pool()
+    num_samples = opts.num_sim_samples
+    CHNK = 1000
+    num_violations = 0
+
+    #TODO: concrete_states should be an iterator/generator
+    concrete_states = sample.sample_init_UR(sys, prop, num_samples)
+    trace_list = []
+
+    sim = ft.partial(simsys.simulate_system, sys, prop.T)
+    f = ft.partial(pickle_res, sim)
+
+    fname = '{}.simdump'.format(sys.sys_name)
+    with fops.StreamWrite(fname) as sw:
+        for trace in pool.imap_unordered(f, concrete_states, chunksize=CHNK):
+            # pickle the trace and dump it
+            # Remove pickling from here...this should be the lightest
+            # process as it is the bottleneck
+            #sw.write(cP.dumps(trace, protocol=cP.HIGHEST_PROTOCOL))
+            sw.write(trace)
+
+
+#         if check_prop_violation(trace, prop):
+#             num_violations += 1
+#             print('violation counter: {}'.format(num_violations))
+
+#     print('number of violations: {}'.format(num_violations))
+    return None
+
+
 def simulate(sys, prop, opts):
     num_samples = opts.num_sim_samples
     num_violations = 0
@@ -226,7 +268,7 @@ def simulate(sys, prop, opts):
 
     sys_sim = simsys.get_system_simulator(sys)
     for i in tqdm.trange(num_samples):
-        trace = simsys.simulate(sys_sim, concrete_states[i], prop.T)
+        trace = simsys.simulate(sys_sim, prop.T, concrete_states[i])
         trace_list.append(trace)
         if check_prop_violation(trace, prop):
             num_violations += 1
