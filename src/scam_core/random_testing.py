@@ -135,7 +135,7 @@ def traces_violates(sys_sim, sys, prop, opts, trace_len, x0_samples, x_array_bmc
     plt.title('red: bmc trace, blue: sim() trace')
     opts.plotting.show()
 
-    vio_traces = [trace for trace in traces if check_prop_violation(trace, prop)]
+    vio_traces = [trace for trace in traces if check_prop_violation(prop, trace)]
     return vio_traces
 
 
@@ -196,7 +196,7 @@ def abstract_trace_violates(sys, sp, prop, AA, opts, x_array, pi_seq):
 
 # TODO: make a module of its own once we add more general property using
 # monitors...
-def check_prop_violation(trace, prop):
+def check_prop_violation(prop, trace):
     """check_prop_violation
 
     Parameters
@@ -224,44 +224,70 @@ def check_prop_violation(trace, prop):
         return False
 
 
-def pickle_res(f, arg):
-    return cP.dumps(f(arg), protocol=cP.HIGHEST_PROTOCOL)
+# def pickle_res(f, arg):
+#     return cP.dumps(f(arg), protocol=cP.HIGHEST_PROTOCOL)
+
 
 def simulate(sys, prop, opts):
     if opts.par:
-        return simulate_par(sys, prop, opts)
+        return simulate_par(sys, prop, opts)()
     else:
         return simulate_single(sys, prop, opts)
 
-def simulate_par(sys, prop, opts):
-    pool = mp.Pool()
-    num_samples = opts.num_sim_samples
-    CHNK = 1000
-    num_violations = 0
 
-    #TODO: concrete_states should be an iterator/generator
-    concrete_states = sample.sample_init_UR(sys, prop, num_samples)
-    trace_list = []
+class simulate_par(object):
+    def __init__(self, sys, prop, opts):
+        self.sys = sys
+        self.prop = prop
+        self.opts = opts
+        self.fname = '{}.simdump'.format(sys.sys_name)
+        return
 
-    sim = ft.partial(simsys.simulate_system, sys, prop.T)
-    f = ft.partial(pickle_res, sim)
+    def trace_gen(self):
+        with fops.ReadLine(self.fname, mode='rb') as sr:
+            data = []
+            line = sr.read()
+            while line != str(''):
+                if line == str('\n'):
+                    # remove the last '\n'
+                    data[-1] = data[-1][:-1]
+                    yield cP.loads(str('').join(data))
+                    data = []
+                else:
+                    data.append(line)
+                line = sr.read()
+        return
 
-    fname = '{}.simdump'.format(sys.sys_name)
-    with fops.StreamWrite(fname) as sw:
-        for trace in pool.imap_unordered(f, concrete_states, chunksize=CHNK):
-            # pickle the trace and dump it
-            # Remove pickling from here...this should be the lightest
-            # process as it is the bottleneck
-            #sw.write(cP.dumps(trace, protocol=cP.HIGHEST_PROTOCOL))
-            sw.write(trace)
+    def __call__(self):
+        pool = mp.Pool()
+        num_samples = self.opts.num_sim_samples
+        CHNK = 1000
+        num_violations = 0
 
+        #TODO: concrete_states should be an iterator/generator
+        concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
 
-#         if check_prop_violation(trace, prop):
-#             num_violations += 1
-#             print('violation counter: {}'.format(num_violations))
+        sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
+        #f = ft.partial(pickle_res, sim)
 
-#     print('number of violations: {}'.format(num_violations))
-    return None
+        with fops.StreamWrite(self.fname, mode='wb') as sw:
+            for trace in pool.imap_unordered(sim, concrete_states, chunksize=CHNK):
+                # pickle the trace and dump it
+                # Remove pickling from here...this should be the lightest
+                # process as it is the bottleneck
+                pickled_trace = cP.dumps(trace, protocol=cP.HIGHEST_PROTOCOL)
+                sw.write(pickled_trace)
+                # add teo newlines, as this is *never*?? happens in a
+                # pickle?
+                sw.write('\n\n')
+                if check_prop_violation(self.prop, trace):
+                    num_violations += 1
+
+        #f = ft.partial(check_prop_violation, self.prop)
+        #num_violations = sum(pool.imap_unordered(f, trace, chunksize=CHNK))
+
+        print('number of violations: {}'.format(num_violations))
+        return self.trace_gen()
 
 
 def simulate_single(sys, prop, opts):
@@ -275,7 +301,7 @@ def simulate_single(sys, prop, opts):
     for i in tqdm.trange(num_samples):
         trace = simsys.simulate(sys_sim, prop.T, concrete_states[i])
         trace_list.append(trace)
-        if check_prop_violation(trace, prop):
+        if check_prop_violation(prop, trace):
             num_violations += 1
             print('violation counter: {}'.format(num_violations))
 
