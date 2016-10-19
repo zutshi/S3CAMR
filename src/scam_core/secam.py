@@ -636,8 +636,6 @@ def run_secam(sys, prop, opts):
                             'random testing!')
         start_time = time.time()
         trace_list = RT.simulate(sys, prop, opts)
-        #trace_list = RT.simulate_par(sys, prop, opts)
-        #if plot:
         if opts.dump_trace:
             dump_trace(trace_list)
         opts.plotting.plot_trace_list(trace_list, opts.plots)
@@ -774,6 +772,9 @@ def main():
                         translating the pwa system to the transitions\
                         system for BMC.')
 
+    parser.add_argument('--par', action='store_true',
+                        help='parallel simulation')
+
 #    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     #print(args)
@@ -843,6 +844,7 @@ def main():
     opts.bmc_engine = args.bmc_engine
     # Default bmc prec
     opts.bmc_prec = args.bmc_prec
+    opts.par = args.par
 
     sys, prop = loadsystem.parse(filepath, args.pvt_init_data)
     if args.prop_check:

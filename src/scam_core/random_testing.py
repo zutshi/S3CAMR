@@ -227,6 +227,11 @@ def check_prop_violation(trace, prop):
 def pickle_res(f, arg):
     return cP.dumps(f(arg), protocol=cP.HIGHEST_PROTOCOL)
 
+def simulate(sys, prop, opts):
+    if opts.par:
+        return simulate_par(sys, prop, opts)
+    else:
+        return simulate_single(sys, prop, opts)
 
 def simulate_par(sys, prop, opts):
     pool = mp.Pool()
@@ -259,7 +264,7 @@ def simulate_par(sys, prop, opts):
     return None
 
 
-def simulate(sys, prop, opts):
+def simulate_single(sys, prop, opts):
     num_samples = opts.num_sim_samples
     num_violations = 0
 
