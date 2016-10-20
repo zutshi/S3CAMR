@@ -253,7 +253,6 @@ class simulate_par(object):
             yield trace
 
     def __call__(self):
-        pool = mp.Pool()
         num_samples = self.opts.num_sim_samples
         CHNK = 1000
         num_violations = 0
@@ -265,11 +264,16 @@ class simulate_par(object):
         #f = ft.partial(pickle_res, sim)
         #writer.write(pool.imap_unordered(sim, concrete_states, chunksize=CHNK))
         #with fops.StreamWrite(self.fname, mode='wb') as sw:
+        pool = mp.Pool()
+
         with PickleStreamWriter(self.fname) as writer:
             for trace in pool.imap_unordered(sim, concrete_states, chunksize=CHNK):
                 writer.write(trace)
                 if check_prop_violation(self.prop, trace):
                     num_violations += 1
+
+        pool.close()
+        pool.join()
 
         print('number of violations: {}'.format(num_violations))
         return self.trace_gen()
