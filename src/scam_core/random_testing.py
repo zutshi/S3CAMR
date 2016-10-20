@@ -264,6 +264,8 @@ class simulate_par(object):
         #f = ft.partial(pickle_res, sim)
         #writer.write(pool.imap_unordered(sim, concrete_states, chunksize=CHNK))
         #with fops.StreamWrite(self.fname, mode='wb') as sw:
+#         import time
+#         ti = time.time()
         pool = mp.Pool()
 
         with PickleStreamWriter(self.fname) as writer:
@@ -274,6 +276,20 @@ class simulate_par(object):
 
         pool.close()
         pool.join()
+#         tf = time.time()
+#         print('mp took: {}s'.format(tf-ti))
+#
+#         ti = time.time()
+#         from numap import NuMap
+#         with PickleStreamWriter(self.fname) as writer:
+#             for trace in NuMap(func=sim, iterable=concrete_states,
+#                                ordered=False, stride=1, buffer=1000):
+#                 writer.write(trace)
+#                 if check_prop_violation(self.prop, trace):
+#                     num_violations += 1
+
+#         tf = time.time()
+#         print('numap took: {}s'.format(tf-ti))
 
         print('number of violations: {}'.format(num_violations))
         return self.trace_gen()
