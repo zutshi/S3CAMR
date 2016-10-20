@@ -3,7 +3,7 @@
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
-from __future__ import unicode_literals
+#from __future__ import unicode_literals
 
 import numpy as np
 from scipy import io
@@ -113,7 +113,7 @@ class Trace(object):
         io.savemat('mat_file.mat', data, appendmat=False, format='5',
                    do_compression=False, oned_as='column')
 
-    def __repr__(self):
+    def __str__(self):
         s = '''t:{},\nx:{},\ns:{},\nu:{},\nci:{},\npi:{}'''.format(
             self.t_array,
             self.x_array,
@@ -121,5 +121,15 @@ class Trace(object):
             self.u_array,
             self.ci,
             self.pi,
+            )
+        return s
+    def serialize(self):
+        s = '''{}\n{}\n{}\n{}\n{}\n{}'''.format(
+            self.t_array.tobytes(),
+            self.x_array.tobytes(),
+            self.s_array.tobytes(),
+            self.u_array.tobytes(),
+            self.ci.tobytes(),
+            self.pi.tobytes(),
             )
         return s

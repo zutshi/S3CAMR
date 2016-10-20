@@ -27,6 +27,9 @@ from . import simulatesystem as simsys
 from .properties import PropertyChecker
 
 import multiprocessing as mp
+import zlib
+
+from IPython import embed
 
 logger = logging.getLogger(__name__)
 term = Terminal()
@@ -243,19 +246,78 @@ class simulate_par(object):
         self.fname = '{}.simdump'.format(sys.sys_name)
         return
 
+
+#     def trace_gen(self):
+#         with fops.ReadLine(self.fname, mode='rb') as sr:
+#             data = []
+#             line = sr.read()
+#             while line != str(''):
+#                 if line == str('\n'):
+#                     # remove the last '\n'
+#                     data[-1] = data[-1][:-1]
+#                     yield cP.loads(str('').join(data))
+#                     data = []
+#                 else:
+#                     data.append(line)
+#                 line = sr.read()
+#         return
     def trace_gen(self):
+        zo = zlib.decompressobj()
+        notdone = True
         with fops.ReadLine(self.fname, mode='rb') as sr:
-            data = []
-            line = sr.read()
-            while line != str(''):
-                if line == str('\n'):
-                    # remove the last '\n'
-                    data[-1] = data[-1][:-1]
-                    yield cP.loads(str('').join(data))
-                    data = []
+            while True:
+                cdata = sr.readline()
+                if cdata == str(''):
+                    break
+                ucdata = str(zo.decompress(cdata))
+                if not ucdata:
+                    continue
+                while notdone:
+                    _, sz, partial_pickle = ucdata.split(str('\n'), 2)
+                    assert(_ == '')
+                    sz = int(sz)
+                    while len(partial_pickle) < sz:
+                        partial_pickle += zo.decompress(sr.readline())
+                    pickle, partial_pickle = partial_pickle[0:sz], partial_pickle[sz:]
+                    yield cP.loads(pickle)
+                    notdone = bool(partial_pickle)
+                    ucdata = str(partial_pickle)
+
+        return
+
+    def trace_gen1(self):
+        zo = zlib.decompressobj()
+        incomp = str('')
+        partial_pickle = []
+        done = False
+        with fops.ReadLine(self.fname, mode='rb') as sr:
+#             from IPython import embed
+#             embed()
+            while not done:
+                cdata = sr.readline()
+                if cdata == str(''):
+                    done = True
+                    ucdata = zo.flush()
                 else:
-                    data.append(line)
-                line = sr.read()
+                    ucdata = zo.decompress(cdata)
+
+                buf = ucdata.split(str('\n\n\n\n'))
+                assert(len(buf) > 0)
+
+                # if split occurred
+                if len(buf) > 1:
+                    partial_pickle.append(buf[0])
+                    # pickle is completed
+                    pickle = str('').join(partial_pickle)
+                    yield cP.loads(pickle)
+                    partial_pickle = []
+                    for pickle in buf[1:-1]:
+                        yield cP.loads(pickle)
+                    partial_pickle.append(buf[-1])
+                else:
+                    partial_pickle.append(buf[0])
+
+        assert(partial_pickle == ['', ''])
         return
 
     def __call__(self):
@@ -270,19 +332,29 @@ class simulate_par(object):
         sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
         #f = ft.partial(pickle_res, sim)
 
+        zo = zlib.compressobj()
         with fops.StreamWrite(self.fname, mode='wb') as sw:
             for trace in pool.imap_unordered(sim, concrete_states, chunksize=CHNK):
                 # pickle the trace and dump it
                 # Remove pickling from here...this should be the lightest
                 # process as it is the bottleneck
                 pickled_trace = cP.dumps(trace, protocol=cP.HIGHEST_PROTOCOL)
-                sw.write(pickled_trace)
                 # add teo newlines, as this is *never*?? happens in a
                 # pickle?
-                sw.write('\n\n')
+                #sw.write('\n\n')
+                # write size
+                sz = len(pickled_trace)
+                sw.write(zo.compress('\n{}\n'.format(sz)))
+                sw.write(zo.compress(pickled_trace))
+                #sw.write(zo.compress('\n\n\n\n'))
+
+                # can serialize, but then will have to do book keeping
+                # for de serializing
+                #sw.write(trace.serialize())
+
                 if check_prop_violation(self.prop, trace):
                     num_violations += 1
-
+            sw.write(zo.flush())
         #f = ft.partial(check_prop_violation, self.prop)
         #num_violations = sum(pool.imap_unordered(f, trace, chunksize=CHNK))
 
