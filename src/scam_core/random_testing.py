@@ -238,6 +238,41 @@ def simulate(sys, prop, opts):
     else:
         return simulate_single(sys, prop, opts)
 
+def f(sys, prop, fd, _):
+    cs = sample.sample_init_UR(sys, prop, 1)
+    trace = simsys.simulate_system(sys, prop.T, cs[0])
+    #fd.write(trace)
+    if check_prop_violation(prop, trace):
+        #num_violations += 1
+        pass
+
+def mp_imap():
+    #TODO: concrete_states should be an iterator/generator
+    concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
+    sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
+    #f = ft.partial(pickle_res, sim)
+    #writer.write(pool.imap_unordered(sim, concrete_states, chunksize=CHNK))
+    #with fops.StreamWrite(self.fname, mode='wb') as sw:
+#
+    pool = mp.Pool(16)
+    with PickleStreamWriter(self.fname) as writer:
+        for trace in pool.imap_unordered(sim, concrete_states, chunksize=CHNK):
+            writer.write(trace)
+            if check_prop_violation(self.prop, trace):
+                num_violations += 1
+    pool.close()
+    pool.join()
+
+def jb_parallel():
+        pool = mp.Pool(16)
+        fd = open('delme.dump', 'w')
+        ff = ft.partial(f, self.sys, self.prop, fd)
+        for trace in pool.imap_unordered(ff, xrange(num_samples), chunksize=CHNK):
+            
+            pass
+        fd.close()
+        pool.close()
+        pool.join()
 
 class simulate_par(object):
     def __init__(self, sys, prop, opts):
@@ -252,30 +287,44 @@ class simulate_par(object):
         for trace in reader.read():
             yield trace
 
+
     def __call__(self):
         num_samples = self.opts.num_sim_samples
-        CHNK = 1000
+        CHNK = 6250
         num_violations = 0
 
-        #TODO: concrete_states should be an iterator/generator
-        concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
+        if False:
+            mp_imap()
 
-        sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
-        #f = ft.partial(pickle_res, sim)
-        #writer.write(pool.imap_unordered(sim, concrete_states, chunksize=CHNK))
-        #with fops.StreamWrite(self.fname, mode='wb') as sw:
-        pool = mp.Pool()
+        else:
+            jb_parallel()
 
-        with PickleStreamWriter(self.fname) as writer:
-            for trace in pool.imap_unordered(sim, concrete_states, chunksize=CHNK):
-                writer.write(trace)
-                if check_prop_violation(self.prop, trace):
-                    num_violations += 1
 
-        pool.close()
-        pool.join()
 
-        print('number of violations: {}'.format(num_violations))
+
+# very slow
+
+#         import tempfile
+#         import os
+#         from joblib import load, dump
+
+#         temp_folder = tempfile.mkdtemp()
+#         filename = os.path.join(temp_folder, 'joblib_test.mmap')
+#         if os.path.exists(filename): os.unlink(filename)
+#         _ = dump(concrete_states, filename)
+#         large_memmap = load(filename, mmap_mode='r+')
+
+
+#         import joblib as jb
+#         with PickleStreamWriter(self.fname) as writer:
+#             for trace in jb.Parallel(n_jobs=16, verbose=0, batch_size='auto')(jb.delayed(sim, check_pickle=False)(i) for i in large_memmap):
+#                 writer.write(trace)
+#                 if check_prop_violation(self.prop, trace):
+#                     num_violations += 1
+      
+
+
+        #print('number of violations: {}'.format(num_violations))
         return self.trace_gen()
 
 
