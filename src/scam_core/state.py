@@ -65,6 +65,9 @@ class StateArray(object):
 
         return len(self.cont_states)
 
+    def __len__(self):
+        return self.n
+
     def iterable(self):
         #i = 0
         #while i < self.n:

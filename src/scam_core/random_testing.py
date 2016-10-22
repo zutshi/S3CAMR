@@ -81,7 +81,6 @@ def concretize_bmc_trace(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq):
         print('nothing found', file=SYS.stderr)
         exit()
 
-
     # 3)
     # Check using random sims. Poll the BMC solver to provide more
     # samples for the same discrete sequence.
@@ -238,6 +237,7 @@ def simulate(sys, prop, opts):
     else:
         return simulate_single(sys, prop, opts)
 
+
 def f(sys, prop, fd, _):
     cs = sample.sample_init_UR(sys, prop, 1)
     trace = simsys.simulate_system(sys, prop.T, cs[0])
@@ -246,10 +246,11 @@ def f(sys, prop, fd, _):
         #num_violations += 1
         pass
 
-def mp_imap():
+
+def mp_imap(self, sim, concrete_states):
+    CHNK = 6250
+    num_violations = 0
     #TODO: concrete_states should be an iterator/generator
-    concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
-    sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
     #f = ft.partial(pickle_res, sim)
     #writer.write(pool.imap_unordered(sim, concrete_states, chunksize=CHNK))
     #with fops.StreamWrite(self.fname, mode='wb') as sw:
@@ -263,7 +264,48 @@ def mp_imap():
     pool.close()
     pool.join()
 
-def numap():
+
+
+
+def worker(prop, sim, writer, concrete_states):
+    num_violations = 0
+    with writer:
+        for cs in concrete_states:
+            trace = sim(cs)
+            writer.write(trace)
+            if check_prop_violation(prop, trace):
+                num_violations += 1
+    return num_violations
+
+
+def mp_custom(self, sim, concrete_states):
+    jobs = []
+    nworkers = mp.cpu_count()
+    work = len(concrete_states)
+    work_load = int(work/nworkers)
+    left_over_jobs = work % nworkers
+    assert(work_load * nworkers + left_over_jobs == work)
+
+    for i in range(nworkers):
+        fname = self.fname + str(i)
+        writer = PickleStreamWriter(fname)
+        cs_slice = concrete_states[i*work_load:(i+1)*work_load]
+        # if its the last worker, send off all the remaining jobs
+        if i == nworkers - 1:
+            cs_slice = concrete_states[i*work_load:]
+        # else, slice evenly
+        else:
+            cs_slice = concrete_states[i*work_load:(i+1)*work_load]
+        p = mp.Process(target=worker, args=(self.prop, sim, writer, cs_slice))
+        jobs.append(p)
+        p.start()
+    for job in jobs:
+        job.join()
+
+
+
+def numap(self, sim, concrete_states):
+    num_violations = 0
     from numap import NuMap
     with PickleStreamWriter(self.fname) as writer:
         for trace in NuMap(func=sim, iterable=concrete_states,
@@ -272,18 +314,39 @@ def numap():
             if check_prop_violation(self.prop, trace):
                 num_violations += 1
 
-    print('numap took: {}s'.format(tf-ti))
 
-def jb_parallel():
-        pool = mp.Pool(16)
-        fd = open('delme.dump', 'w')
-        ff = ft.partial(f, self.sys, self.prop, fd)
-        for trace in pool.imap_unordered(ff, xrange(num_samples), chunksize=CHNK):
-            
-            pass
-        fd.close()
-        pool.close()
-        pool.join()
+def mp_shared_mem(self, num_samples):
+    CHNK = 6250
+    pool = mp.Pool(16)
+    fd = open('delme.dump', 'w')
+    ff = ft.partial(f, self.sys, self.prop, fd)
+    for trace in pool.imap_unordered(ff, xrange(num_samples), chunksize=CHNK):
+        pass
+    fd.close()
+    pool.close()
+    pool.join()
+
+
+def jb_parallel(self, sim, concrete_states):
+    num_violations = 0
+    import tempfile
+    import os
+    import joblib as jb
+    from joblib import load, dump
+
+    temp_folder = tempfile.mkdtemp()
+    filename = os.path.join(temp_folder, 'joblib_test.mmap')
+    if os.path.exists(filename):
+        os.unlink(filename)
+    dump(concrete_states, filename)
+    large_memmap = load(filename, mmap_mode='r+')
+
+    with PickleStreamWriter(self.fname) as writer:
+        for trace in jb.Parallel(n_jobs=16, verbose=0, batch_size='auto')(jb.delayed(sim, check_pickle=False)(i) for i in large_memmap):
+            writer.write(trace)
+            if check_prop_violation(self.prop, trace):
+                num_violations += 1
+
 
 class simulate_par(object):
     def __init__(self, sys, prop, opts):
@@ -298,39 +361,28 @@ class simulate_par(object):
         for trace in reader.read():
             yield trace
 
-
     def __call__(self):
-        num_samples = self.opts.num_sim_samples
-        CHNK = 6250
-        num_violations = 0
+        par_option = 'mp_custom'
 
-        if False:
-            mp_imap()
-
-        else:
+        if par_option == 'mp':
+            num_samples = self.opts.num_sim_samples
+            concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
+            sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
+            mp_imap(self, sim, concrete_states)
+        elif par_option == 'mp_custom':
+            num_samples = self.opts.num_sim_samples
+            concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
+            sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
+            mp_custom(self, sim, concrete_states)
+        elif par_option == 'mp_shared_mem':
+            num_samples = self.opts.num_sim_samples
+            concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
+            sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
+        elif par_option == 'joblib':
             jb_parallel()
-
-# very slow
-
-#         import tempfile
-#         import os
-#         from joblib import load, dump
-
-#         temp_folder = tempfile.mkdtemp()
-#         filename = os.path.join(temp_folder, 'joblib_test.mmap')
-#         if os.path.exists(filename): os.unlink(filename)
-#         _ = dump(concrete_states, filename)
-#         large_memmap = load(filename, mmap_mode='r+')
-
-
-#         import joblib as jb
-#         with PickleStreamWriter(self.fname) as writer:
-#             for trace in jb.Parallel(n_jobs=16, verbose=0, batch_size='auto')(jb.delayed(sim, check_pickle=False)(i) for i in large_memmap):
-#                 writer.write(trace)
-#                 if check_prop_violation(self.prop, trace):
-#                     num_violations += 1
-      
-
+        else:
+            raise NotImplementedError
+            #single threaded
 
         #print('number of violations: {}'.format(num_violations))
         return self.trace_gen()
