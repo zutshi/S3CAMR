@@ -263,6 +263,17 @@ def mp_imap():
     pool.close()
     pool.join()
 
+def numap():
+    from numap import NuMap
+    with PickleStreamWriter(self.fname) as writer:
+        for trace in NuMap(func=sim, iterable=concrete_states,
+                           ordered=False, stride=1, buffer=1000):
+            writer.write(trace)
+            if check_prop_violation(self.prop, trace):
+                num_violations += 1
+
+    print('numap took: {}s'.format(tf-ti))
+
 def jb_parallel():
         pool = mp.Pool(16)
         fd = open('delme.dump', 'w')
@@ -298,9 +309,6 @@ class simulate_par(object):
 
         else:
             jb_parallel()
-
-
-
 
 # very slow
 
