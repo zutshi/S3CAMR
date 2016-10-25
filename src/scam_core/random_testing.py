@@ -255,7 +255,7 @@ def mp_imap(self, sim, concrete_states):
     #writer.write(pool.imap_unordered(sim, concrete_states, chunksize=CHNK))
     #with fops.StreamWrite(self.fname, mode='wb') as sw:
 #
-    pool = mp.Pool(16)
+    pool = mp.Pool()
     with PickleStreamWriter(self.fname) as writer:
         for trace in pool.imap_unordered(sim, concrete_states, chunksize=CHNK):
             writer.write(trace)
@@ -267,7 +267,10 @@ def mp_imap(self, sim, concrete_states):
 
 
 
+import time
 def worker(prop, sim, writer, concrete_states):
+    print('burden: {}'.format(len(concrete_states)))
+    ti = time.time()
     num_violations = 0
     with writer:
         for cs in concrete_states:
@@ -275,12 +278,14 @@ def worker(prop, sim, writer, concrete_states):
             writer.write(trace)
             if check_prop_violation(prop, trace):
                 num_violations += 1
+    tf = time.time()
+    print('time taken = {}'.format(tf-ti))
     return num_violations
 
 
 def mp_custom(self, sim, concrete_states):
     jobs = []
-    nworkers = mp.cpu_count()
+    nworkers = 16#mp.cpu_count()
     work = len(concrete_states)
     work_load = int(work/nworkers)
     left_over_jobs = work % nworkers
