@@ -89,6 +89,12 @@ class GraphNX(object):
             self.G = G
             self.Type = Type
 
+    def num_nodes(self):
+        return self.G.number_of_nodes()
+
+    def num_edges(self):
+        return self.G.number_of_edges()
+
     def nodes(self):
         return self.G.nodes()
 
