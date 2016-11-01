@@ -636,9 +636,9 @@ def run_secam(sys, prop, opts):
                             'random testing!')
         start_time = time.time()
         trace_list = RT.simulate(sys, prop, opts)
-        print(len(list(trace_list)))
-#         for trace in trace_list:
-#             print(trace)
+        #print(len(list(trace_list)))
+        for trace in trace_list:
+            print(trace)
         if opts.dump_trace:
             dump_trace(trace_list)
         opts.plotting.plot_trace_list(trace_list, opts.plots)

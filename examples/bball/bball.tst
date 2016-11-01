@@ -17,8 +17,8 @@ initial_set = [[-0.1, 3.0, 5.0, -5.0],
 # x=[ 330.01284287    1.06944299    9.99909701   -1.0229609 ], t=33.0
 
 # X0 leading to error set
-initial_set = [[-0.04308, 3.4704, 9.9862, 4.9871],
-               [-0.04300, 3.4705, 9.9863, 4.9872]]
+#initial_set = [[-0.04308, 3.4704, 9.9862, 4.9871],
+#               [-0.04300, 3.4705, 9.9863, 4.9872]]
 
 
 error_set = [[330.0, 1.0, -inf, -inf],
@@ -55,15 +55,15 @@ num_samples = 2
 #num_samples = 50
 
 # Abstraction params: coarse
-# grid_eps = [50, 20, 20, 20]
-# delta_t = 1.0
-# num_samples = 20
+#grid_eps = [50, 20, 20, 20]
+delta_t = 5.0
+num_samples = 100
 
 # Abstraction params: coarse
-#grid_eps = [50.1, 10.1, 10.1, 10.1]
-grid_eps = [0.001]*4
-delta_t = 5.0
-num_samples = 20
+grid_eps = [50.1, 10.1, 10.1, 10.1]
+#grid_eps = [0.001]*4
+#delta_t = 5.0
+#num_samples = 20
 
 MAX_ITER = 4
 
