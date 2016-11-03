@@ -41,9 +41,8 @@ T = 40.0
 
 # Might work, but have not observed success yet.
 #grid_eps = [10, 1, 1, 1]
-
-delta_t = 40.0
-num_samples = 2
+#delta_t = 40.0
+#num_samples = 2
 
 # Specially confusing, since the BMC comes back with no results...
 # delta_t = 5.0
