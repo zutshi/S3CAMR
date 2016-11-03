@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 debug = False
 debug_plot = False
+plot = False
 
 
 # CE hack is ON
