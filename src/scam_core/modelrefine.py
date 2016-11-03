@@ -30,6 +30,8 @@ from utils import print
 import err
 from constraints import IntervalCons, top2ic, zero2ic
 
+from IPython import embed
+
 #np.set_printoptions(suppress=True, precision=2)
 
 # multiply num samples with the
@@ -590,6 +592,7 @@ def mdl(tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
             for qi in it.chain([q], qgraph.neighbors(q)):
                 if settings.debug:
                     print('checking qi: ', qi)
+                embed()
                 Y__ = qi.sim(step_sim, Y_)
                 sat = qi.sat(Y__)
                 # TODO: If we are out of samples, we can't do much. Need to
