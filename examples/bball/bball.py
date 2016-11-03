@@ -14,7 +14,7 @@ import pylab as plt
 
 import utils as U
 
-PLT = False
+PLT = True
 
 
 class SIM(object):
@@ -22,7 +22,7 @@ class SIM(object):
     def __init__(self, _, pvt_init_data):
         self.model = create_model()
 
-    @U.memoize2disk(U.memoize_hash_method)
+    #@U.memoize2disk(U.memoize_hash_method)
     def sim(self, TT, X0, D, P, U, I, property_checker):
         tol = 1e-2
         if ((abs(X0[1]) <= tol and abs(X0[3]) <= tol) or X0[1] < 0):
