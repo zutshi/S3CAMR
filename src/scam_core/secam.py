@@ -794,6 +794,11 @@ def main():
     # TODO put plot hack as a switch in settings
     settings.debug_plot = args.enable_regression_plots
     settings.debug = args.debug
+    #TODO:
+    # Another hack to make sure that we know plot is on at some random
+    # places which is not usoing plotlib but overriding plotting with
+    # matplotlib.
+    settings.plot = args.plot is not None
 
     # TODO:
     # dynamicall generate an opt class to mimic the same defined in
