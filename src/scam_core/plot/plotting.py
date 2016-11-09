@@ -8,15 +8,15 @@ import err
 from .plotting_abstract import PlottingBase
 
 
-def factory(lib_name, *args):
+def factory(lib_name, plots, *args):
     # Matplotlib
     if lib_name == 'mp':
         from . import plotMP
-        plotting = plotMP.Plotting(*args)
+        plotting = plotMP.Plotting(plots, *args)
     # pyQtGraph
     elif lib_name == 'pg':
         from . import plotPG
-        plotting = plotPG.Plotting(*args)
+        plotting = plotPG.Plotting(plots, *args)
     # Bokeh
     elif lib_name == 'bk':
         from . import plotBK
