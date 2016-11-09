@@ -190,9 +190,8 @@ def refine_dft_model_based(
     # initialize Qxw class
     if AA.num_dims.pi:
         Qxw.init(sp.pi_ref.i_cons)
-
-    qg = get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs)
-    pwa_model = build_pwa_model(AA, prop, qg, sp, opts, 'dft')
+    qgraph = get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs)
+    pwa_model = build_pwa_model(AA, prop, qgraph, sp, opts, 'dft')
 
 #     if settings.debug:
 #         qg.draw_graphviz()
@@ -318,7 +317,10 @@ def verify_bmc_trace(AA, sys, prop, sp, opts, bmc_trace, pwa_trace):
 
     # TODO: fix inputs!!
     #pi_seq = [[step.assignments[w] for w in ws] for step in bmc_trace[:-1]]
+    opts.plotting.new_session()
     res = rt.concretize_bmc_trace(sys, prop, AA, sp, opts, num_trace_states, x_array, pi_seq)
+
+    opts.plotting.new_session()
     init_cons_subset = azp.overapprox_x0(AA, prop, opts, pwa_trace, opts.bmc_prec)
     rt.concretize_init_cons_subset(sys, prop, AA, sp, opts, num_trace_states, x_array, pi_seq, init_cons_subset)
     return
@@ -572,6 +574,7 @@ def mdl(tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
         #err.warn('e%:{}, |e%|:{}'.format(e_pc, np.linalg.norm(e_pc, 2)))
         if settings.debug_plot:
             rm.plot(X, Y, tol, 'q:{}, err:{}'.format(q, e_pc))
+        settings.plt_show()
     else:
         refine = True
 
@@ -592,14 +595,14 @@ def mdl(tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
             for qi in it.chain([q], qgraph.neighbors(q)):
                 if settings.debug:
                     print('checking qi: ', qi)
-                embed()
+                #embed()
                 Y__ = qi.sim(step_sim, Y_)
                 sat = qi.sat(Y__)
                 # TODO: If we are out of samples, we can't do much. Need to
                 # handle this situation better? Not sure? Request for more
                 # samples? Give up?
                 if any(sat):
-                    if settings.debug_plot:
+                    if settings.debug and settings.plot:
                         from matplotlib import pyplot as plt
                         plt.plot(Y__[sat, 0], Y__[sat, 1], 'y*')
                         plt.plot(Y_[sat, 0], Y_[sat, 1], 'r*')
