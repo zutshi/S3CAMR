@@ -14,7 +14,7 @@ CE = True
 
 def plt_show():
     from matplotlib import pyplot as plt
-    if debug_plot:
+    if debug_plot or (debug and plot):
         plt.show()
     else:
         plt.close()
