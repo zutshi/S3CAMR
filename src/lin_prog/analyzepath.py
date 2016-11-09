@@ -256,5 +256,6 @@ def overapprox_x0(AA, prop, opts, pwa_trace, prec, solver='glpk'):
         import IPython
         IPython.embed()
 
+    #ranges = [[0.00416187, 0.00416187],[3.47047152,3.47047152],[9.98626028,9.98626028],[4.98715449,4.98715449]]
     r = np.asarray(ranges)
     return cons.IntervalCons(r[:, 0], r[:, 1])
