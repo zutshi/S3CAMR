@@ -254,7 +254,7 @@ class RegressionModel(object):
         ax.set_ylabel('x1')
         ax.set_zlabel('y1')
 
-        settings.plt_show()
+        #settings.plt_show()
 
 # Old single figure plots
 #         fig = plt.figure()
