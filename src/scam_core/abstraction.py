@@ -63,6 +63,7 @@ class TopLevelAbs:
     def __init__(
         self,
         config_dict,
+        ROI,
         T,
         num_dims,
         controller_sym_path_obj,
@@ -77,6 +78,7 @@ class TopLevelAbs:
 
         # super(Abstraction, self).__init__()
 
+        self.ROI = ROI
         self.graph_lib = graph_lib
         self.num_dims = num_dims
         self.G = g.factory(graph_lib)
@@ -240,6 +242,17 @@ class TopLevelAbs:
             self.refinement_factor = 2.0
 
         return
+
+    def in_ROI(self, abs_state):
+        """ is the abstract state in ROI?
+        Only checks plant's abstract state for now. Not sure if the
+        controller's state should matter.
+
+        Returns
+        -------
+        True/False
+        """
+        return self.plant_abs.in_ROI(abs_state.ps, self.ROI) #and self.controller_abs.in_ROI()
 
     # TODO: remove this eventually...
 
