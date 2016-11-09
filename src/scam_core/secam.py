@@ -182,6 +182,7 @@ def create_abstraction(sys, prop, opts):
     # idea is that an abstraction module should be 'pluggable'.
     current_abs = abstraction.abstraction_factory(
         plant_config_dict,
+        prop.ROI,
         T,
         num_dims,
         controller_sym_path_obj,
@@ -360,6 +361,24 @@ def refine_trace(
         #init_cons_list = [current_abs.plant_abs.get_ival_constraints(i) for i in valid_promising_initial_state_list]
 
 
+def ERROR_PATHS(A):
+    from . import state
+    l = [[0.01961446,    3.47045684,    9.98620188,    4.98716176],
+         [49.95062386,   15.90625493,    9.98620188,   -0.01283824],
+         [99.88163325,    3.3420208,    9.98620188,   -5.01283824],
+         [149.81264265,    8.93715771,    9.98620188,   -0.14237774],
+         [199.74365204,    2.47800605,    9.98620188,    2.26046069],
+         [249.67466144,    1.28030005,    9.98620188,   -2.73953931],
+         [299.60567083,    0.43858743,    9.98620188,   -2.18741369],
+         [330.06358656,    1.01642601,    9.98620188,   -1.07331661],
+         [330.06358656,    1.01642601,    9.98620188,   -1.07331661]]
+
+    x = np.array(l).reshape(9, 4)
+    s = [state.State(0, xi, 0, 0, [], [], [], []) for xi in x]
+    abs_trace = [A.get_abs_state_from_concrete_state(si) for si in s]
+    return [abs_trace]
+
+
 # returns a True when its done
 def falsify_using_model(
         current_abs,
@@ -420,13 +439,19 @@ def falsify_using_model(
     # creates a new pi_ref, ci_ref
     (error_paths,
      ci_seq_list,
-     pi_seq_list) = current_abs.get_error_paths_not_normalized(initial_state_set,
-                                                final_state_set,
-                                                pi_ref,
-                                                ci_ref,
-                                                pi,
-                                                ci,
-                                                opts.max_paths)
+     pi_seq_list) = current_abs.get_error_paths_not_normalized(
+             initial_state_set,
+             final_state_set,
+             pi_ref,
+             ci_ref,
+             pi,
+             ci,
+             opts.max_paths)
+
+    #error_paths = ERROR_PATHS(current_abs)
+    ep = ERROR_PATHS(current_abs)[0]
+    assert(ep in error_paths)
+
     print('Refining...')
     if opts.refine == 'model-dft':
         MR.refine_dft_model_based(current_abs,
@@ -846,8 +871,8 @@ def main():
     opts.graph_lib = args.graph_lib
     opts.max_paths = args.max_paths
     opts.max_model_error = args.max_model_error
-    opts.plotting = plotting.factory(args.plot, *args.plot_opts)
-    opts.plots = args.plots
+    opts.plotting = plotting.factory(args.plot, args.plots, *args.plot_opts)
+    #opts.plots = args.plots
     opts.model_err = args.incl_error
     opts.bmc_engine = args.bmc_engine
     # Default bmc prec
