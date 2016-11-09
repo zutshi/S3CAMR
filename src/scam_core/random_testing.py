@@ -62,12 +62,16 @@ def concretize_bmc_trace(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq):
     if trace:
         print(term.green('violation found'))
         print('violation found', file=SYS.stderr)
-        return True
+        res = True
     else:
         print('nothing found')
         print('nothing found', file=SYS.stderr)
         print(term.red('nothing found'))
-        return False
+        res = False
+
+    return res
+#######################################
+#######################################
     # 2)
     # Check using random sims. Find the abstract state of the trace's
     # X0, and send it to random_test() along with pi_seqs
@@ -103,7 +107,7 @@ def trace_violates(sys_sim, sys, prop, opts, trace_len, x_array, pi_seq):
 
 
 def concretize_init_cons_subset(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq, init_cons_subset):
-    x0_samples = init_cons_subset.sample_UR(100)
+    x0_samples = init_cons_subset.sample_UR(1000)
     sys_sim = simsys.get_system_simulator(sys)
     return traces_violates(sys_sim, sys, prop, opts, trace_len, x0_samples, x_array, pi_seq)
 
@@ -131,11 +135,14 @@ def traces_violates(sys_sim, sys, prop, opts, trace_len, x0_samples, x_array_bmc
 
         traces.append(simsys.simulate(sys_sim, sys.delta_t*num_segments, concrete_states[0]))
 
-    from matplotlib import pyplot as plt
+    #from matplotlib import pyplot as plt
     #print(trace)
-    opts.plotting.plot_trace_list(traces, x_vs_y=opts.plots)
-    plt.plot(x_array[:, 0], x_array[:, 1], 'r*-', linewidth=2)
-    plt.title('red: bmc trace, blue: sim() trace')
+
+    # t_array is the same
+    t_array = np.arange(0., prop.T, sys.delta_t)
+
+    opts.plotting.plot_trace_list(traces)#, x_vs_y=opts.plots)
+    opts.plotting.plot_trace_array(t_array, x_array, 'r*-', linewidth=2)
     opts.plotting.show()
 
     vio_traces = [trace for trace in traces if check_prop_violation(prop, trace)]
