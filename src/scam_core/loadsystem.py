@@ -82,7 +82,7 @@ class System(object):
 class Property(object):
     def __init__(self, T, init_cons_list, init_cons, final_cons, ci, pi,
                  initial_discrete_state, initial_controller_state, MAX_ITER,
-                 num_segments):
+                 num_segments, ROI):
         self.T = T
         self.init_cons_list = init_cons_list
         self.init_cons = init_cons
@@ -93,6 +93,8 @@ class Property(object):
         self.initial_controller_state = initial_controller_state
         self.MAX_ITER = MAX_ITER
         self.num_segments = num_segments
+        # Region of interest
+        self.ROI = ROI
 
         self.sanity_check = U.assert_no_Nones
         #print init_cons.to_numpy_array()
@@ -259,6 +261,13 @@ def parse(file_path, plant_pvt_init_data):
     except AttributeError as e:
         raise MissingSystemDefError(e)
 
+    # ROI is not mandatory and defaults to xi \in (-inf, inf)
+    try:
+        ROI = cns.IntervalCons(*sut.ROI)
+        assert(ROI.dim == num_dims.x)
+    except AttributeError:
+        ROI = cns.top2ic(num_dims.x)
+
     sys = System(sys_name, controller_path, num_dims, plant_config_dict,
                  delta_t, controller_path_dir_path,
                  controller_object_str, path, plant_pvt_init_data,
@@ -266,7 +275,7 @@ def parse(file_path, plant_pvt_init_data):
                  pi_grid_eps)
     prop = Property(T, init_cons_list, init_cons, final_cons, ci,
                     pi, initial_discrete_state, initial_controller_state,
-                    MAX_ITER, num_segments)
+                    MAX_ITER, num_segments, ROI)
 
     print('system loaded...')
     return sys, prop
