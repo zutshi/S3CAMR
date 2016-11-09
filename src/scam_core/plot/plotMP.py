@@ -3,6 +3,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import collections
+
 import matplotlib
 # Force GTK3 backend. By default GTK2 gets loaded and conflicts with
 # graph-tool
@@ -21,27 +23,73 @@ plot_figure_for_paper = False
 
 class Plotting(PlottingBase):
 
-    def __init__(self, *args):
+    def __init__(self, plots, *args):
         self._ax = None
         self.fast_plot = True if 'fast-plot' in args else False
+        self.plots = plots
+        self.x_vs_y = plots
+        self.new_session()
         return
 
-    def figure(self):
-        fig = plt.figure()
-        self._ax = fig.gca()
+#     def figure(self):
+#         fig = plt.figure()
+#         self._ax = fig.gca()
 
-    @property
-    def ax(self):
-        if self._ax is None:
-            fig = plt.figure()
-            self._ax = fig.gca()
+    def new_session(self):
+        self.xy2fig_map = collections.defaultdict(plt.figure)
+
+    def ax(self, x_vs_y=None):
+        # creates throwable figures
+        if x_vs_y is None:
+            if self._ax is None:
+                fig = plt.figure()
+                self._ax = fig.gca()
+        else:
+            ax = self.xy2fig_map[x_vs_y].gca()
+            ax.set_title(x_vs_y)
+            self._ax = ax
+
         return self._ax
 
-    def show(self):
-        plt.show()
+    def show(self, block=True):
+        plt.show(block)
 
-    def plot(self, *args):
-        self.ax.plot(*args)
+    def title(self, *args, **kwargs):
+        self.ax().set_title(*args, **kwargs)
+
+    # discouraged!
+    def plot(self, *args, **kwargs):
+        self.ax().plot(*args, **kwargs)
+
+    def gen_x_vs_y(self, nd):
+        if self.x_vs_y is None:
+            x_vs_y = [('t', 'x{}'.format(i)) for i in range(nd)]
+        else:
+            x_vs_y = self.x_vs_y
+        return x_vs_y
+
+    def tx_array_selectors(self, x_vs_y):
+        for a, o in x_vs_y:
+
+            a_str = a[0]
+            o_str = o[0]
+
+            a_idx = int(a[1:]) if a[1:] else 0
+            o_idx = int(o[1:]) if o[1:] else 0
+
+            title = '{} - {}'.format(a, o)
+
+            yield a_str, o_str, a_idx, o_idx, title
+
+    def plot_trace_array(self, t_array, x_array, *args, **kwargs):
+
+        x_vs_y = self.gen_x_vs_y(x_array.shape[1])
+        ao = self.tx_array_selectors(x_vs_y)
+
+        for a_str, o_str, a_idx, o_idx, title in ao:
+            x = t_array if a_str == 't' else x_array[:, a_idx]
+            y = t_array if o_str == 't' else x_array[:, o_idx]
+            self.ax(title).plot(x, y, *args, **kwargs)
 
     def plot_abs_states(self, AA, s):
         color_map = {
@@ -65,7 +113,7 @@ class Plotting(PlottingBase):
         else:
             c = r[0]
             rng = r[1]
-        self.ax.add_patch(
+        self.ax().add_patch(
             patches.Rectangle(c, *rng, fill=False, edgecolor=edgecolor)
             #patches.Rectangle((0.1, 0.1), 0.5, 0.5, fill=False)
         )
@@ -82,7 +130,7 @@ class Plotting(PlottingBase):
             y.append(xy[:, 1])
             y.append(N)
             #self.ax.plot(x[:, 0], x[:, 1], '-*')
-        self.ax.plot(np.hstack(x), np.hstack(y), '-*')
+        self.ax().plot(np.hstack(x), np.hstack(y), '-*')
 
     def parse_plot_cmd(self, plot_cmd, trace_obj):
         if len(plot_cmd) != 4:
@@ -206,15 +254,28 @@ class Plotting(PlottingBase):
                 ax.plot(x_array[:, 0], x_array[:, 1])
             #plt.show()
 
-    def plot_trace_list(self, trace_list, x_vs_y=None):
+    # Move this function to Traces class!
+    def plot_trace_list(self, trace_list):
         """plot all state vars """
-        if not x_vs_y:
-            nd = trace_list[0].x_array.shape[1]
-            x_vs_y = [('t', 'x{}'.format(i)) for i in range(nd)]
+
+        nd = trace_list[0].x_array.shape[1]
+        x_vs_y = self.gen_x_vs_y(nd)
+
         if self.fast_plot:
             self.plot_trace_list_xvsy_sc(trace_list, x_vs_y)
         else:
             self.plot_trace_list_xvsy_dc(trace_list, x_vs_y)
+
+
+#     def plot_trace_list(self, trace_list):
+#         """plot all state vars """
+#         if not self.x_vs_y2ax_map:
+#             nd = trace_list[0].x_array.shape[1]
+#             self.x_vs_y2ax_map = {('t', 'x{}'.format(i)): plt.figure().gca() for i in range(nd)}
+#         if self.fast_plot:
+#             self.plot_trace_list_xvsy_sc(trace_list)
+#         else:
+#             self.plot_trace_list_xvsy_dc(trace_list)
 
     def plot_trace_list_xvsy_sc(self, trace_list, x_vs_y):
         """plot_trace_list: Same Color but faster?
@@ -246,19 +307,10 @@ class Plotting(PlottingBase):
                 x_.append(N)
             return x_
 
+        ao = self.tx_array_selectors(x_vs_y)
+
         # ordinate, abcissa
-        for a, o in x_vs_y:
-            ax = plt.figure().gca()
-            self._ax = ax
-            a_str = a[0]
-            o_str = o[0]
-
-            a_idx = int(a[1:]) if a[1:] else 0
-            o_idx = int(o[1:]) if o[1:] else 0
-
-            title = '{} - {}'.format(a, o)
-
-            ax.set_title(title)
+        for a_str, o_str, a_idx, o_idx, title in ao:
 
             # collect t_array
             x = (prep_t_trace(trace_list) if a_str == 't'
@@ -267,7 +319,7 @@ class Plotting(PlottingBase):
             y = (prep_t_trace(trace_list) if o_str == 't'
                  else prep_x_trace(trace_list, o_idx))
 
-            ax.plot(np.hstack(x), np.hstack(y))
+            self.ax(title).plot(np.hstack(x), np.hstack(y))
 
     def plot_trace_list_xvsy_dc(self, trace_list, x_vs_y):
         """plot_trace_list: Different Color but slower?
@@ -290,19 +342,10 @@ class Plotting(PlottingBase):
         def prep_x_trace(trace_list, idx):
             return [trace.x_array[:, idx] for trace in trace_list]
 
+        ao = self.tx_array_selectors(x_vs_y)
+
         # ordinate, abcissa
-        for a, o in x_vs_y:
-            ax = plt.figure().gca()
-            self._ax = ax
-            a_str = a[0]
-            o_str = o[0]
-
-            a_idx = int(a[1:]) if a[1:] else 0
-            o_idx = int(o[1:]) if o[1:] else 0
-
-            title = '{} - {}'.format(a, o)
-
-            ax.set_title(title)
+        for a_str, o_str, a_idx, o_idx, title in ao:
 
             # collect t_array
             x = (prep_t_trace(trace_list) if a_str == 't'
@@ -312,7 +355,7 @@ class Plotting(PlottingBase):
                  else prep_x_trace(trace_list, o_idx))
 
             for i, j in zip(x, y):
-                ax.plot(i, j, '-*')
+                self.ax(title).plot(i, j, '-*')
 
     def plot_trace_list_sat(self, trace_list):
         '''
