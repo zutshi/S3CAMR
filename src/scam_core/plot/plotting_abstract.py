@@ -14,10 +14,10 @@ class PlottingBase():
 
     ######################################
     # #### Debatable methods
-    @abc.abstractmethod
-    def figure(self):
-        """draws a figure like Matplotlib"""
-        return
+#     @abc.abstractmethod
+#     def figure(self):
+#         """draws a figure like Matplotlib"""
+#         return
 
     @abc.abstractmethod
     def show(self):
