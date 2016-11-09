@@ -134,7 +134,9 @@ def discover(A, system_params, budget=None):
 
         # ##!!##logger.debug('{} = Q.get()'.format(abs_state))
 
-        if not (A.is_terminal(abs_state) or abs_state in examined_state_set):
+        if not (A.is_terminal(abs_state)
+                or abs_state in examined_state_set
+                or not A.in_ROI(abs_state)):
 
             # ##!!##logger.debug('decided to process abs_state')
 
