@@ -74,6 +74,9 @@ class PlantAbstraction:
 
         #pi_cells = self.ival_cons_to_cell_list(pi_cons, self.pi_eps)
 
+    def in_ROI(self, ps, ROI):
+        return self.get_ival_cons_abs_state(ps) & ROI is not None
+
     # ================== MANIPULATES FORMAT =============== of abs_state
     # Assumes abstract state is represented by a tuple t(x1, x2, x3, ... xn) of
     # ints
