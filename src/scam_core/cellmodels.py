@@ -223,21 +223,33 @@ class Qx(Q):
 #             ax.yaxis.grid(True, which='minor')
 
             # plot errors
-            eps = 0.51
-            for i in np.arange(0, 9, eps):
+            # van der pol
+            #epsx0 = 0.51
+            #epsx1 = 0.51
+            #xrng = (-9, 9)
+            #yrng = (-3, 3)
+
+            # bball
+            epsx0 = 50.1
+            epsx1 = 10.1
+            xrng = (-50, 500)
+            yrng = (0, 60)
+
+            for i in np.arange(0, yrng[1], epsx1):
                 ax.axhline(i, linestyle='-', color='k')
-            for i in np.arange(0, -9, -eps):
+            for i in np.arange(0, yrng[0], -epsx1):
                 ax.axhline(i, linestyle='-', color='k')
-            for i in np.arange(0, 3, eps):
+            for i in np.arange(0, xrng[1], epsx0):
                 ax.axvline(i, linestyle='-', color='k')
-            for i in np.arange(0, -3, -eps):
+            for i in np.arange(0, xrng[0], -epsx0):
                 ax.axvline(i, linestyle='-', color='k')
 
+            # For van der pol only
             # plot error states
-            ax.axhline(-5.6, linestyle='-', color='r')
-            ax.axhline(-6.5, linestyle='-', color='r')
-            ax.axvline(-1, linestyle='-', color='r')
-            ax.axvline(-0.7, linestyle='-', color='r')
+            #ax.axhline(-5.6, linestyle='-', color='r')
+            #ax.axhline(-6.5, linestyle='-', color='r')
+            #ax.axvline(-1, linestyle='-', color='r')
+            #ax.axvline(-0.7, linestyle='-', color='r')
 
         return np.vstack(Yl)
 
@@ -262,7 +274,7 @@ class Qx(Q):
         for x in x_array:
             (t_, x_, s_, d_, pvt_, u_) = sim(t0, x, s, d, pvt, ci, pi)
             Yl.append(x_)
-        if settings.debug_plot and settings.plot:
+        if settings.debug_plot:
             # close intermediate plots which can not be switched off;
             # as these are in the system model *.py
             #plt.title('ignore')
