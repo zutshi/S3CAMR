@@ -184,6 +184,44 @@ def get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs):
     return G
 
 
+def error_graph2qgraph_xw(sp, AA, opts, error_graph, pi_seqs):
+    G = graph_factory(opts.graph_lib)
+
+    for edge in error_graph.edges():
+
+        a1, a2 = edge
+        x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
+        w1cell = ic2cell(error_graph.get_edge_data(*edge), sp.pi_ref.eps)['pi']
+        q1 = Qxw(x1cell, w1cell)
+
+
+        G.add_edge(q1, q2)
+
+        if AA.num_dims.pi:
+            for (a1, a2), (pi1_ic, pi2_ic) in it.izip_longest(U.pairwise(path), U.pairwise(pi_seq)):
+                x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
+                w1cell = ic2cell(pi1_ic, sp.pi_ref.eps)
+                w2cell = ic2cell(pi2_ic, sp.pi_ref.eps)
+                q2 = Qxw(x2cell, w2cell)
+
+                q1 = Qxw(x1cell, w1cell)
+
+                if pi2_ic is None:
+                    w2cells = ic2multicell(sp.pi_ref.i_cons, sp.pi_ref.eps)
+                    q2s = [Qxw(x2cell, w2cell) for w2cell in w2cells]
+                    for q2 in q2s:
+                        G.add_edge(q1, q2)
+                else:
+                    w2cell = ic2cell(pi2_ic, sp.pi_ref.eps)
+                    q2 = Qxw(x2cell, w2cell)
+                    G.add_edge(q1, q2)
+        else:
+            for (a1, a2) in U.pairwise(path):
+                x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
+                q1, q2 = Qx(x1cell), Qx(x2cell)
+                G.add_edge(q1, q2)
+    return G
+
 def refine_dft_model_based(
         AA, error_paths, pi_seqs, sp, sys_sim, opts, sys, prop):
 
@@ -196,13 +234,18 @@ def refine_dft_model_based(
 #     if settings.debug:
 #         qg.draw_graphviz()
 #         qg.draw_mplib()
+
     draw_model(opts, sys.sys_name, pwa_model)
 
-    max_path_len = max([len(path) for path in error_paths])
-    print('max_path_len:', max_path_len)
+    #max_path_len = max([len(path) for path in error_paths])
+    #print('max_path_len:', max_path_len)
+
     # depth = max_path_len - 1, because path_len = num_states along
     # path. This is 1 less than SAL depth and simulation length
-    depth = max(int(np.ceil(AA.T/AA.delta_t)), max_path_len - 1)
+    #depth = max(int(np.ceil(AA.T/AA.delta_t)), max_path_len - 1)
+
+    depth = int(np.ceil(AA.T/AA.delta_t))
+
     assert(settings.CE) # adding a depth to accomodate the last
     # transition which takes a location to the CE
     depth += 1

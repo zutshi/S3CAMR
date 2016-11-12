@@ -34,7 +34,7 @@ from . import properties
 
 import err
 import fileops as fp
-#import utils as U
+import utils as U
 from utils import print
 
 import settings
@@ -450,7 +450,11 @@ def falsify_using_model(
 
     #error_paths = ERROR_PATHS(current_abs)
     ep = ERROR_PATHS(current_abs)[0]
-    assert(ep in error_paths)
+    #assert(ep in error_paths)
+    if ep in error_paths:
+        U.pause('yay, found!')
+    else:
+        U.pause('not found')
 
     print('Refining...')
     if opts.refine == 'model-dft':

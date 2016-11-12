@@ -26,32 +26,39 @@ def factory(lib_name, plots, *args):
         plotting = PlottingDisabled()
     else:
         raise err.Fatal('unknown plotting library requested: {}'.format(lib_name))
-
-    assert(isinstance(plotting, PlottingBase))
+    
+    if lib_name is not None:
+        assert(isinstance(plotting, PlottingBase))
     return plotting
 
 
-class PlottingDisabled(PlottingBase):
-    def figure(self):
-        return
+#class PlottingDisabled(PlottingBase):
+class PlottingDisabled(object):
+    def __getattribute__(*args):
+        return lambda: None
+#     def figure(self):
+#         return
 
-    def show(self):
-        return
+#     def show(self):
+#         return
 
-    def plot_rect(self, r, edgecolor='k'):
-        return
+#     def plot_rect(self, r, edgecolor='k'):
+#         return
 
-    def plot_abs_states(self, AA, s):
-        return
+#     def plot_abs_states(self, AA, s):
+#         return
 
-    def plot_trace_list(self, trace_list, x_vs_y=None):
-        return
+#     def plot_trace_list(self, trace_list, x_vs_y=None):
+#         return
 
-    def plot_pwa_traces(self, txs):
-        return
+#     def plot_pwa_traces(self, txs):
+#         return
 
-    def plot(self, *args):
-        return
+#     def plot(self, *args):
+#         return
+
+#     def title(self, *args):
+#         return
 
 
 def plot_opts_parse(popts):
