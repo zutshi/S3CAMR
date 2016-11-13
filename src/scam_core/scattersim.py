@@ -78,7 +78,7 @@ def init(
         initial_state_list.append(AA.TopLevelAbs.get_abs_state(plant_state=plant_init_state,
                                   controller_state=controller_init_abs_state))
 
-    final_state_list = []
+    #final_state_list = []
 
 #    for plant_final_state in plant_final_state_set:
 #        final_state_list.append(AA.TopLevelAbs.get_abs_state(
@@ -112,13 +112,14 @@ def init(
 
     # ##!!##logger.debug('{0}initial{0}\n{1}'.format('=' * 10, plant_initial_state_set))
 
-    return (set(initial_state_list), set(final_state_list), is_final)
+    return (set(initial_state_list), is_final)
 
 
 # TODO: move set_n, get_n here, because no other exploration process might want to use it?
 # Calls the simulator for each abstract state
 
-def discover(A, system_params, budget=None):
+def discover(A, system_params, initial_state_set, budget=None):
+    final_state_set = set()
     Q = Queue.Queue(maxsize=0)
     examined_state_set = set()
 
@@ -126,7 +127,7 @@ def discover(A, system_params, budget=None):
 
     # ##!!##logger.debug('Adding initial states to Q')
 
-    for init_state in system_params.initial_state_set:
+    for init_state in initial_state_set:
         Q.put(init_state)
 
     while not Q.empty():
@@ -166,7 +167,7 @@ def discover(A, system_params, budget=None):
                 # If yes, tag it so
 
                 if system_params.is_final(A, rchd_abs_state):
-                    system_params.final_state_set.add(rchd_abs_state)
+                    final_state_set.add(rchd_abs_state)
                 else:
 
                     # print('found a final state')
@@ -185,6 +186,7 @@ def discover(A, system_params, budget=None):
 
     # ##!!##logger.debug('Abstraction discovery done')
     # ##!!##logger.debug('Printing Abstraction\n {}'.format(str(A)))
+    return final_state_set
 
 # Same as discover_old, but accumulates all abstract states from the Q before
 # calling get_reachable_abs_states() on the entire group
