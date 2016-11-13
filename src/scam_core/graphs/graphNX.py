@@ -10,11 +10,14 @@ import subprocess
 import logging
 
 import networkx as nx
-import utils as U
 from heapq import heappush, heappop
 from itertools import count
 from collections import defaultdict
 from blessed import Terminal
+
+
+import utils as U
+import err
 
 #from networkx.drawing.nx_agraph import graphviz_layout
 from networkx.drawing.nx_agraph import write_dot
@@ -101,18 +104,36 @@ class GraphNX(object):
     def node_attrs(self, node):
         return self.G.node[node]
 
+    def edge_attrs(self, edge):
+        return self.G.get_edge_data(edge[0], edge[1])
+
     def edges(self, node):
         """Get edges of a node
         """
         return self.G.edges(node)
 
+    def all_edges(self):
+        """Get edges of a node
+        """
+        return self.G.edges()
+
     def nodes_iter(self):
         return self.G.nodes_iter()
 
+    # TODO: An edge b/w two states stores a unique value of ci and pi.
+    # In other words, if x -> x', only the last discovered ci/pi is
+    # stored.
     def add_edge(self, v1, v2, **attr_dict_arg):#ci=None, pi=None, weight=1):
+        if self.G.has_edge(v1, v2):
+            return
         attrs = {'ci': None, 'pi': None, 'weight': 1}
         #print('nx:', v1, v2)
         attrs.update(attr_dict_arg)
+
+#         if __debug__:
+#             if self.G.has_edge(v1, v2):
+#                 err.warn('overwriting an edge')
+
         self.G.add_edge(v1, v2, attrs)
 
         self.ctr += 1
@@ -143,6 +164,33 @@ class GraphNX(object):
         print('saving graph')
         nx.write_gpickle(self.G, fname)
         return
+
+    def multiple2single_st(self, sources, targets):
+        # Create a shallow copy of the graph
+        H = nx.DiGraph(self.G)
+
+        # All modifications are now done on this shallow copy H
+
+        # Define super source and sink nodes
+        # A Super source node has a directed edge to each source node in the
+        # source_list
+        # Similarily, a Super sink node has a directed edge from each sink node
+        # in the sink_list
+
+        dummy_super_source_node = 'source'
+        dummy_super_target_node = 'sink'
+
+        for s in sources:
+            H.add_edge(dummy_super_source_node, s)
+        for t in targets:
+            H.add_edge(t, dummy_super_target_node)
+
+        return H, dummy_super_source_node, dummy_super_target_node
+
+    def subgraph_source2target(self, sources, targets):
+        H, S, T = self.multiple2single_st(sources, targets)
+        G = H.subgraph(nx.descendants(H, S) & nx.ancestors(H, T))
+        return self.__class__(G)
 
     # ###################### KSP 1 ##################################################
     # https://gist.github.com/guilhermemm/d4623c574d4bccb6bf0c
