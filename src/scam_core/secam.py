@@ -39,6 +39,8 @@ from utils import print
 
 import settings
 
+from IPython import embed
+
 #matplotlib.use('GTK3Agg')
 
 #precision=None, threshold=None, edgeitems=None, linewidth=None, suppress=True, nanstr=None, infstr=None, formatter=Nonu)
@@ -71,8 +73,8 @@ class SystemParams:
 
     def __init__(
             self,
-            initial_state_set,
-            final_state_set,
+            #initial_state_set,
+            #final_state_set,
             is_final,
             plant_sim,
             controller_sim,
@@ -85,8 +87,8 @@ class SystemParams:
             ci_ref
             ):
 
-        self.initial_state_set = initial_state_set
-        self.final_state_set = final_state_set
+        #self.initial_state_set = initial_state_set
+        #self.final_state_set = final_state_set
         self.is_final = is_final
         self.plant_sim = plant_sim
         self.controller_sim = controller_sim
@@ -406,13 +408,13 @@ def falsify_using_model(
     from . import modelrefine as MR
     # TODO: temp function ss.init()
 
-    (initial_state_set, final_state_set, is_final) = \
+    (initial_state_set, is_final) = \
         SS.init(current_abs, init_cons_list, final_cons,
                 initial_discrete_state, initial_controller_state)
 
     system_params = SystemParams(
-        initial_state_set,
-        final_state_set,
+        #initial_state_set,
+        #final_state_set,
         is_final,
         plant_sim,
         controller_sim,
@@ -425,42 +427,49 @@ def falsify_using_model(
         ci_ref
         )
 
-    SS.discover(current_abs, system_params)
+    # Modifies system_params
+    final_state_set = SS.discover(current_abs, system_params, initial_state_set)
 
     opts.plotting.show()
     print('dumping abstraction')
     fp.write_data('{}_graph.dump'.format(sys.sys_name), dill.dumps(current_abs))
 
-    if not system_params.final_state_set:
+    if not final_state_set:
         print('did not find any abstract counter example!', file=SYS.stderr)
         return False
 
-    print('analyzing graph...')
-    # creates a new pi_ref, ci_ref
-    (error_paths,
-     ci_seq_list,
-     pi_seq_list) = current_abs.get_error_paths_not_normalized(
-             initial_state_set,
-             final_state_set,
-             pi_ref,
-             ci_ref,
-             pi,
-             ci,
-             opts.max_paths)
+#     print('analyzing graph...')
+#     # creates a new pi_ref, ci_ref
+#     (error_paths,
+#      ci_seq_list,
+#      pi_seq_list) = current_abs.get_error_paths_not_normalized(
+#              initial_state_set,
+#              final_state_set,
+#              pi_ref,
+#              ci_ref,
+#              pi,
+#              ci,
+#              opts.max_paths)
 
     #error_paths = ERROR_PATHS(current_abs)
     ep = ERROR_PATHS(current_abs)[0]
     #assert(ep in error_paths)
-    if ep in error_paths:
-        U.pause('yay, found!')
-    else:
-        U.pause('not found')
+
+    error_graph = current_abs.G.subgraph_source2target(initial_state_set, final_state_set)
+    embed()
+
+
+#     if ep in error_paths:
+#         U.pause('yay, found!')
+#     else:
+#         U.pause('not found')
 
     print('Refining...')
     if opts.refine == 'model-dft':
         MR.refine_dft_model_based(current_abs,
-                                  error_paths,
-                                  pi_seq_list,
+                                  #error_paths,
+                                  error_graph,
+                                  final_state_set,
                                   system_params,
                                   sys_sim,
                                   opts,
