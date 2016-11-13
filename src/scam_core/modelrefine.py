@@ -110,18 +110,18 @@ def sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts):
     opts.plotting.show()
 
 
-def get_qgraph(sp, AA, G, error_paths, pi_seqs):
+# def get_qgraph(sp, AA, G, error_paths, pi_seqs):
 
-    for path, pi_seq in zip(error_paths, pi_seqs):
-        for (a1, a2), pi_ic in zip(U.pairwise(path), pi_seq):
-            x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
-            if AA.num_dims.pi:
-                wcell = ic2cell(pi_ic, sp.pi_ref.eps)
-            else:
-                wcell = None
-            q1, q2 = Qx(x1cell), Qx(x2cell)
-            G.add_edge(q1, q2, pi=wcell)
-    return G
+#     for path, pi_seq in zip(error_paths, pi_seqs):
+#         for (a1, a2), pi_ic in zip(U.pairwise(path), pi_seq):
+#             x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
+#             if AA.num_dims.pi:
+#                 wcell = ic2cell(pi_ic, sp.pi_ref.eps)
+#             else:
+#                 wcell = None
+#             q1, q2 = Qx(x1cell), Qx(x2cell)
+#             G.add_edge(q1, q2, pi=wcell)
+#     return G
 
 
 #TODO: URGENT: The error path and pi_seq generated from S3CAM is not
@@ -184,51 +184,40 @@ def get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs):
     return G
 
 
-def error_graph2qgraph_xw(sp, AA, opts, error_graph, pi_seqs):
+def error_graph2qgraph_xw(sp, AA, opts, error_graph):
     G = graph_factory(opts.graph_lib)
 
-    for edge in error_graph.edges():
+    for edge in error_graph.all_edges():
 
         a1, a2 = edge
+
         x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
-        w1cell = ic2cell(error_graph.get_edge_data(*edge), sp.pi_ref.eps)['pi']
-        q1 = Qxw(x1cell, w1cell)
-
-
-        G.add_edge(q1, q2)
 
         if AA.num_dims.pi:
-            for (a1, a2), (pi1_ic, pi2_ic) in it.izip_longest(U.pairwise(path), U.pairwise(pi_seq)):
-                x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
-                w1cell = ic2cell(pi1_ic, sp.pi_ref.eps)
-                w2cell = ic2cell(pi2_ic, sp.pi_ref.eps)
-                q2 = Qxw(x2cell, w2cell)
+            pi1_ic = error_graph.edge_attrs(edge)['pi']
+            assert(pi1_ic is not None)
+            w1cell = ic2cell(pi1_ic, sp.pi_ref.eps)
+            # This is a mess. Instead of being an edge, pi is actuall
+            # in the node....fix it somehow
+            assert(False)
+            w2cell = ic2cell(pi2_ic, sp.pi_ref.eps)
 
-                q1 = Qxw(x1cell, w1cell)
-
-                if pi2_ic is None:
-                    w2cells = ic2multicell(sp.pi_ref.i_cons, sp.pi_ref.eps)
-                    q2s = [Qxw(x2cell, w2cell) for w2cell in w2cells]
-                    for q2 in q2s:
-                        G.add_edge(q1, q2)
-                else:
-                    w2cell = ic2cell(pi2_ic, sp.pi_ref.eps)
-                    q2 = Qxw(x2cell, w2cell)
-                    G.add_edge(q1, q2)
+            q1, q2 = Qxw(x1cell, w1cell), Qxw(x2cell, w2cell)
         else:
-            for (a1, a2) in U.pairwise(path):
-                x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
-                q1, q2 = Qx(x1cell), Qx(x2cell)
-                G.add_edge(q1, q2)
+            q1, q2 = Qx(x1cell), Qx(x2cell)
+
+        G.add_edge(q1, q2)
     return G
 
-def refine_dft_model_based(
-        AA, error_paths, pi_seqs, sp, sys_sim, opts, sys, prop):
+
+def refine_dft_model_based(AA, error_graph, final_state_set, sp, sys_sim, opts, sys, prop):
 
     # initialize Qxw class
     if AA.num_dims.pi:
         Qxw.init(sp.pi_ref.i_cons)
-    qgraph = get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs)
+    #qgraph = get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs)
+    qgraph = error_graph2qgraph_xw(sp, AA, opts, error_graph)
+
     pwa_model = build_pwa_model(AA, prop, qgraph, sp, opts, 'dft')
 
 #     if settings.debug:
@@ -251,9 +240,9 @@ def refine_dft_model_based(
     depth += 1
     print('depth :',  depth)
 
-    if settings.debug_plot:
-        # Need to define a new function to simulate inputs
-        sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts)
+#     if settings.debug_plot:
+#         # Need to define a new function to simulate inputs
+#         sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts)
 
     assert(settings.CE)
     # TODO: The reason we need this is to encode the transitions which
@@ -279,7 +268,13 @@ def refine_dft_model_based(
     # Hence, we need to know the error locations, from where we add
     # one more partition.
 
-    prop_cells = set(abs_state2cell(path[-1], AA) for path in error_paths)
+    # older calculation of prop_cells
+    #prop_cells = {abs_state2cell(path[-1], AA) for path in error_paths}
+
+    prop_cells = {abs_state2cell(s, AA) for s in (final_state_set)}
+    embed()
+    assert(prop_cells)
+
     # partitions do not have a has function. Hence, using a work
     # around to avoid duplications
     # Create a mapping from Q -> partitions
