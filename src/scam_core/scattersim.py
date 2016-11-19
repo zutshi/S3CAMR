@@ -380,6 +380,7 @@ def refine_init_based(A, promising_initial_abs_states,
 
     refined_abs = AA.abstraction_factory(
         param_dict,
+        A.ROI,
         A.T,
         A.num_dims,
         A.controller_sym_path_obj,

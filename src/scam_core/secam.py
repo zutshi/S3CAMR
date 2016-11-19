@@ -32,6 +32,10 @@ from .plot import plotting
 from . import random_testing as RT
 from . import properties
 
+
+import globalopts
+#from globalopts import opts as gopts
+
 import err
 import fileops as fp
 import utils as U
@@ -102,11 +106,11 @@ class SystemParams:
         return
 
 
-def sanity_check_input(sys, prop, opts):
+def sanity_check_input(sys, prop):
     return
 
 
-def create_abstraction(sys, prop, opts):
+def create_abstraction(sys, prop):
     num_dims = sys.num_dims
     plant_config_dict = sys.plant_config_dict
     controller_path_dir_path = sys.controller_path_dir_path
@@ -114,7 +118,7 @@ def create_abstraction(sys, prop, opts):
 
     T = prop.T
 
-    METHOD = opts.METHOD
+    METHOD = globalopts.opts.METHOD
 
     plant_abstraction_type = 'cell'
     if METHOD == 'concolic':
@@ -152,17 +156,17 @@ def create_abstraction(sys, prop, opts):
         # use OS independant APIs from fileOps
     elif METHOD == 'symbolic':
         sampler = None
-        if opts.symbolic_analyzer == 'klee':
+        if globalopts.opts.symbolic_analyzer == 'klee':
             controller_abstraction_type = 'symbolic_klee'
-            if opts.cntrl_rep == 'smt2':
+            if globalopts.opts.cntrl_rep == 'smt2':
                 controller_path_dir_path += '/klee/'
             else:
                 raise err.Fatal('KLEE supports only smt2 files!')
-        elif opts.symbolic_analyzer == 'pathcrawler':
+        elif globalopts.opts.symbolic_analyzer == 'pathcrawler':
             controller_abstraction_type = 'symbolic_pathcrawler'
-            if opts.cntrl_rep == 'smt2':
+            if globalopts.opts.cntrl_rep == 'smt2':
                 controller_path_dir_path += '/pathcrawler/'
-            elif opts.cntrl_rep == 'trace':
+            elif globalopts.opts.cntrl_rep == 'trace':
                 controller_path_dir_path += '/controller'
             else:
                 raise err.Fatal('argparse should have caught this!')
@@ -170,9 +174,9 @@ def create_abstraction(sys, prop, opts):
             # TAG:PCH_IND
             # Parse PC Trace
             import CSymLoader as CSL
-            controller_sym_path_obj = CSL.load_sym_obj((opts.cntrl_rep, opts.trace_struct), controller_path_dir_path)
+            controller_sym_path_obj = CSL.load_sym_obj((globalopts.opts.cntrl_rep, globalopts.opts.trace_struct), controller_path_dir_path)
         else:
-            raise err.Fatal('unknown symbolic analyzer requested:{}'.format(opts.symbolic_analyzer))
+            raise err.Fatal('unknown symbolic analyzer requested:{}'.format(globalopts.opts.symbolic_analyzer))
 
     else:
         raise NotImplementedError
@@ -191,13 +195,13 @@ def create_abstraction(sys, prop, opts):
         sys.min_smt_sample_dist,
         plant_abstraction_type,
         controller_abstraction_type,
-        opts.graph_lib,
+        globalopts.opts.graph_lib,
         )
     return current_abs, sampler
 
 
 #def falsify(sut, init_cons, final_cons, plant_sim, controller_sim, init_cons_list, ci, pi, current_abs, sampler):
-def falsify(sys, prop, opts, current_abs, sampler):
+def falsify(sys, prop, current_abs, sampler):
     # sys
     controller_sim = sys.controller_sim
     plant_sim = sys.plant_sim
@@ -216,10 +220,10 @@ def falsify(sys, prop, opts, current_abs, sampler):
     # ss-concrete. It is false if ss-symex (and anything else) is
     # asked for, because then ci_seq consists if concrete values. Can
     # also be activated for symex as an option, but to be done later.
-    sample_ci = opts.METHOD == 'concrete' or opts.METHOD == 'concrete_no_controller'
+    sample_ci = globalopts.opts.METHOD == 'concrete' or globalopts.opts.METHOD == 'concrete_no_controller'
 
     # options
-    #plot = opts.plot
+    #plot = globalopts.opts.plot
 
     initial_discrete_state = tuple(initial_discrete_state)
     initial_controller_state = np.array(initial_controller_state)
@@ -259,15 +263,15 @@ def falsify(sys, prop, opts, current_abs, sampler):
             sample_ci,
             pi_ref,
             ci_ref,
-            opts)
+            )
 
-    if opts.refine == 'init':
+    if globalopts.opts.refine == 'init':
         refine_init(*args)
-    elif opts.refine == 'trace':
+    elif globalopts.opts.refine == 'trace':
         refine_trace(*args)
-    elif (opts.refine == 'model-dft'
-         or opts.refine == 'model-dmt'
-         or opts.refine == 'model-dct'):
+    elif (globalopts.opts.refine == 'model-dft'
+         or globalopts.opts.refine == 'model-dmt'
+         or globalopts.opts.refine == 'model-dct'):
         sys_sim = simsys.get_system_simulator(sys)
         falsify_using_model(*args, sys_sim=sys_sim, sys=sys, prop=prop)
     else:
@@ -400,7 +404,6 @@ def falsify_using_model(
         sample_ci,
         pi_ref,
         ci_ref,
-        opts,
         sys_sim,
         sys,
         prop):
@@ -430,7 +433,17 @@ def falsify_using_model(
     # Modifies system_params
     final_state_set = SS.discover(current_abs, system_params, initial_state_set)
 
-    opts.plotting.show()
+    # Flush the first plot
+
+    plt = globalopts.opts.plotting
+    if settings.paper_plot:
+        plt.acquire_global_fig()
+        plt.plot_abs_states(current_abs, prop, (i for i in current_abs.G.nodes_iter()))
+        #plt.plot_rect(prop.init_cons.rect(), 'g')
+        #plt.plot_rect(prop.final_cons.rect(), 'r')
+        plt.set_range((-2.5, 2.5), (-8, 8))
+    plt.show(block=True)
+
     print('dumping abstraction')
     fp.write_data('{}_graph.dump'.format(sys.sys_name), dill.dumps(current_abs))
 
@@ -438,53 +451,52 @@ def falsify_using_model(
         print('did not find any abstract counter example!', file=SYS.stderr)
         return False
 
-#     print('analyzing graph...')
-#     # creates a new pi_ref, ci_ref
-#     (error_paths,
-#      ci_seq_list,
-#      pi_seq_list) = current_abs.get_error_paths_not_normalized(
-#              initial_state_set,
-#              final_state_set,
-#              pi_ref,
-#              ci_ref,
-#              pi,
-#              ci,
-#              opts.max_paths)
-
-    #error_paths = ERROR_PATHS(current_abs)
-    ep = ERROR_PATHS(current_abs)[0]
+    #ep = ERROR_PATHS(current_abs)[0]
     #assert(ep in error_paths)
 
-    error_graph = current_abs.G.subgraph_source2target(initial_state_set, final_state_set)
-    embed()
+    if globalopts.opts.max_paths > 0:
+        print('analyzing graph...')
+        # creates a new pi_ref, ci_ref
+        (error_paths,
+         ci_seq_list,
+         pi_seq_list) = current_abs.get_error_paths_not_normalized(
+                 initial_state_set,
+                 final_state_set,
+                 pi_ref,
+                 ci_ref,
+                 pi,
+                 ci,
+                 globalopts.opts.max_paths)
+        errors = (error_paths, pi_seq_list)
+    else:
+        errors = current_abs.G.subgraph_source2target(initial_state_set, final_state_set)
 
-
+    #error_paths = ERROR_PATHS(current_abs)
 #     if ep in error_paths:
 #         U.pause('yay, found!')
 #     else:
 #         U.pause('not found')
 
     print('Refining...')
-    if opts.refine == 'model-dft':
+    if globalopts.opts.refine == 'model-dft':
         MR.refine_dft_model_based(current_abs,
                                   #error_paths,
-                                  error_graph,
+                                  #error_graph,
+                                  errors,
                                   final_state_set,
                                   system_params,
                                   sys_sim,
-                                  opts,
                                   sys,
                                   prop)
-    elif opts.refine == 'model-dmt':
+    elif globalopts.opts.refine == 'model-dmt':
         MR.refine_dmt_model_based(current_abs,
                                   error_paths,
                                   pi_seq_list,
                                   system_params,
                                   sys_sim,
-                                  opts,
                                   sys,
                                   prop)
-    elif opts.refine == 'model-dct':
+    elif globalopts.opts.refine == 'model-dct':
         raise NotImplementedError
     else:
         assert(False)
@@ -522,10 +534,11 @@ def falsify_using_model(
 
     if res:
         print('Concretized', file=SYS.stderr)
-        fp.append_data(opts.op_fname,
+        fp.append_data(globalopts.opts.op_fname,
                        '{0} Concrete Traces({2}) for: {1} {0}\n'.
-                       format('='*20, opts.sys_path, len(res)))
-        fp.append_data(opts.op_fname, '{}\n'.format(res))
+                       format('='*20, globalopts.opts.sys_path, len(res)))
+        embed()
+        fp.append_data(globalopts.opts.op_fname, '{}\n'.format(res))
         return True
 
     #print('Failed: MAX iterations {} exceeded'.format(MAX_ITER), file=SYS.stderr)
@@ -550,22 +563,22 @@ def refine_init(
         sample_ci,
         pi_ref,
         ci_ref,
-        opts):
+        ):
 
     i = 1
     while i <= MAX_ITER:
         print('iteration:', i)
         # TODO: temp function ss.init()
 
-        (initial_state_set, final_state_set, is_final) = \
+        (initial_state_set, is_final) = \
             SS.init(current_abs, init_cons_list, final_cons,
                     initial_discrete_state, initial_controller_state)
 
         logger.debug('initial state set:\n{}'.format('\n'.join([str(current_abs.plant_abs.get_ival_cons_abs_state(s0.ps)) for s0 in initial_state_set])))
 
         system_params = SystemParams(
-            initial_state_set,
-            final_state_set,
+            #initial_state_set,
+            #final_state_set,
             is_final,
             plant_sim,
             controller_sim,
@@ -577,11 +590,11 @@ def refine_init(
             pi_ref,
             ci_ref
             )
-        SS.discover(current_abs, system_params)
+        final_state_set = SS.discover(current_abs, system_params, initial_state_set)
 
-        opts.plotting.show()
+        globalopts.opts.plotting.show()
 
-        if not system_params.final_state_set:
+        if not final_state_set:
             print('did not find any abstract counter example!', file=SYS.stderr)
             return False
 
@@ -598,7 +611,7 @@ def refine_init(
                                                                            ci_ref,
                                                                            pi,
                                                                            ci,
-                                                                           opts.max_paths)
+                                                                           globalopts.opts.max_paths)
 
         # ##!!##logger.debug('promising initial states: {}'.format(promising_initial_states))
 
@@ -632,17 +645,18 @@ def refine_init(
             pi_seq_list,
             initial_discrete_state,
             initial_controller_state,
-            sample_ci
+            sample_ci,
+            return_vio_only=True
             )
 
-        opts.plotting.show()
+        globalopts.opts.plotting.show()
 
         if res:
             print('Concretized', file=SYS.stderr)
-            fp.append_data(opts.op_fname,
+            fp.append_data(globalopts.opts.op_fname,
                            '{0} Concrete Traces({2}) for: {1} {0}\n'.
-                           format('='*20, opts.sys_path, len(res)))
-            fp.append_data(opts.op_fname, '{}\n'.format(res))
+                           format('='*20, globalopts.opts.sys_path, len(res)))
+            fp.append_data(globalopts.opts.op_fname, '{}\n'.format(res))
             return True
 
         (current_abs, init_cons_list) = SS.refine_init_based(
@@ -662,31 +676,47 @@ def dump_trace(trace_list):
     trace_list[0].dump_matlab()
 
 
-def run_secam(sys, prop, opts):
-    MODE = opts.MODE
-    #plot = opts.plot
+def run_secam(sys, prop):
+    MODE = globalopts.opts.MODE
+    plt = globalopts.opts.plotting
+    #plot = globalopts.opts.plot
 
     if MODE == 'simulate':
         if not isinstance(
-                opts.property_checker,
+                globalopts.opts.property_checker,
                 properties.PropertyChecker):
             raise err.Fatal('property checker must be enabled when '
                             'random testing!')
         start_time = time.time()
-        trace_list = RT.simulate(sys, prop, opts)
+        trace_list = RT.simulate(sys, prop)
         #print(len(list(trace_list)))
-        for trace in trace_list:
-            print(trace)
-        if opts.dump_trace:
+#         for trace in trace_list:
+#             print(trace)
+        if globalopts.opts.dump_trace:
             dump_trace(trace_list)
-        opts.plotting.plot_trace_list(trace_list, opts.plots)
-        opts.plotting.show()
+
+        if settings.paper_plot:
+            # because the plot is craeted inside the simulator, get
+            # the global handle
+            plt.acquire_global_fig()
+            plt.plot_rect(prop.init_cons.rect(), 'g')
+            plt.plot_rect(prop.final_cons.rect(), 'r')
+            plt.set_range((-2.5, 2.5), (-8, 8))
+
+        plt.plot_trace_list(trace_list)
+
+#         if settings.paper_plot:
+#             plt.plot_rect(prop.init_cons.rect(), 'g')
+#             plt.plot_rect(prop.final_cons.rect(), 'r')
+#             plt.set_range((-2, 2), (-7, 7))
+
+        plt.show()
     elif MODE == 'falsify':
         # ignore time taken to create_abstraction: mainly to ignore parsing
         # time
-        current_abs, sampler = create_abstraction(sys, prop, opts)
+        current_abs, sampler = create_abstraction(sys, prop)
         start_time = time.time()
-        falsify(sys, prop, opts, current_abs, sampler)
+        falsify(sys, prop, current_abs, sampler)
     else:
         raise err.Fatal('bad MODE supplied: {}'.format(MODE))
 
@@ -838,12 +868,8 @@ def main():
     # matplotlib.
     settings.plot = args.plot is not None
 
-    # TODO:
-    # dynamicall generate an opt class to mimic the same defined in
-    # loadsystem.py
-    # switch this to a reg class later.
-    Options = type(str('Options'), (), {})
-    opts = Options()
+    opts = globalopts.Options()
+
     if args.simulate is not None:
         opts.MODE = 'simulate'
         opts.num_sim_samples = args.simulate
@@ -902,8 +928,11 @@ def main():
     matlab_engine = args.meng
     sys.init_sims(opts.plotting, opts.property_checker, psim_args=matlab_engine)
 
-    sanity_check_input(sys, prop, opts)
-    run_secam(sys, prop, opts)
+    sanity_check_input(sys, prop)
+
+    globalopts.opts = opts
+
+    run_secam(sys, prop)
     # ##!!##logger.debug('execution ends')
 
 if __name__ == '__main__':

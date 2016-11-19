@@ -14,7 +14,7 @@ import pylab as plt
 
 import utils as U
 
-PLT = False
+PLT = True
 
 
 class SIM(object):

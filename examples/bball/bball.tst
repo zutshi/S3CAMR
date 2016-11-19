@@ -12,6 +12,9 @@ ROI = [[-10, 0, 5.0, -15.0],
 initial_set = [[-0.1, 3.0, 5.0, -5.0],
                [0.1, 4.0, 10.0, 5.0]]
 
+# initial_set = [[0, 3.0, 9.4, 3.91689],
+#                [0, 3.322, 9.4, 3.91689]]
+
 
 # Solves the original problem (in matlab atlaest)
 # x(0) = -0.09996, y(0) = 3.999, vx(0) = 9.8672, vy(0) = 4.968.
@@ -69,6 +72,20 @@ grid_eps = [25.1, 2.1, 25.1, 2.1]
 #grid_eps = [0.001]*4
 #delta_t = 5.0
 #num_samples = 20
+
+# works..as in, it comes up with a path which can be concretized
+# However, the graph is very very large, with many many paths
+#delta_t = 5.0
+#num_samples = 100
+#grid_eps = [25.1, 2.1, 25.1, 2.1]
+
+# 0.5, 1, 2, 5, 10
+#grid_eps = [2]*4
+grid_eps = [0.5]*4
+delta_t = 5.0 
+num_samples = 20
+
+
 
 MAX_ITER = 4
 

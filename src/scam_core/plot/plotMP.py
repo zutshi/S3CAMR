@@ -17,6 +17,7 @@ import numpy as np
 
 from .plotting_abstract import PlottingBase
 import err
+import settings
 
 plot_figure_for_paper = False
 
@@ -26,6 +27,7 @@ class Plotting(PlottingBase):
     def __init__(self, plots, *args):
         self._ax = None
         self.fast_plot = True if 'fast-plot' in args else False
+        self.block = False if 'no-block' in args else True
         self.plots = plots
         self.x_vs_y = plots
         self.new_session()
@@ -34,6 +36,16 @@ class Plotting(PlottingBase):
 #     def figure(self):
 #         fig = plt.figure()
 #         self._ax = fig.gca()
+
+    def force_ax(self, ax):
+        self._ax = ax
+
+    def single_color(self, c):
+        self.ax().set_color_cycle([c])
+
+    def acquire_global_fig(self):
+        ax = plt.gca()
+        self._ax = ax
 
     def new_session(self):
         self.xy2fig_map = collections.defaultdict(plt.figure)
@@ -47,11 +59,20 @@ class Plotting(PlottingBase):
         else:
             ax = self.xy2fig_map[x_vs_y].gca()
             ax.set_title(x_vs_y)
+            if settings.paper_plot:
+                ax.set_title('')
             self._ax = ax
 
         return self._ax
 
-    def show(self, block=True):
+    def set_range(self, x_range, y_range):
+        self.ax().set_xlim(x_range)
+        self.ax().set_ylim(y_range)
+
+    def show(self, block=None):
+        if block is None:
+            block = self.block
+
         plt.show(block)
 
     def title(self, *args, **kwargs):
@@ -91,19 +112,28 @@ class Plotting(PlottingBase):
             y = t_array if o_str == 't' else x_array[:, o_idx]
             self.ax(title).plot(x, y, *args, **kwargs)
 
-    def plot_abs_states(self, AA, s):
-        color_map = {
-                    'init': 'g',
-                    'final': 'r',
-                    'regular': 'k'
-                    }
-        for atype, abs_states in s.iteritems():
-            for abs_state in abs_states:
-                #r = AA.plant_abs.rect(abs_state.plant_state)
-                #if c.dim != 2:
-                #    raise StandardError('dim should be 2 for plotting 2D!')
-                r = AA.plant_abs.get_ival_cons_abs_state(abs_state.plant_state).rect()
-                self.plot_rect(r, color_map[atype])
+    def plot_abs_states(self, AA, prop, abs_states):
+        def get_color(s):
+            if AA.plant_abs.get_ival_cons_abs_state(s.ps) & prop.init_cons:
+                color = 'g'
+            elif AA.plant_abs.get_ival_cons_abs_state(s.ps) & prop.final_cons:
+                color = 'r'
+            else:
+                color = 'k'
+            return color
+
+#         if not isinstance(states, dict):
+#             s = {'regular': states}
+#         for atype, abs_states in s.iteritems():
+#             for abs_state in abs_states:
+#                 #r = AA.plant_abs.rect(abs_state.plant_state)
+#                 #if c.dim != 2:
+#                 #    raise StandardError('dim should be 2 for plotting 2D!')
+#                 r = AA.plant_abs.get_ival_cons_abs_state(abs_state.plant_state).rect()
+#                 self.plot_rect(r, color_map[atype])
+        for abs_state in abs_states:
+            r = AA.plant_abs.get_ival_cons_abs_state(abs_state.plant_state).rect()
+            self.plot_rect(r, get_color(abs_state))
 
     def plot_rect(self, r, edgecolor='k'):
         if len(r[0]) > 2:
@@ -114,7 +144,7 @@ class Plotting(PlottingBase):
             c = r[0]
             rng = r[1]
         self.ax().add_patch(
-            patches.Rectangle(c, *rng, fill=False, edgecolor=edgecolor)
+            patches.Rectangle(c, *rng, fill=False, edgecolor=edgecolor, linewidth=2)
             #patches.Rectangle((0.1, 0.1), 0.5, 0.5, fill=False)
         )
 
@@ -319,7 +349,7 @@ class Plotting(PlottingBase):
             y = (prep_t_trace(trace_list) if o_str == 't'
                  else prep_x_trace(trace_list, o_idx))
 
-            self.ax(title).plot(np.hstack(x), np.hstack(y))
+            self.ax(title).plot(np.hstack(x), np.hstack(y), '.-', linewidth=0.5)
 
     def plot_trace_list_xvsy_dc(self, trace_list, x_vs_y):
         """plot_trace_list: Different Color but slower?

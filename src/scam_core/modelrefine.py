@@ -32,10 +32,12 @@ from constraints import IntervalCons, top2ic, zero2ic
 
 from IPython import embed
 
+from globalopts import opts as gopts
+
 #np.set_printoptions(suppress=True, precision=2)
 
 # multiply num samples with the
-MORE_FACTOR = 10
+MORE_FACTOR = 100
 #TEST_FACTOR = 10
 
 MAX_TRAIN = 500
@@ -71,11 +73,10 @@ def ic2cell(ic, eps):
 
 
 def simulate_pwa(pwa_model, x_samples, N):
-    #ps = pwa_sim.PWA_SIM(pwa_model)
     return [pwa_sim.simulate(pwa_model, x0, N) for x0 in x_samples]
 
 
-def simulate(AA, s, sp, pwa_model, max_path_len, S0):
+def simulate(AA, sp, pwa_model, max_path_len, S0):
     NUM_SIMS = 100
     # sample only initial abstract state
     x0_samples = (sp.sampler.sample_multiple(S0, AA, sp, NUM_SIMS)).x_array
@@ -89,25 +90,21 @@ def simulate(AA, s, sp, pwa_model, max_path_len, S0):
     return traces
 
 
-def sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts):
+def sim_n_plot(sp, AA, prop, error_paths, depth, pwa_model):
     # intial abs state set
     S0 = {path[0] for path in error_paths}
-    s = {
-        'init': {path[0] for path in error_paths},
-        'final': {path[-1] for path in error_paths},
-        'regular': {state for path in error_paths for state in path[1:-1]}
-        }
+    s = (state for path in error_paths for state in path)
     print('simulating using depth = {} ...'.format(depth))
-    pwa_traces = simulate(AA, s, sp, pwa_model, depth, S0)
+    pwa_traces = simulate(AA, sp, pwa_model, depth, S0)
     print('done')
-    opts.plotting.figure()
+    gopts.plotting.figure()
     print('plotting...')
-    opts.plotting.plot_abs_states(AA, s)
-    opts.plotting.plot_rect(sp.final_cons.rect())
-    opts.plotting.plot_pwa_traces(pwa_traces)
+    gopts.plotting.plot_abs_states(AA, prop, s)
+    gopts.plotting.plot_rect(sp.final_cons.rect())
+    gopts.plotting.plot_pwa_traces(pwa_traces)
     #fig = BP.figure(title='S3CAMR')
     #fig = plt.figure()
-    opts.plotting.show()
+    gopts.plotting.show()
 
 
 # def get_qgraph(sp, AA, G, error_paths, pi_seqs):
@@ -130,7 +127,7 @@ def sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts):
 # and error paths and pi_seqs extracted.
 
 # Subsumes get_qgraph
-def get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs):
+def get_qgraph_xw(sp, AA, error_paths, pi_seqs):
 #     for i, pi_seq in enumerate(pi_seqs):
 #         for j, pi in enumerate(pi_seq):
 #             try:
@@ -139,7 +136,7 @@ def get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs):
 #                 print(i,j)
 #                 print(pi)
 #      exit()
-    G = graph_factory(opts.graph_lib)
+    G = graph_factory(gopts.graph_lib)
 
     for path, pi_seq in zip(error_paths, pi_seqs):
         # Normalize the (x, w) list
@@ -165,27 +162,27 @@ def get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs):
                 x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
                 w1cell = ic2cell(pi1_ic, sp.pi_ref.eps)
 
-                q1 = Qxw(x1cell, w1cell)
+                q1 = Qxw(a1, x1cell, w1cell)
 
                 if pi2_ic is None:
                     w2cells = ic2multicell(sp.pi_ref.i_cons, sp.pi_ref.eps)
-                    q2s = [Qxw(x2cell, w2cell) for w2cell in w2cells]
+                    q2s = [Qxw(a2, x2cell, w2cell) for w2cell in w2cells]
                     for q2 in q2s:
                         G.add_edge(q1, q2)
                 else:
                     w2cell = ic2cell(pi2_ic, sp.pi_ref.eps)
-                    q2 = Qxw(x2cell, w2cell)
+                    q2 = Qxw(a2, x2cell, w2cell)
                     G.add_edge(q1, q2)
         else:
             for (a1, a2) in U.pairwise(path):
                 x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
-                q1, q2 = Qx(x1cell), Qx(x2cell)
+                q1, q2 = Qx(a1, x1cell), Qx(a2, x2cell)
                 G.add_edge(q1, q2)
     return G
 
 
-def error_graph2qgraph_xw(sp, AA, opts, error_graph):
-    G = graph_factory(opts.graph_lib)
+def error_graph2qgraph_xw(sp, AA, error_graph):
+    G = graph_factory(gopts.graph_lib)
 
     for edge in error_graph.all_edges():
 
@@ -204,27 +201,35 @@ def error_graph2qgraph_xw(sp, AA, opts, error_graph):
 
             q1, q2 = Qxw(x1cell, w1cell), Qxw(x2cell, w2cell)
         else:
-            q1, q2 = Qx(x1cell), Qx(x2cell)
+            q1, q2 = Qx(a1, x1cell), Qx(a2, x2cell)
 
         G.add_edge(q1, q2)
     return G
 
 
-def refine_dft_model_based(AA, error_graph, final_state_set, sp, sys_sim, opts, sys, prop):
+def refine_dft_model_based(AA, errors, final_state_set, sp, sys_sim, sys, prop):
 
     # initialize Qxw class
     if AA.num_dims.pi:
         Qxw.init(sp.pi_ref.i_cons)
-    #qgraph = get_qgraph_xw(sp, AA, opts, error_paths, pi_seqs)
-    qgraph = error_graph2qgraph_xw(sp, AA, opts, error_graph)
 
-    pwa_model = build_pwa_model(AA, prop, qgraph, sp, opts, 'dft')
+    if gopts.max_paths > 0:
+        error_paths, pi_seqs = errors
+        qgraph = get_qgraph_xw(sp, AA, error_paths, pi_seqs)
+    else:
+        error_graph = errors
+        qgraph = error_graph2qgraph_xw(sp, AA, error_graph)
+
+    #qgraph = get_qgraph_xw(sp, AA, error_paths, pi_seqs)
+    qgraph = error_graph2qgraph_xw(sp, AA, error_graph)
+
+    pwa_model = build_pwa_model(AA, prop, qgraph, sp, 'dft')
 
 #     if settings.debug:
 #         qg.draw_graphviz()
 #         qg.draw_mplib()
 
-    draw_model(opts, sys.sys_name, pwa_model)
+    draw_model(sys.sys_name, pwa_model)
 
     #max_path_len = max([len(path) for path in error_paths])
     #print('max_path_len:', max_path_len)
@@ -242,7 +247,7 @@ def refine_dft_model_based(AA, error_graph, final_state_set, sp, sys_sim, opts, 
 
 #     if settings.debug_plot:
 #         # Need to define a new function to simulate inputs
-#         sim_n_plot(error_paths, depth, pwa_model, AA, sp, opts)
+#         sim_n_plot(sp, AA, prop, error_paths, depth, pwa_model)
 
     assert(settings.CE)
     # TODO: The reason we need this is to encode the transitions which
@@ -271,8 +276,12 @@ def refine_dft_model_based(AA, error_graph, final_state_set, sp, sys_sim, opts, 
     # older calculation of prop_cells
     #prop_cells = {abs_state2cell(path[-1], AA) for path in error_paths}
 
-    prop_cells = {abs_state2cell(s, AA) for s in (final_state_set)}
-    embed()
+    #prop_cells = {abs_state2cell(s, AA) for s in (final_state_set)}
+    if gopts.max_paths > 0:
+        prop_cells = {abs_state2cell(path[-1], AA) for path in error_paths}
+    else:
+        prop_cells = {abs_state2cell(s, AA) for s in (final_state_set)}
+
     assert(prop_cells)
 
     # partitions do not have a has function. Hence, using a work
@@ -282,10 +291,13 @@ def refine_dft_model_based(AA, error_graph, final_state_set, sp, sys_sim, opts, 
     # Q have a hash function
     prop_partitions = Q_p_map.values()
 
-    check4CE(pwa_model, depth, prop_partitions, sys.sys_name, 'dft', AA, sys, prop, sp, opts)
+    # Flush all plots: must block
+    gopts.plotting.show(block=True)
+
+    check4CE(pwa_model, depth, prop_partitions, sys.sys_name, 'dft', AA, sys, prop, sp)
 
 
-def check4CE(pwa_model, depth, prop_partitions, sys_name, model_type, AA, sys, prop, sp, opts):
+def check4CE(pwa_model, depth, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
 
 
     # Remove prop_partitions
@@ -304,13 +316,13 @@ def check4CE(pwa_model, depth, prop_partitions, sys_name, model_type, AA, sys, p
     vs = xs + ws
 
     bmc = BMC.factory(
-            opts.bmc_engine,
+            gopts.bmc_engine,
             vs,
             pwa_model, init_cons, safety_prop,
             prop_partitions,
             '{}_{}'.format(sys_name, model_type),
             model_type,
-            opts.bmc_prec)
+            gopts.bmc_prec)
 
     status = bmc.check(depth)
     if status == InvarStatus.Safe:
@@ -327,7 +339,7 @@ def check4CE(pwa_model, depth, prop_partitions, sys_name, model_type, AA, sys, p
                 print(bmc_trace)
             print('Unsafe...trying to concretize...')
             #verify_bmc_trace(AA, sys, prop, sp, bmc.trace, xs, ws)
-            verify_bmc_trace(AA, sys, prop, sp, opts, bmc_trace, pwa_trace)
+            verify_bmc_trace(AA, sys, prop, sp, bmc_trace, pwa_trace)
 
             bmc.get_new_disc_trace()
             bmc_trace = bmc.get_last_trace()
@@ -340,7 +352,7 @@ def check4CE(pwa_model, depth, prop_partitions, sys_name, model_type, AA, sys, p
         raise err.Fatal('Internal')
 
 
-def verify_bmc_trace(AA, sys, prop, sp, opts, bmc_trace, pwa_trace):
+def verify_bmc_trace(AA, sys, prop, sp, bmc_trace, pwa_trace):
     """Get multiple traces and send them for random testing
     """
 
@@ -355,12 +367,12 @@ def verify_bmc_trace(AA, sys, prop, sp, opts, bmc_trace, pwa_trace):
 
     # TODO: fix inputs!!
     #pi_seq = [[step.assignments[w] for w in ws] for step in bmc_trace[:-1]]
-    opts.plotting.new_session()
-    res = rt.concretize_bmc_trace(sys, prop, AA, sp, opts, num_trace_states, x_array, pi_seq)
+    gopts.plotting.new_session()
+    res = rt.concretize_bmc_trace(sys, prop, AA, sp, num_trace_states, x_array, pi_seq)
 
-    opts.plotting.new_session()
-    init_cons_subset = azp.overapprox_x0(AA, prop, opts, pwa_trace, opts.bmc_prec)
-    rt.concretize_init_cons_subset(sys, prop, AA, sp, opts, num_trace_states, x_array, pi_seq, init_cons_subset)
+    gopts.plotting.new_session()
+    init_cons_subset = azp.overapprox_x0(AA, prop, pwa_trace, gopts.bmc_prec)
+    rt.concretize_init_cons_subset(sys, prop, AA, sp, num_trace_states, x_array, pi_seq, init_cons_subset)
     return
 
 
@@ -406,7 +418,7 @@ def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, bmc_engine
     bmc.check()
 
 
-def build_pwa_model(AA, prop, qgraph, sp, opts, model_type):
+def build_pwa_model(AA, prop, qgraph, sp, model_type):
     """build_pwa_model
     Builds both dft and rel models
 
@@ -420,8 +432,8 @@ def build_pwa_model(AA, prop, qgraph, sp, opts, model_type):
     include_err : include error in determining next state
                   x' = x +- errror
     """
-    tol = opts.max_model_error
-    include_err = opts.model_err
+    tol = gopts.max_model_error
+    include_err = gopts.model_err
 
     # number of training samples
     #TODO : should be min and not max!
@@ -443,15 +455,17 @@ def build_pwa_model(AA, prop, qgraph, sp, opts, model_type):
         if True:
             if settings.debug:
                 print('modeling: {}'.format(q))
-            for sub_model in q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
+            for sub_model in q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
                 assert(sub_model is not None)
                 # sub_model.pnexts[0] = sub_model.p.ID to enforce self loops
-                print(U.colorize('{} -> {}, e%:{}, status: {}, e: {}'.format(
+                print(U.colorize('{} -> {}, e%:{}, status: {}, e: {}, A:{}, b:{}'.format(
                     sub_model.p.ID,
                     [p.ID for p in sub_model.pnexts],
                     np.trunc(sub_model.max_error_pc),
                     sub_model_status(sub_model),
-                    sub_model.m.error)))
+                    sub_model.m.error,
+                    str(sub_model.m.A).replace('\n',''),
+                    sub_model.m.b)))
                 pwa_model.add(sub_model)
                 #abs_state_models[abs_state] = sub_model
 
@@ -463,7 +477,7 @@ def sub_model_status(s, status2str={KMAX_EXCEEDED: 'kamx exceeded', SUCCESS: 'su
     return status2str[s.status]
 
 
-def draw_model(opts, sys_name, pwa_model):
+def draw_model(sys_name, pwa_model):
     """Adds a 'label' attribute to the edges. This is useful for
     graphs rendered using graphviz, as it annotates the edges with the
     value of those attributes. Currently, the label's value is the
@@ -486,7 +500,7 @@ def draw_model(opts, sys_name, pwa_model):
 #                 label_edge_with_error(e, sub_model.max_error_pc)
 #                 break
 
-    G = graph_factory(opts.graph_lib)
+    G = graph_factory(gopts.graph_lib)
 
     for sub_model in pwa_model:
         for p_ in sub_model.pnexts:
@@ -543,57 +557,7 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
     return pwa_models
 
 
-# def q_graph_models(ntrain, ntest, step_sim, tol, include_err, qgraph):
-#     qmodels = {}
-#     # Make a model for every q in the graph
-#     for q in qgraph:
-#         X, Y = q.get_rels(ntrain, step_sim)
-#         models = mdl(tol, qgraph, q, (X, Y), X, K)
-#         qmodels[q] = models
-#     return qmodels
-
-
-# def mdl_old(tol, step_sim, qgraph, q, (X, Y), Y_, k):
-#     assert(X.shape[1] == q.dim)
-#     assert(Y_.shape[1] == q.dim)
-#     assert(X.shape[0] == Y.shape[0] == Y_.shape[0])
-
-#     if k == -1:
-#         err.warn('max depth exceeded but the error > tol. Giving up!')
-#         return []
-
-#     rm = RegressionModel(X, Y)
-#     e_pc = rm.max_error_pc(X, Y)
-#     err.imp('error%: {}'.format(e_pc))
-#     error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
-#     error_exceeds_tol = len(error_dims) > 0
-#     #err.warn('e%:{}, |e%|:{}'.format(e_pc, np.linalg.norm(e_pc, 2)))
-#     if error_exceeds_tol:
-#         ms = []
-#         for qi in qgraph.neighbors(q):
-#             Y__ = qi.sim(step_sim, Y_)
-#             sat = qi.sat(Y__)
-#             # TODO: If we are out of samples, we can't do much. Need to
-#             # handle this situation better? Not sure? Request for more
-#             # samples? Give up?
-#             if any(sat):
-#                 rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k-1)
-#                 l = [(rm_, [q]+qseq_, e_pc_) for rm_, qseq_, e_pc_ in rm_qseq]
-#                 ms.extend(l)
-#             else:
-#                 err.warn('out of samples...Giving up!')
-
-#         # The loop never ran due to q not having any neighbors,
-#         # Or, no samples were left. We do the best with what we have
-#         # then.
-#         if not ms:
-#             ms = [(rm, [q], e_pc)]
-#         return ms
-#     else:
-#         return [(rm, [q], e_pc)]
-
-
-def mdl(tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
+def mdl(AA, prop, tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
     X, Y = XY
     assert(X.shape[1] == q.dim)
     assert(Y_.shape[1] == q.dim)
@@ -612,7 +576,7 @@ def mdl(tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
         #err.warn('e%:{}, |e%|:{}'.format(e_pc, np.linalg.norm(e_pc, 2)))
         if settings.debug_plot:
             rm.plot(X, Y, tol, 'q:{}, err:{}'.format(q, e_pc))
-        settings.plt_show()
+        gopts.plotting.show()
     else:
         refine = True
 
@@ -630,22 +594,34 @@ def mdl(tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
             # first check for existance of a self loop
             #if any(q.sat(Y)):
                 #err.imp('self loop exists')
+
             for qi in it.chain([q], qgraph.neighbors(q)):
                 if settings.debug:
                     print('checking qi: ', qi)
-                #embed()
+
                 Y__ = qi.sim(step_sim, Y_)
                 sat = qi.sat(Y__)
+
                 # TODO: If we are out of samples, we can't do much. Need to
                 # handle this situation better? Not sure? Request for more
                 # samples? Give up?
-                if any(sat):
-                    if settings.debug and settings.plot:
-                        from matplotlib import pyplot as plt
-                        plt.plot(Y__[sat, 0], Y__[sat, 1], 'y*')
-                        plt.plot(Y_[sat, 0], Y_[sat, 1], 'r*')
+                from matplotlib import pyplot as plt
+                if settings.debug and settings.plot:
+                    #ax = plt.gca()
+                    #ax.set_color_cycle(['b'])
+                    #ax.set_ylim([-10, 10])
+                    #ax.set_xlim([-2, 2])
+                    gopts.plotting.acquire_global_fig()
+                    gopts.plotting.single_color('b')
+                    gopts.plotting.set_range((-2, 2), (-7, 7))
+                    gopts.plotting.plot_abs_states(AA, prop, [q.a])
+                    if any(sat):
+                        gopts.plotting.plot(Y__[sat, 0], Y__[sat, 1], '*')
+                        gopts.plotting.plot(Y_[sat, 0], Y_[sat, 1], '.')
+                    gopts.plotting.plot_abs_states(AA, prop, [qi.a])
 
-                    rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k+1, kmin, kmax)
+                if any(sat):
+                    rm_qseq = mdl(AA, prop, tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k+1, kmin, kmax)
                     l = [(rm_, [qi]+qseq_, e_pc_, status_)
                          for rm_, qseq_, e_pc_, status_ in rm_qseq]
                     ms.extend(l)
@@ -654,6 +630,21 @@ def mdl(tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
                         pass # no self loop observed
                     else:
                         err.warn('out of samples...Giving up on the edge!')
+
+#############################################
+#############################################
+            ax = plt.gca()
+            remove = set()
+            for l in ax.lines:
+                xy = l.get_xydata()
+                if np.all(q.sat(xy[0:1, :])):
+                    if not any([np.all(qi.sat(xy[-1:, :])) for qi in it.chain([q], qgraph.neighbors(q))]):
+                        remove.add(l)
+            for l in remove:
+                ax.lines.remove(l)
+
+##############################################
+##############################################
 
         # TODO: this will happen when the last location fails? confirm
         if not ms:
@@ -668,20 +659,6 @@ def mdl(tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
         ms = [(rm, [], e_pc, status)]
 
     return ms
-
-# def sim(step_sim, x_array):
-#     """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
-#     """
-#     d, pvt, s = [np.array([])]*3
-#     ci, pi = [np.array([])]*2
-#     t0 = 0
-#     Yl = []
-
-#     for x in x_array:
-#         (t_, x_, s_, d_, pvt_, u_) = step_sim(t0, x, s, d, pvt, ci, pi)
-#         Yl.append(x_)
-
-#     return np.vstack(Yl)
 
 
 def dummy_sub_model(q):
@@ -704,7 +681,7 @@ def dummy_sub_model(q):
     return sub_model
 
 
-def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
+def q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
     """Find affine models for a given Q
 
     Parameters
@@ -743,7 +720,7 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
             return [dummy_sub_model(q)]
 
         try:
-            regression_models = mdl(tol, step_sim, qgraph, q, (X, Y), X, k=0, kmin=KMIN, kmax=KMAX)
+            regression_models = mdl(AA, prop, tol, step_sim, qgraph, q, (X, Y), X, k=0, kmin=KMIN, kmax=KMAX)
             # we are done!
             if regression_models:
                 try_again = False
@@ -767,7 +744,7 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
     # try again on failure, and settle with non relational models
     if not regression_models:
         err.warn('No model found for q: {}'.format(q))
-        regression_models = mdl(np.inf, step_sim, qgraph, q, (X, Y), X, k=0, kmin=0, kmax=1)
+        regression_models = mdl(AA, prop, np.inf, step_sim, qgraph, q, (X, Y), X, k=0, kmin=0, kmax=1)
         assert(regression_models)
         # No model found, get a non-relational model as the worst case
         pwa_non_relational = True
@@ -1026,7 +1003,7 @@ def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
 
 
 # def refine_rel_model_based(
-#         AA, error_paths, pi_seq_list, sp, sys_sim, opts, sys, prop):
+#         AA, error_paths, pi_seq_list, sp, sys_sim, sys, prop):
 #     '''does not handle pi_seq_list yet'''
 
 #     # abs_state relations: maps an abs_state to other abs_states
@@ -1043,12 +1020,12 @@ def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
 #         flat_relations.extend(flat_relation)
 
 #     pwa_model = build_pwa_model(
-#             AA, flat_relations, sp, opts.max_model_error,
-#             opts.model_err, 'rel')
+#             AA, flat_relations, sp, gopts.max_model_error,
+#             gopts.model_err, 'rel')
 
 #     if __debug__:
-#         sim_n_plot(error_paths, pwa_model, AA, sp, opts)
-#     check4CE(pwa_model, error_paths, sys.sys_name, 'rel', AA, sys, prop, sp, opts.bmc_engine)
+#         sim_n_plot(error_paths, pwa_model, AA, sp)
+#     check4CE(pwa_model, error_paths, sys.sys_name, 'rel', AA, sys, prop, sp, gopts.bmc_engine)
 
 
 
@@ -1122,3 +1099,53 @@ def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
 #                 wcell = ic2cell(pi_ic, pi_eps)
 #                 qs.append(Qxw(xcell, wcell, sp.pi_ref.i_cons))
 #     return qs
+#
+# def q_graph_models(ntrain, ntest, step_sim, tol, include_err, qgraph):
+#     qmodels = {}
+#     # Make a model for every q in the graph
+#     for q in qgraph:
+#         X, Y = q.get_rels(ntrain, step_sim)
+#         models = mdl(tol, qgraph, q, (X, Y), X, K)
+#         qmodels[q] = models
+#     return qmodels
+
+
+# def mdl_old(tol, step_sim, qgraph, q, (X, Y), Y_, k):
+#     assert(X.shape[1] == q.dim)
+#     assert(Y_.shape[1] == q.dim)
+#     assert(X.shape[0] == Y.shape[0] == Y_.shape[0])
+
+#     if k == -1:
+#         err.warn('max depth exceeded but the error > tol. Giving up!')
+#         return []
+
+#     rm = RegressionModel(X, Y)
+#     e_pc = rm.max_error_pc(X, Y)
+#     err.imp('error%: {}'.format(e_pc))
+#     error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
+#     error_exceeds_tol = len(error_dims) > 0
+#     #err.warn('e%:{}, |e%|:{}'.format(e_pc, np.linalg.norm(e_pc, 2)))
+#     if error_exceeds_tol:
+#         ms = []
+#         for qi in qgraph.neighbors(q):
+#             Y__ = qi.sim(step_sim, Y_)
+#             sat = qi.sat(Y__)
+#             # TODO: If we are out of samples, we can't do much. Need to
+#             # handle this situation better? Not sure? Request for more
+#             # samples? Give up?
+#             if any(sat):
+#                 rm_qseq = mdl(tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k-1)
+#                 l = [(rm_, [q]+qseq_, e_pc_) for rm_, qseq_, e_pc_ in rm_qseq]
+#                 ms.extend(l)
+#             else:
+#                 err.warn('out of samples...Giving up!')
+
+#         # The loop never ran due to q not having any neighbors,
+#         # Or, no samples were left. We do the best with what we have
+#         # then.
+#         if not ms:
+#             ms = [(rm, [q], e_pc)]
+#         return ms
+#     else:
+#         return [(rm, [q], e_pc)]
+

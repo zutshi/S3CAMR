@@ -31,6 +31,7 @@ from .properties import PropertyChecker
 import multiprocessing as mp
 
 from IPython import embed
+import globalopts
 
 logger = logging.getLogger(__name__)
 term = Terminal()
@@ -39,7 +40,7 @@ term = Terminal()
 # mpl.setLevel(logging.INFO)
 
 
-def concretize_bmc_trace(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq):
+def concretize_bmc_trace(sys, prop, AA, sp, trace_len, x_array, pi_seq):
     """
     Tries to concretize a BMC trace
 
@@ -58,7 +59,7 @@ def concretize_bmc_trace(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq):
     # 1)
     # Check exact returned trace.
     print('Checking trace returned by BMC...')
-    trace = trace_violates(sys_sim, sys, prop, opts, trace_len, x_array, pi_seq)
+    trace = trace_violates(sys_sim, sys, prop, trace_len, x_array, pi_seq)
     if trace:
         print(term.green('violation found'))
         print('violation found', file=SYS.stderr)
@@ -76,7 +77,7 @@ def concretize_bmc_trace(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq):
     # Check using random sims. Find the abstract state of the trace's
     # X0, and send it to random_test() along with pi_seqs
     print('concretizing using sampling X0...[fixed X0+pi_seq]')
-    if abstract_trace_violates(sys, sp, prop, AA, opts, x_array, pi_seq):
+    if abstract_trace_violates(sys, sp, prop, AA, x_array, pi_seq):
         print('our job is done...')
         print('our job is done...', file=SYS.stderr)
         exit()
@@ -100,19 +101,19 @@ def concretize_bmc_trace(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq):
     exit()
 
 
-def trace_violates(sys_sim, sys, prop, opts, trace_len, x_array, pi_seq):
+def trace_violates(sys_sim, sys, prop, trace_len, x_array, pi_seq):
     x0_samples = [x_array[0, :]]
     x_array_bmc = x_array
-    return traces_violates(sys_sim, sys, prop, opts, trace_len, x0_samples, x_array_bmc, pi_seq)
+    return traces_violates(sys_sim, sys, prop, trace_len, x0_samples, x_array_bmc, pi_seq)
 
 
-def concretize_init_cons_subset(sys, prop, AA, sp, opts, trace_len, x_array, pi_seq, init_cons_subset):
-    x0_samples = init_cons_subset.sample_UR(1000)
+def concretize_init_cons_subset(sys, prop, AA, sp, trace_len, x_array, pi_seq, init_cons_subset):
+    x0_samples = init_cons_subset.sample_UR(100)
     sys_sim = simsys.get_system_simulator(sys)
-    return traces_violates(sys_sim, sys, prop, opts, trace_len, x0_samples, x_array, pi_seq)
+    return traces_violates(sys_sim, sys, prop, trace_len, x0_samples, x_array, pi_seq)
 
 
-def traces_violates(sys_sim, sys, prop, opts, trace_len, x0_samples, x_array_bmc, pi_seq):
+def traces_violates(sys_sim, sys, prop, trace_len, x0_samples, x_array_bmc, pi_seq):
     x_array = x_array_bmc
     # The property can be violated at t <= Time Horizon. In that case
     # simulate only as much as the trace length allows.
@@ -141,15 +142,15 @@ def traces_violates(sys_sim, sys, prop, opts, trace_len, x0_samples, x_array_bmc
     # t_array is the same
     t_array = np.arange(0., prop.T, sys.delta_t)
 
-    opts.plotting.plot_trace_list(traces)#, x_vs_y=opts.plots)
-    opts.plotting.plot_trace_array(t_array, x_array, 'r*-', linewidth=2)
-    opts.plotting.show()
+    globalopts.opts.plotting.plot_trace_list(traces)#, x_vs_y=globalopts.opts.plots)
+    globalopts.opts.plotting.plot_trace_array(t_array, x_array, 'r*-', linewidth=2)
+    globalopts.opts.plotting.show()
 
     vio_traces = [trace for trace in traces if check_prop_violation(prop, trace)]
     return vio_traces
 
 
-def abstract_trace_violates(sys, sp, prop, AA, opts, x_array, pi_seq):
+def abstract_trace_violates(sys, sp, prop, AA, x_array, pi_seq):
     if AA.num_dims.pi != 0:
         pi_eps = sp.pi_ref.pi_eps
         pi_seq = [
@@ -196,10 +197,10 @@ def abstract_trace_violates(sys, sp, prop, AA, opts, x_array, pi_seq):
         return_vio_only=False
         )
 
-    #opts.plotting.figure()
-    opts.plotting.plot_trace_list(trace_list, x_vs_y=opts.plots)
-    opts.plotting.plot_abs_states(AA, {'init': [initial_state]})
-    opts.plotting.show()
+    #globalopts.opts.plotting.figure()
+    globalopts.opts.plotting.plot_trace_list(trace_list, x_vs_y=globalopts.opts.plots)
+    globalopts.opts.plotting.plot_abs_states(AA, {'init': [initial_state]})
+    globalopts.opts.plotting.show()
 
     return vio_found
 
@@ -238,11 +239,11 @@ def check_prop_violation(prop, trace):
 #     return cP.dumps(f(arg), protocol=cP.HIGHEST_PROTOCOL)
 
 
-def simulate(sys, prop, opts):
-    if opts.par:
-        return simulate_par(sys, prop, opts)()
+def simulate(sys, prop):
+    if globalopts.opts.par:
+        return simulate_par(sys, prop)()
     else:
-        return simulate_single(sys, prop, opts)
+        return simulate_single(sys, prop)
 
 
 def f(sys, prop, fd, _):
@@ -361,7 +362,7 @@ def jb_parallel(self, sim, concrete_states):
 
 
 class simulate_par(object):
-    def __init__(self, sys, prop, opts):
+    def __init__(self, sys, prop):
         self.sys = sys
         self.prop = prop
         self.opts = opts
@@ -377,17 +378,17 @@ class simulate_par(object):
         par_option = 'mp_custom'
 
         if par_option == 'mp':
-            num_samples = self.opts.num_sim_samples
+            num_samples = self.globalopts.opts.num_sim_samples
             concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
             sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
             mp_imap(self, sim, concrete_states)
         elif par_option == 'mp_custom':
-            num_samples = self.opts.num_sim_samples
+            num_samples = self.globalopts.opts.num_sim_samples
             concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
             sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
             mp_custom(self, sim, concrete_states)
         elif par_option == 'mp_shared_mem':
-            num_samples = self.opts.num_sim_samples
+            num_samples = self.globalopts.opts.num_sim_samples
             concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
             sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
         elif par_option == 'joblib':
@@ -400,8 +401,8 @@ class simulate_par(object):
         return self.trace_gen()
 
 
-def simulate_single(sys, prop, opts):
-    num_samples = opts.num_sim_samples
+def simulate_single(sys, prop):
+    num_samples = globalopts.opts.num_sim_samples
     num_violations = 0
 
     concrete_states = sample.sample_init_UR(sys, prop, num_samples)

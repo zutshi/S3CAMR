@@ -184,7 +184,7 @@ def truncate(prec, *args):
     return (trunc_array(X) for X in args)
 
 
-def overapprox_x0(AA, prop, opts, pwa_trace, prec, solver='glpk'):
+def overapprox_x0(AA, prop, pwa_trace, prec, solver='glpk'):
     C, d = part_constraints(pwa_trace)
     A, b = dyn_constraints(pwa_trace)
     pA, pb = prop_constraints(AA, prop, pwa_trace)
@@ -247,15 +247,23 @@ def overapprox_x0(AA, prop, opts, pwa_trace, prec, solver='glpk'):
             #raise e
 
     # For python2/3 compatibility
-    try:
-        input = raw_input
-    except NameError:
-        pass
-    prompt = input('load the prompt? (y/Y)')
-    if prompt.lower() == 'y':
-        import IPython
-        IPython.embed()
+#     try:
+#         input = raw_input
+#     except NameError:
+#         pass
+#     prompt = input('load the prompt? (y/Y)')
+#     if prompt.lower() == 'y':
+#         import IPython
+#         IPython.embed()
 
     #ranges = [[0.00416187, 0.00416187],[3.47047152,3.47047152],[9.98626028,9.98626028],[4.98715449,4.98715449]]
     r = np.asarray(ranges)
-    return cons.IntervalCons(r[:, 0], r[:, 1])
+    # due to numerical errors, the interval can be malformed
+    try:
+        ret_val = cons.IntervalCons(r[:, 0], r[:, 1])
+    except:
+        from IPython import embed
+        print('Malformed Interval! Please fix.')
+        embed()
+
+    return ret_val

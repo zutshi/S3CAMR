@@ -35,7 +35,7 @@ def factory(lib_name, plots, *args):
 #class PlottingDisabled(PlottingBase):
 class PlottingDisabled(object):
     def __getattribute__(*args):
-        return lambda: None
+        return lambda *args, **kwargs: None
 #     def figure(self):
 #         return
 

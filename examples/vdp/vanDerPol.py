@@ -49,7 +49,7 @@ class SIM(object):
 
         self.solver = ode(dyn).set_integrator('dopri5', rtol=rtol, max_step=max_step, nsteps=nsteps)  # (1)
 
-    #@U.memoize2disk(U.memoize_hash_method)
+    @U.memoize2disk(U.memoize_hash_method)
     def sim(self, TT, X0, D, P, U, I, property_checker):
         property_violated_flag = False
         num_dim_x = len(X0)
@@ -86,7 +86,7 @@ class SIM(object):
         #plt.plot(plot_data[0] + Ti, plot_data[1][:, 0])
 
         if PLOT:
-            plt.plot(plot_data[1][:, 0], plot_data[1][:, 1])
+            plt.plot(plot_data[1][:, 0], plot_data[1][:, 1], 'b-', linewidth=0.5)
 
         ##plt.plot(plot_data[0] + Ti, np.tile(U, plot_data[0].shape))
 

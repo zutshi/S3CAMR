@@ -14,6 +14,7 @@ import constraints as cons
 from utils import print
 
 import settings
+from IPython import embed
 
 from . import cellmanager as CM
 
@@ -66,14 +67,20 @@ class Qxw(Q):
     def init(cls, wic):
         cls.wic = wic
 
-    def __init__(self, xcell, wcell):
+    # TODO: a is being as a result of a hack!
+    def __init__(self, a, xcell, wcell):
         """__init__
 
         Parameters
         ----------
-        abs_state : abstract states
+        a : abstract state
+        xcell: cell over state space
         w_cells : cells associated with the abstract state defining
         range of inputs
+
+        Notes
+        -------
+        It is not clear if abstract state should be here
         """
         if Qxw.wic is None:
             raise NameError('Class was not initialized. wic is None')
@@ -81,6 +88,7 @@ class Qxw(Q):
         assert(isinstance(xcell, CM.Cell))
         assert(isinstance(wcell, CM.Cell))
 
+        self.a = a
         self.xcell = xcell
         self.wcell = wcell
         self.xwcell = CM.Cell.concatenate(xcell, wcell)
@@ -189,9 +197,10 @@ class Qxw(Q):
 
 
 class Qx(Q):
-    def __init__(self, xcell):
+    def __init__(self, a, xcell):
         assert(isinstance(xcell, CM.Cell))
 
+        self.a = a
         self.xcell = xcell
         self.ival_constraints = xcell.ival_constraints
         self.xdim = xcell.dim
@@ -213,36 +222,31 @@ class Qx(Q):
             (t_, x_, s_, d_, pvt_, u_) = step_sim(t0, x, s, d, pvt, ci, pi)
             Yl.append(x_)
 
-        if settings.debug and settings.plot:
-            print('plotting grids Qx')
-            #fig, ax = plt.subplots()
-            ax = plt.gca()
-#             ax.set_yticks([0.2, 0.6, 0.8], minor=False)
-#             ax.set_yticks([0.3, 0.55, 0.7], minor=True)
-#             ax.yaxis.grid(True, which='major')
-#             ax.yaxis.grid(True, which='minor')
+#         if settings.debug and settings.plot:
+#             print('plotting grids Qx')
+#             ax = plt.gca()
 
             # plot errors
             # van der pol
-            #epsx0 = 0.51
-            #epsx1 = 0.51
-            #xrng = (-9, 9)
-            #yrng = (-3, 3)
+#             epsx0 = 0.2
+#             epsx1 = 0.2
+#             yrng = (-9, 9)
+#             xrng = (-3, 3)
 
-            # bball
-            epsx0 = 50.1
-            epsx1 = 10.1
-            xrng = (-50, 500)
-            yrng = (0, 60)
+#             # bball
+#             epsx0 = 50.1
+#             epsx1 = 10.1
+#             xrng = (-50, 500)
+#             yrng = (0, 60)
 
-            for i in np.arange(0, yrng[1], epsx1):
-                ax.axhline(i, linestyle='-', color='k')
-            for i in np.arange(0, yrng[0], -epsx1):
-                ax.axhline(i, linestyle='-', color='k')
-            for i in np.arange(0, xrng[1], epsx0):
-                ax.axvline(i, linestyle='-', color='k')
-            for i in np.arange(0, xrng[0], -epsx0):
-                ax.axvline(i, linestyle='-', color='k')
+#             for i in np.arange(0, yrng[1], epsx1):
+#                 ax.axhline(i, linestyle='-', color='k')
+#             for i in np.arange(0, yrng[0], -epsx1):
+#                 ax.axhline(i, linestyle='-', color='k')
+#             for i in np.arange(0, xrng[1], epsx0):
+#                 ax.axvline(i, linestyle='-', color='k')
+#             for i in np.arange(0, xrng[0], -epsx0):
+#                 ax.axvline(i, linestyle='-', color='k')
 
             # For van der pol only
             # plot error states
@@ -250,6 +254,7 @@ class Qx(Q):
             #ax.axhline(-6.5, linestyle='-', color='r')
             #ax.axvline(-1, linestyle='-', color='r')
             #ax.axvline(-0.7, linestyle='-', color='r')
+            #embed()
 
         return np.vstack(Yl)
 
@@ -279,7 +284,8 @@ class Qx(Q):
             # as these are in the system model *.py
             #plt.title('ignore')
             #plt.show()
-            plt.close()
+            #plt.close()
+            pass
 
         # return empty arrays
         if x_array.size == 0:
