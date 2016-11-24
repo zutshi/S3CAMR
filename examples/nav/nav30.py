@@ -260,7 +260,7 @@ class SIM(object):
     def __init__(self, _, pvt_init_data):
         self.model = create_model()
 
-    #@U.memoize2disk(U.memoize_hash_method)
+    @U.memoize2disk(U.memoize_hash_method)
     def sim(self, TT, X0, D, P, _, I, property_checker):
 
         m0 = x2mode(X0)
