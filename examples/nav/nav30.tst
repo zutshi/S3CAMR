@@ -25,13 +25,13 @@ R = [[1., 6., -inf, -inf],
 S = [[22., 11., -inf, -inf],
      [23., 12., inf, inf]]
 
-error_set = S
+error_set = P
 
 # P, Q, R
-#T = 20.0
+T = 20.0
 
 # S
-T = 35.0
+#T = 35.0
 
 # Abstraction params: P, Q, R, S
 #grid_eps = [0.2, 0.2, 0.4, 0.4]
@@ -41,9 +41,9 @@ T = 35.0
 
 # Working set for P, Q
 # ./scamr.py -f ../examples/nav/nav30.tst -cn  --refine model-dft --prop-check --incl-error --seed 0 --max-model-error 10 --max-paths 1000
-# grid_eps = [1.1]*4
-# delta_t = 5.0
-# num_samples = 100
+grid_eps = [5.1]*4
+delta_t = 5.0
+num_samples = 100
 
 # Worked for R
 # grid_eps = [0.6]*4
@@ -52,9 +52,9 @@ T = 35.0
 
 # [1.1]*4 did not work for S
 # Trying below
-grid_eps = [0.6]*4
-delta_t = 5.0
-num_samples = 200
+# grid_eps = [0.6]*4
+# delta_t = 5.0
+# num_samples = 200
 
 MAX_ITER = 4
 
