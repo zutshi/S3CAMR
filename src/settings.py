@@ -7,7 +7,7 @@ debug = False
 debug_plot = False
 plot = False
 
-paper_plot = True
+paper_plot = False
 
 # CE hack is ON
 CE = True

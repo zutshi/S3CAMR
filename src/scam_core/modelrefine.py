@@ -40,7 +40,7 @@ from globalopts import opts as gopts
 MORE_FACTOR = 100
 #TEST_FACTOR = 10
 
-MAX_TRAIN = 50
+MAX_TRAIN = 500
 
 #MAX_TEST = 200
 
@@ -633,15 +633,17 @@ def mdl(AA, prop, tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
 
 #############################################
 #############################################
-            ax = plt.gca()
-            remove = set()
-            for l in ax.lines:
-                xy = l.get_xydata()
-                if np.all(q.sat(xy[0:1, :])):
-                    if not any([np.all(qi.sat(xy[-1:, :])) for qi in it.chain([q], qgraph.neighbors(q))]):
-                        remove.add(l)
-            for l in remove:
-                ax.lines.remove(l)
+            # Delete unused traj seg: assumes 1-relational modeling
+            if settings.paper_plot:
+                ax = plt.gca()
+                remove = set()
+                for l in ax.lines:
+                    xy = l.get_xydata()
+                    if np.all(q.sat(xy[0:1, :])):
+                        if not any([np.all(qi.sat(xy[-1:, :])) for qi in it.chain([q], qgraph.neighbors(q))]):
+                            remove.add(l)
+                for l in remove:
+                    ax.lines.remove(l)
 
 ##############################################
 ##############################################
