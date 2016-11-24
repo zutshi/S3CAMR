@@ -32,12 +32,6 @@ error_set = [[-1, -6.5], [-0.7, -5.6]]
 #num_samples = 10
 
 
-# param 5: works for S3CAM
-grid_eps = [0.1, 0.1]
-delta_t = 0.1
-num_samples = 3
-
-
 # # Must have prop check ON
 # grid_eps = [.21, .21]
 # num_samples = 10
@@ -78,12 +72,18 @@ num_samples = 3
 # num_samples = 2
 # delta_t = 0.1
 
+
+# param 5: works for S3CAM
+# grid_eps = [0.11, 0.11]
+# delta_t = 0.1
+# num_samples = 3
+
 ##########################
 ## Works for scamr!
 
-# grid_eps = [.011, .011]
-# num_samples = 2
-# delta_t = 0.5
+grid_eps = [.011, .011]
+num_samples = 2
+delta_t = 0.5
 
 
 initial_discrete_state = []
