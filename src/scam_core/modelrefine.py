@@ -40,7 +40,7 @@ from globalopts import opts as gopts
 MORE_FACTOR = 100
 #TEST_FACTOR = 10
 
-MAX_TRAIN = 500
+MAX_TRAIN = 50
 
 #MAX_TEST = 200
 
@@ -221,7 +221,7 @@ def refine_dft_model_based(AA, errors, final_state_set, sp, sys_sim, sys, prop):
         qgraph = error_graph2qgraph_xw(sp, AA, error_graph)
 
     #qgraph = get_qgraph_xw(sp, AA, error_paths, pi_seqs)
-    qgraph = error_graph2qgraph_xw(sp, AA, error_graph)
+    #qgraph = error_graph2qgraph_xw(sp, AA, error_graph)
 
     pwa_model = build_pwa_model(AA, prop, qgraph, sp, 'dft')
 
