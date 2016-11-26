@@ -61,15 +61,17 @@ np.set_printoptions(linewidth=200)
 # use this when we add windows portability
 ###############################
 
+
 # start logger
+def setup_logger():
+    FORMAT = '[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s'
+    FORMAT2 = '%(levelname) -10s %(asctime)s %(module)s:\
+               %(lineno)s %(funcName)s() %(message)s'
 
-FORMAT = '[%(filename)s:%(lineno)s - %(funcName)20s() ] %(message)s'
-FORMAT2 = '%(levelname) -10s %(asctime)s %(module)s:\
-           %(lineno)s %(funcName)s() %(message)s'
-
-logging.basicConfig(filename='log.secam', filemode='w', format=FORMAT2,
-                    level=logging.DEBUG)
-logger = logging.getLogger(__name__)
+    logging.basicConfig(filename='{}_secam.log'.format(TIME_STR), filemode='w', format=FORMAT2,
+                        level=logging.DEBUG)
+    logger = logging.getLogger(__name__)
+    return logger
 
 
 # Remove this re-structuring!! Use existing structures instead.
@@ -108,6 +110,20 @@ class SystemParams:
 
 def sanity_check_input(sys, prop):
     return
+
+
+#side effect: creates the dir
+def setup_dir(sys, dirname):
+    # If no output folder is specified, generate one
+    if dirname is None:
+        dirname = '{}_{}'.format(sys.sys_name, TIME_STR)
+    if fp.file_exists(dirname):
+        err.Fatal('output dir exists! Please provide a new dir name to prevent override.')
+
+    def construct_path(fname): return fp.construct_path(fname, dirname)
+    # create otuput directory
+    fp.make_dir(dirname)
+    return construct_path
 
 
 def create_abstraction(sys, prop):
@@ -935,16 +951,7 @@ def main():
     else:
         opts.property_checker = properties.PropertyCheckerNeverDetects()
 
-    # If no output folder is specified, generate one
-    if args.output is None:
-        args.output = '{}_{}'.format(sys.sys_name, fp.time_string())
-    if fp.file_exists(args.output):
-        err.Fatal('output dir exists! Please provide a new dir name to prevent override.')
-
-    def construct_path(fname): return fp.construct_path(fname, args.output)
-    opts.construct_path = construct_path
-    # create otuput directory
-    fp.make_dir(args.output)
+    opts.construct_path = setup_dir(sys, args.output)
 
     # TAG:MSH
     matlab_engine = args.meng
@@ -956,6 +963,11 @@ def main():
 
     run_secam(sys, prop)
     # ##!!##logger.debug('execution ends')
+
+#######################################################################
+# GLobals: is there a better way to do this?
+TIME_STR = fp.time_string()
+logger = setup_logger()
 
 if __name__ == '__main__':
     main()
