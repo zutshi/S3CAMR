@@ -229,7 +229,7 @@ def refine_dft_model_based(AA, errors, final_state_set, sp, sys_sim, sys, prop):
 #         qg.draw_graphviz()
 #         qg.draw_mplib()
 
-    draw_model(sys.sys_name, pwa_model)
+    draw_model(gopts.construct_path(sys.sys_name), pwa_model)
 
     #max_path_len = max([len(path) for path in error_paths])
     #print('max_path_len:', max_path_len)
@@ -320,6 +320,7 @@ def check4CE(pwa_model, depth, prop_partitions, sys_name, model_type, AA, sys, p
             vs,
             pwa_model, init_cons, safety_prop,
             prop_partitions,
+            gopts.construct_path,
             '{}_{}'.format(sys_name, model_type),
             model_type,
             gopts.bmc_prec)

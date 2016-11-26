@@ -38,12 +38,13 @@ class SalOpts():
 
 # Must separate the arguements. i.e., -v 3 should be given as ['-v', '3']
 # This can be avoided by using shell=True, but that is a security risk
-def sal_run_cmd(sal_path, depth, module_name, prop_name, opts=SalOpts()):
+def sal_run_cmd(sal_path, depth, sal_file, prop_name, opts=SalOpts()):
     cmd = [
         sal_path,
         '-v', str(opts.verbosity),
         '-d', str(depth),
-        '{}.sal'.format(module_name),
+        #'{}.sal'.format(module_name),
+        sal_file,
         prop_name
     ]
 
@@ -63,7 +64,7 @@ def sal_run_cmd(sal_path, depth, module_name, prop_name, opts=SalOpts()):
 
 class BMC(BMCSpec):
     def __init__(self, vs, pwa_model, init_state, safety_prop,
-                 prop_partitions, module_name, model_type, prec):
+                 prop_partitions, fname_constructor, module_name, model_type, prec):
         """__init__
 
         Parameters
@@ -84,7 +85,10 @@ class BMC(BMCSpec):
         """
 
         self.prop_name = 'safety'
+        self.fname_constructor = fname_constructor
         self.module_name = module_name
+        fname = module_name + '.sal'
+        self.sal_file = fname_constructor(fname)
         self.trace = None
         self.vs = vs
         # stores info to convert the bmc back to pwa
@@ -201,7 +205,7 @@ class BMC(BMCSpec):
         sal_cmd = sal_run_cmd(
                     sal_path,
                     depth,
-                    self.module_name,
+                    self.sal_file,
                     self.prop_name,
                     )
 
@@ -215,7 +219,7 @@ class BMC(BMCSpec):
                 sal_cmd = sal_run_cmd(
                             sal_path,
                             depth,
-                            self.module_name,
+                            self.sal_file,
                             self.prop_name,
                             opts)
                 sal_op = U.strict_call_get_op(sal_cmd)
@@ -237,8 +241,7 @@ class BMC(BMCSpec):
             return InvarStatus.Unsafe
 
     def dump(self):
-        sal_file = self.module_name + '.sal'
-        fops.write_data(sal_file, str(self.sal_trans_sys))
+        fops.write_data(self.sal_file, str(self.sal_trans_sys))
         return
 
     def get_last_trace(self):

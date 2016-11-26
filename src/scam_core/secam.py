@@ -445,7 +445,8 @@ def falsify_using_model(
     plt.show(block=True)
 
     print('dumping abstraction')
-    fp.write_data('{}_graph.dump'.format(sys.sys_name), dill.dumps(current_abs))
+    fp.write_data(globalopts.opts.construct_path('{}_graph.dump'.format(sys.sys_name)),
+                  dill.dumps(current_abs))
 
     if not final_state_set:
         print('did not find any abstract counter example!', file=SYS.stderr)
@@ -789,9 +790,9 @@ def main():
     parser.add_argument('--incl-error', action='store_true',
                         help='Include errors in model for bmc')
 
-    parser.add_argument('-o', '--output', type=str,
-                        default=DEF_VIO_LOG,
-                        help='violation log')
+#     parser.add_argument('-o', '--output', type=str,
+#                         default=DEF_VIO_LOG,
+#                         help='violation log')
 
     parser.add_argument('-g', '--graph-lib', type=str,
                         default=DEF_GRAPH_LIB,
@@ -845,6 +846,10 @@ def main():
 
     parser.add_argument('--par', action='store_true',
                         help='parallel simulation')
+
+    parser.add_argument('-o', '--output', type=str,
+                        default=None,
+                        help='output directory')
 
 #    argcomplete.autocomplete(parser)
     args = parser.parse_args()
@@ -902,10 +907,16 @@ def main():
         print('No refinement strategy is specified!  Please use --help')
         exit()
 
+    # TODO: fixed arguement, remove it from opts
+    opts.vio_fname = DEF_VIO_LOG
+
     #opts.plot = args.plot
     opts.dump_trace = args.dump
     opts.refine = args.refine
-    opts.op_fname = args.output
+
+    #opts.op_fname = args.output
+    #opts.op_path = args.output
+
     opts.sys_path = filepath
     opts.graph_lib = args.graph_lib
     opts.max_paths = args.max_paths
@@ -923,6 +934,17 @@ def main():
         opts.property_checker = properties.PropertyChecker(prop.final_cons)
     else:
         opts.property_checker = properties.PropertyCheckerNeverDetects()
+
+    # If no output folder is specified, generate one
+    if args.output is None:
+        args.output = '{}_{}'.format(sys.sys_name, fp.time_string())
+    if fp.file_exists(args.output):
+        err.Fatal('output dir exists! Please provide a new dir name to prevent override.')
+
+    def construct_path(fname): return fp.construct_path(fname, args.output)
+    opts.construct_path = construct_path
+    # create otuput directory
+    fp.make_dir(args.output)
 
     # TAG:MSH
     matlab_engine = args.meng

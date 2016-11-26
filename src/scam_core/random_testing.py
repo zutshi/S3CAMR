@@ -365,8 +365,8 @@ class simulate_par(object):
     def __init__(self, sys, prop):
         self.sys = sys
         self.prop = prop
-        self.opts = opts
-        self.fname = '{}.simdump'.format(sys.sys_name)
+        fname = '{}.simdump'.format(sys.sys_name)
+        self.fname = globalopts.opts.construct_path(fname)
         return
 
     def trace_gen(self):
