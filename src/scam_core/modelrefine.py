@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import itertools as it
 
 #from collections import defaultdict
+import collections
 
 import numpy as np
 
@@ -20,6 +21,7 @@ import modeling.affinemodel as AFM
 from .cellmodels import Qxw, Qx
 from . import cellmanager as CM
 from .graphs.graph import factory as graph_factory
+from .graphs.graph import class_factory as graph_class
 from lin_prog import analyzepath as azp
 from . import state
 
@@ -51,6 +53,9 @@ KMIN = 1
 KMAX_EXCEEDED = 0
 SUCCESS = 1
 TERMINAL = 2
+
+PWASYSPROP = collections.namedtuple('pwa_sys_prop', 'pwa_model init_partitions final_partitions')
+
 
 def abs_state2cell(abs_state, AA):
     return CM.Cell(abs_state.plant_state.cell_id, AA.plant_abs.eps)
@@ -121,6 +126,12 @@ def sim_n_plot(sp, AA, prop, error_paths, depth, pwa_model):
 #     return G
 
 
+class QGraph(graph_class(gopts.graph_lib)):
+    def __init__(self):
+        super(self.__class__, self).__init__()
+        self.init = set()
+        self.final = set()
+
 #TODO: URGENT: The error path and pi_seq generated from S3CAM is not
 # clear. Are we capturing multiple pi values between same states?
 # Please review the code where the pi values are added to the edges
@@ -136,7 +147,8 @@ def get_qgraph_xw(sp, AA, error_paths, pi_seqs):
 #                 print(i,j)
 #                 print(pi)
 #      exit()
-    G = graph_factory(gopts.graph_lib)
+    #G = graph_factory(gopts.graph_lib)
+    G = QGraph()
 
     for path, pi_seq in zip(error_paths, pi_seqs):
         # Normalize the (x, w) list
@@ -156,8 +168,20 @@ def get_qgraph_xw(sp, AA, error_paths, pi_seqs):
         # performance.
         pi_seq.append(None)
 
+        ###############################
+        # Add final and initial states
+        #TODO: Only works for AA.num_dims.pi = 0
+        a0, af = path[0], path[-1]
+        x0cell, xfcell = abs_state2cell(a0, AA), abs_state2cell(af, AA)
+        q0, qf = Qx(a0, x0cell), Qx(af, xfcell)
+        G.init.add(q0)
+        G.final.add(qf)
+        ###############################
+
         # TODO: Merge the two branches?
         if AA.num_dims.pi:
+            # Fix this crap: have wcell on edge?
+            raise NotImplementedError
             for (a1, a2), (pi1_ic, pi2_ic) in it.izip_longest(U.pairwise(path), U.pairwise(pi_seq)):
                 x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
                 w1cell = ic2cell(pi1_ic, sp.pi_ref.eps)
@@ -181,8 +205,24 @@ def get_qgraph_xw(sp, AA, error_paths, pi_seqs):
     return G
 
 
-def error_graph2qgraph_xw(sp, AA, error_graph):
-    G = graph_factory(gopts.graph_lib)
+def error_graph2qgraph_xw(sp, AA, initial_state_set, final_state_set, error_graph):
+    G = QGraph()
+
+    # Add all initial and final q
+    #TODO: works only for AA.num_dims.pi = 0
+    ################################
+    for a in error_graph.nodes():
+        if a in initial_state_set:
+            xcell = abs_state2cell(a, AA)
+            q = Qx(a, xcell)
+            G.init.add(q)
+        elif a in final_state_set:
+            xcell = abs_state2cell(a, AA)
+            q = Qx(a, xcell)
+            G.final.add(q)
+        else:
+            pass
+    ##############################
 
     for edge in error_graph.all_edges():
 
@@ -207,7 +247,7 @@ def error_graph2qgraph_xw(sp, AA, error_graph):
     return G
 
 
-def refine_dft_model_based(AA, errors, final_state_set, sp, sys_sim, sys, prop):
+def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, sys_sim, sys, prop):
 
     # initialize Qxw class
     if AA.num_dims.pi:
@@ -218,18 +258,22 @@ def refine_dft_model_based(AA, errors, final_state_set, sp, sys_sim, sys, prop):
         qgraph = get_qgraph_xw(sp, AA, error_paths, pi_seqs)
     else:
         error_graph = errors
-        qgraph = error_graph2qgraph_xw(sp, AA, error_graph)
+        qgraph = error_graph2qgraph_xw(sp, AA, initial_state_set,
+                                       final_state_set, error_graph)
 
+    # make sure init and final are not empty
+    assert(qgraph.init)
+    assert(qgraph.final)
     #qgraph = get_qgraph_xw(sp, AA, error_paths, pi_seqs)
     #qgraph = error_graph2qgraph_xw(sp, AA, error_graph)
 
-    pwa_model = build_pwa_model(AA, prop, qgraph, sp, 'dft')
+    pwa_sys_prop = build_pwa_model(AA, prop, qgraph, sp, 'dft')
 
 #     if settings.debug:
 #         qg.draw_graphviz()
 #         qg.draw_mplib()
 
-    draw_model(gopts.construct_path(sys.sys_name), pwa_model)
+    draw_model(gopts.construct_path(sys.sys_name), pwa_sys_prop.pwa_model)
 
     #max_path_len = max([len(path) for path in error_paths])
     #print('max_path_len:', max_path_len)
@@ -249,7 +293,7 @@ def refine_dft_model_based(AA, errors, final_state_set, sp, sys_sim, sys, prop):
 #         # Need to define a new function to simulate inputs
 #         sim_n_plot(sp, AA, prop, error_paths, depth, pwa_model)
 
-    assert(settings.CE)
+
     # TODO: The reason we need this is to encode the transitions which
     # land to error states. This is required to discard bmc paths
     # which do the below:
@@ -277,27 +321,36 @@ def refine_dft_model_based(AA, errors, final_state_set, sp, sys_sim, sys, prop):
     #prop_cells = {abs_state2cell(path[-1], AA) for path in error_paths}
 
     #prop_cells = {abs_state2cell(s, AA) for s in (final_state_set)}
-    if gopts.max_paths > 0:
-        prop_cells = {abs_state2cell(path[-1], AA) for path in error_paths}
-    else:
-        prop_cells = {abs_state2cell(s, AA) for s in (final_state_set)}
 
-    assert(prop_cells)
+#     if gopts.max_paths > 0:
+#         prop_cells = {abs_state2cell(path[-1], AA) for path in error_paths}
+#         init_cells = {abs_state2cell(path[0], AA) for path in error_paths}
+#     else:
+#         prop_cells = {abs_state2cell(s, AA) for s in (final_state_set)}
+#         init_cells = {abs_state2cell(s, AA) for s in (initial_state_set)}
 
-    # partitions do not have a has function. Hence, using a work
-    # around to avoid duplications
-    # Create a mapping from Q -> partitions
-    Q_p_map = {sm.p.ID.xcell: sm.p for sm in pwa_model if sm.p.ID.xcell in prop_cells}
-    # Q have a hash function
-    prop_partitions = Q_p_map.values()
+    assert(pwa_sys_prop.init_partitions)
+    assert(pwa_sys_prop.final_partitions)
+
+#     # partitions do not have a hash function. Hence, using a work
+#     # around to avoid duplications
+#     # Create a mapping from Q -> partitions
+#     Q_p_map = {sm.p.ID.xcell: sm.p for sm in pwa_model if sm.p.ID.xcell in prop_cells}
+#     # Q have a hash function
+#     prop_partitions = [sm.p for sm in pwa_model if sm.p.ID.xcell in prop_cells]
+
+#     init_partitions = {sm.p.ID.xcell: sm.p for sm in pwa_model if sm.p.ID.xcell in init_cells}.values()
 
     # Flush all plots: must block
     gopts.plotting.show(block=True)
 
-    check4CE(pwa_model, depth, prop_partitions, sys.sys_name, 'dft', AA, sys, prop, sp)
+    check4CE(pwa_sys_prop.pwa_model, depth,
+             pwa_sys_prop.init_partitions,
+             pwa_sys_prop.final_partitions,
+             sys.sys_name, 'dft', AA, sys, prop, sp)
 
 
-def check4CE(pwa_model, depth, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
+def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
 
 
     # Remove prop_partitions
@@ -317,13 +370,15 @@ def check4CE(pwa_model, depth, prop_partitions, sys_name, model_type, AA, sys, p
 
     bmc = BMC.factory(
             gopts.bmc_engine,
+            sys,
+            prop,
             vs,
             pwa_model, init_cons, safety_prop,
+            init_partitions,
             prop_partitions,
             gopts.construct_path,
             '{}_{}'.format(sys_name, model_type),
-            model_type,
-            gopts.bmc_prec)
+            model_type)
 
     status = bmc.check(depth)
     if status == InvarStatus.Safe:
@@ -372,7 +427,7 @@ def verify_bmc_trace(AA, sys, prop, sp, bmc_trace, pwa_trace):
     res = rt.concretize_bmc_trace(sys, prop, AA, sp, num_trace_states, x_array, pi_seq)
 
     gopts.plotting.new_session()
-    init_cons_subset = azp.overapprox_x0(AA, prop, pwa_trace, gopts.bmc_prec)
+    init_cons_subset = azp.overapprox_x0(AA.num_dims, prop, pwa_trace)
     rt.concretize_init_cons_subset(sys, prop, AA, sp, num_trace_states, x_array, pi_seq, init_cons_subset)
     return
 
@@ -448,29 +503,38 @@ def build_pwa_model(AA, prop, qgraph, sp, model_type):
     #abs_state_models = {}
 
     pwa_model = rel.PWARelational()
+    init_partitions = set()
+    final_partitions = set()
 
     # for ever vertex (abs_state) in the graph
     for q in qgraph:
-        # if the vertex has relation to another vertex
-        #if qgraph.out_degree(q):
-        if True:
-            if settings.debug:
-                print('modeling: {}'.format(q))
-            for sub_model in q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
-                assert(sub_model is not None)
-                # sub_model.pnexts[0] = sub_model.p.ID to enforce self loops
-                print(U.colorize('{} -> {}, e%:{}, status: {}, e: {}, A:{}, b:{}'.format(
-                    sub_model.p.ID,
-                    [p.ID for p in sub_model.pnexts],
-                    np.trunc(sub_model.max_error_pc),
-                    sub_model_status(sub_model),
-                    sub_model.m.error,
-                    str(sub_model.m.A).replace('\n',''),
-                    sub_model.m.b)))
-                pwa_model.add(sub_model)
-                #abs_state_models[abs_state] = sub_model
+        if settings.debug:
+            print('modeling: {}'.format(q))
+        for sub_model in q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
+            assert(sub_model is not None)
+            # sub_model.pnexts[0] = sub_model.p.ID to enforce self loops
+            print(U.colorize('{} -> {}, e%:{}, status: {}, e: {}, A:{}, b:{}'.format(
+                sub_model.p.ID,
+                [p.ID for p in sub_model.pnexts],
+                np.trunc(sub_model.max_error_pc),
+                sub_model_status(sub_model),
+                sub_model.m.error,
+                str(sub_model.m.A).replace('\n', ''),
+                sub_model.m.b)))
+            pwa_model.add(sub_model)
+            #abs_state_models[abs_state] = sub_model
+            # Even if a state gets split, its recorded
+            if q in qgraph.init:
+                init_partitions.add(sub_model.p)
+            # TODO: If we split a final cell to increase precision for
+            # the transition to concrete error_states and break the
+            # terminal self-loop, both will get recorded and get
+            # weird.
+            if q in qgraph.final:
+                final_partitions.add(sub_model.p)
 
-    return pwa_model
+    pwa_sys_prop = PWASYSPROP(pwa_model, init_partitions, final_partitions)
+    return pwa_sys_prop
 
 
 # TODO: fix this mess and move it to pwa models
