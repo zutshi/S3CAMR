@@ -6,6 +6,7 @@ from __future__ import unicode_literals
 import six
 import abc
 import logging
+from IPython import embed
 
 from . import modelspec
 from . import relational as R
