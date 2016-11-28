@@ -10,11 +10,14 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import abc
+import collections
+
 import numpy as np
 import six
 
 import settings
 
+PWATRACE = collections.namedtuple('pwatrace', 'partitions models')
 
 class InvarStatus:
     Safe, Unsafe, Unknown = range(3)
