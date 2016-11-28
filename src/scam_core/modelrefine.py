@@ -622,6 +622,58 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
     return pwa_models
 
 
+def model(X, Y, tol):
+    rm = AFM.OLS(X, Y)
+    e_pc = rm.max_error_pc(X, Y)
+    if settings.debug:
+        err.imp('error%: {}'.format(e_pc))
+    error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
+    error_exceeds_tol = len(error_dims) > 0
+    refine = error_exceeds_tol
+    #TODO
+    status = SUCCESS if not refine else KMAX_EXCEEDED
+    return [(rm, e_pc, status)]
+
+
+def mdl_1relational(AA, prop, tol, step_sim, qgraph, q, X, Y):
+    assert(X.shape[1] == q.dim)
+    assert(Y.shape[1] == q.dim)
+    assert(X.shape[0] == Y.shape[0])
+
+    ms = []
+    for qi in it.chain([q], qgraph.neighbors(q)):
+        if settings.debug:
+            print('checking qi: ', qi)
+        sat = qi.sat(Y)
+
+        if any(sat):
+            rm_qseq = model(X[sat], Y[sat], tol)
+            l = [(rm_, (qi,), e_pc_, status_) for rm_, e_pc_, status_ in rm_qseq]
+            ms.extend(l)
+        else:
+            if(qi == q):
+                # no self loop observed
+                if settings.debug:
+                    print('no self loop found')
+            else:
+                err.warn('out of samples...Giving up on the edge!')
+
+    # TODO: this will happen when the last location fails? confirm
+    if not ms:
+        # This means, all samples which landed are in a cell which
+        # was never initially explored by S3CAM. Can happen, but
+        # possibility is very very low.
+        err.Fatal('Very low prob. of happening. Check code')
+#     else:
+#         status = SUCCESS
+#         if settings.debug:
+#             print('error is under control...')
+#         ms = [(rm, [], e_pc, status)]
+
+    return ms
+
+
+
 def mdl(AA, prop, tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
     X, Y = XY
     assert(X.shape[1] == q.dim)
@@ -788,6 +840,7 @@ def q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
 
         try:
             regression_models = mdl(AA, prop, tol, step_sim, qgraph, q, (X, Y), X, k=0, kmin=KMIN, kmax=KMAX)
+            #regression_models = mdl_1relational(AA, prop, tol, step_sim, qgraph, q, X, Y)
             # we are done!
             if regression_models:
                 try_again = False
@@ -812,6 +865,7 @@ def q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
     if not regression_models:
         err.warn('No model found for q: {}'.format(q))
         regression_models = mdl(AA, prop, np.inf, step_sim, qgraph, q, (X, Y), X, k=0, kmin=0, kmax=1)
+        #regression_models = mdl_1relational(AA, prop, np.inf, step_sim, qgraph, q, X, Y)
         assert(regression_models)
         # No model found, get a non-relational model as the worst case
         pwa_non_relational = True
