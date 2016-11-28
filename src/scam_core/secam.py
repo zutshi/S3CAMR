@@ -500,6 +500,7 @@ def falsify_using_model(
                                   #error_paths,
                                   #error_graph,
                                   errors,
+                                  initial_state_set,
                                   final_state_set,
                                   system_params,
                                   sys_sim,
@@ -751,7 +752,7 @@ def main():
     LIST_OF_REFINEMENTS = ['init', 'trace', 'model-dft', 'model-dmt', 'model-dct']
     LIST_OF_GRAPH_LIBS = ['nx', 'gt', 'g']
     LIST_OF_PLOT_LIBS = ['mp', 'pg']
-    LIST_OF_BMC = ['sal', 's3camsmt']
+    LIST_OF_BMC = ['sal', 's3camsmt', 'pwa']
 
     DEF_BMC_PREC = 4
     DEF_BMC = 'sal'
