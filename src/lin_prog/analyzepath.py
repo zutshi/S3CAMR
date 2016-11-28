@@ -268,7 +268,7 @@ def prop_constraints(num_dims, prop, num_partitions):
 
 
 def truncate(*args):
-    assert(type(gopts.bmc_prec), str)
+    assert(isinstance(gopts.bmc_prec, int))
     prec = gopts.bmc_prec/10.
 
     # Round off to the same amount as the bmc query
