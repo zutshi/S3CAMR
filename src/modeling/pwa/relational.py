@@ -33,7 +33,7 @@ class KPath(modelspec.PartitionedDiscreteAffineModel):
         self.p_future = p_future
         self.m = m
         # make p = p1, i.e., check sat against p[0] and ID is p[0]'s ID
-        super(KPath, self).__init__(p, m)
+        super(self.__class__, self).__init__(p, m)
         return
 
     def __repr__(self):
@@ -57,7 +57,7 @@ class Relation(modelspec.PartitionedDiscreteAffineModel):
         self.pnext = p2
         self.m = m
         # make p = p1, i.e., check sat against p1 and ID is p1's ID
-        super(Relation, self).__init__(p1, m)
+        super(self.__class__, self).__init__(p1, m)
         return
 
     def __repr__(self):
