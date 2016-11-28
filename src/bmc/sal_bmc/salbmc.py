@@ -9,7 +9,7 @@ import logging
 #import saltrans as slt_dft
 from . import saltrans_rel as slt_rel
 from . import saltrans_dmt as slt_dmt
-from bmc.bmc_spec import BMCSpec, InvarStatus
+from bmc.bmc_spec import BMCSpec, InvarStatus, PWATRACE
 from . import sal_op_parser
 
 import fileops as fops
@@ -64,7 +64,7 @@ def sal_run_cmd(sal_path, depth, sal_file, prop_name, opts=SalOpts()):
 
 class BMC(BMCSpec):
     def __init__(self, vs, pwa_model, init_state, safety_prop,
-                 prop_partitions, fname_constructor, module_name, model_type, prec):
+                 prop_partitions, fname_constructor, module_name, model_type):
         """__init__
 
         Parameters
@@ -75,7 +75,6 @@ class BMC(BMCSpec):
         safety_prop :
         module_name :
         model_type :
-        prec :
 
         Returns
         -------
@@ -100,7 +99,7 @@ class BMC(BMCSpec):
         if model_type == 'dft':
             self.sal_trans_sys = self.sal_module_dft(
                     vs, pwa_model, init_state, safety_prop,
-                    prop_partitions, module_name, prec)
+                    prop_partitions, module_name)
         elif model_type == 'dmt':
             dts = pwa_model.keys()
             self.sal_trans_sys = BMC.sal_module_dmt(
@@ -116,14 +115,14 @@ class BMC(BMCSpec):
         return
 
     def sal_module_dft(self, vs, pwa_model, init_set, safety_prop,
-                       prop_partitions, module_name, prec):
+                       prop_partitions, module_name):
         # Remove prop_partitions
         assert(settings.CE)
-        sal_trans_sys = slt_rel.SALTransSysRel(module_name, vs, init_set, safety_prop, prec)
+        sal_trans_sys = slt_rel.SALTransSysRel(module_name, vs, init_set, safety_prop)
 
         for sub_model in pwa_model:
             Cid = sal_trans_sys.add_C(sub_model.p.ID)
-            self.conversion_info[Cid] = sub_model.p.ID
+            self.conversion_info[Cid] = sub_model.p
 
         # sal_trans_sys.add_locations(pwa_model.relation_ids)
 
@@ -257,6 +256,9 @@ class BMC(BMCSpec):
         Returns
         -------
         pwa_trace = [sub_model_0, sub_model_1, ... ,sub_model_n]
+        pwa_trace =
+            models = [m01, m12, ... , m(n-1)n]
+            partitions = [p0, p1, p2, ..., pn]
 
         Notes
         ------
@@ -265,35 +267,37 @@ class BMC(BMCSpec):
         ambiguity.
         """
 
-        pwa_trace = []
         steps = list(self.trace)
-        # each step, but the last, corresponds to a transition
-        for step in steps[:-1]:
-            part_id = self.conversion_info[step.assignments['cell']]
-            sub_model = self.conversion_info[step.tid]
+#         # each step, but the last, corresponds to a transition
+#         for step in steps[:-1]:
+#             part_id = self.conversion_info[step.assignments['cell']]
+#             sub_model = self.conversion_info[step.tid]
 
-            # Assumption of trace building is that each submodel only
-            # has 1 unique next location. If this violated, we need to
-            # add cell ids/part ids to resolve the ambiguity.
-            assert(len(sub_model.pnexts) == 1)
+#             # Assumption of trace building is that each submodel only
+#             # has 1 unique next location. If this violated, we need to
+#             # add cell ids/part ids to resolve the ambiguity.
+#             assert(len(sub_model.pnexts) == 1)
 
-            assert(sub_model.p.ID == part_id)
-            # this is still untested, so in case assert is off...
-            if(sub_model.p.ID != part_id):
-                err.warn('gone case')
+#             assert(sub_model.p.ID == part_id)
+#             # this is still untested, so in case assert is off...
+#             assert(sub_model.p.ID == part_id)
+#                 #err.warn('gone case')
 
-            #pwa_trace.extend((part_id, sub_model))
-            pwa_trace.append(sub_model)
+#             #pwa_trace.extend((part_id, sub_model))
+#             pwa_trace.append(sub_model)
+
+        submodels = [self.conversion_info[step.tid] for step in steps[:-1]]
+        models = [sm.m for sm in submodels]
+        partitions = [self.conversion_info[step.assignments['cell']] for step in steps]
 
         # append the last location/cell/partition id
         #last_step = steps[-1]
         #last_part_id = self.conversion_info[last_step.assignments['cell']]
         #pwa_trace.append(last_part_id)
+        pwa_trace = PWATRACE(partitions, models)
         return pwa_trace
-        #print(pwa_trace)
-        #exit()
 
     def get_new_disc_trace(self):
-        """Makes trace = None, signifying no more traces..."""
-        self.trace = None
+        """makes trace = none, signifying no more traces..."""
+        self.trace = none
         return
