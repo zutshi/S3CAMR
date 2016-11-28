@@ -166,7 +166,6 @@ class TopLevelAbs:
             smt_solver, #TAG:Z3_IND - Add solver param
             )
 
-
         print(U.decorate('new abstraction created'))
         print('eps:', self.eps)
         print('num_samples:', self.num_samples)
@@ -175,6 +174,15 @@ class TopLevelAbs:
         print('TH:', self.T)
         print('num traces:', self.N)
         print('=' * 50)
+
+        logger.debug('new abstraction created')
+        logger.debug('eps:{}'.format(self.eps))
+        logger.debug('num_samples:{}'.format(self.num_samples))
+        logger.debug('refine:{}'.format(self.refinement_factor))
+        logger.debug('deltaT:{}'.format(self.delta_t))
+        logger.debug('TH:{}'.format(self.T))
+        logger.debug('num traces:{}'.format(self.N))
+        logger.debug('=' * 50)
 
         # ##!!##logger.debug('==========abstraction parameters==========')
         # ##!!##logger.debug('eps: {}, refinement_factor: {}, num_samples: {},delta_t: {}'.format(str(self.eps), self.refinement_factor, self.num_samples, self.delta_t))
