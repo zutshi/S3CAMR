@@ -311,7 +311,10 @@ class Qx(Q):
         return hash(self.xcell)
 
     def __eq__(self, q):
-        return self.xcell == q.xcell
+        if isinstance(q, self.__class__):
+            return self.xcell == q.xcell
+        else:
+            return False
 
     def __str__(self):
         return str(self.xcell)
