@@ -15,18 +15,45 @@ import random as rand
 #  FIX heap duplicates used by different ksp!
 
 
-def factory(graph_lib):
+def class_factory(graph_lib):
+    """class_factory
+
+    Parameters
+    ----------
+    graph_lib : string for the graph lib
+
+    Returns
+    -------
+    corresponding class for the specified graph lib
+
+    Notes
+    ------
+    """
     if graph_lib == 'nx':
         from .graphNX import GraphNX
-        return GraphNX()
+        return GraphNX
     elif graph_lib == 'gt':
         from .graphGT import GraphGT
-        return GraphGT()
+        return GraphGT
     elif graph_lib == 'g':
         from .graph_generic import Graph
-        return Graph()
+        return Graph
     else:
         raise err.Fatal('unknown graph library requested: {}'.format(graph_lib))
+
+
+def factory(graph_lib):
+    """factory
+
+    Parameters
+    ----------
+    graph_lib : string for the graph lib
+
+    Returns
+    -------
+    corresponding object of the specified graph lib
+    """
+    return class_factory(graph_lib)()
 
 
 def random_graph(
