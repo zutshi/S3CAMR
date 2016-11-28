@@ -13,6 +13,7 @@ import textwrap as tw
 from math import isinf
 
 from bmc.helpers.expr2str import Expr2Str
+from globalopts import opts as gopts
 
 #import utils as U
 import settings
@@ -25,7 +26,7 @@ class SALTransError(Exception):
 # Make classes out of every header, prop, init, etc
 class SALTransSys(object):
 
-    def __init__(self, module_name, vs, init_cons, prop, prec):
+    def __init__(self, module_name, vs, init_cons, prop):
         """
         Parameters
         ----------
@@ -35,7 +36,6 @@ class SALTransSys(object):
         prop : Unsafe Set described as an interval constraint
         """
 
-        self.prec = prec
         self.vs = vs
         self.prop_name = 'safety'
         self.init_cons = init_cons
@@ -43,7 +43,7 @@ class SALTransSys(object):
         self.transitions = []
         self.prop = prop
         # initialize the class with the prec
-        Expr2Str.set_prec(prec)
+        Expr2Str.set_prec(gopts.bmc_prec)
         return
 
     def add_transition(self, tran):
