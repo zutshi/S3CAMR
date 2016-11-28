@@ -39,9 +39,10 @@ class BMC(BMCSpec):
             mtrace = [pwa_model.edge_m((qi, qj)) for qi, qj in U.pairwise(path)]
             pwa_trace = PWATRACE(partitions=ptrace, models=mtrace)
             ret_val = azp.overapprox_x0(sys.num_dims, prop, pwa_trace)
-#             if ret_val is not None:
-#                 embed()
-#                 U.pause()
+            if ret_val is not None:
+                print('Model Found')
+                #embed()
+                #U.pause()
         return
 
     def check(*args):
