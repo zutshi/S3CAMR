@@ -17,9 +17,8 @@ from . import saltrans
 # Make classes out of every header, prop, init, etc
 class SALTransSysRel(saltrans.SALTransSys):
 
-    def __init__(self, module_name, vs, init_cons, prop, prec):
-        super(SALTransSysRel, self).__init__(
-                module_name, vs, init_cons, prop, prec)
+    def __init__(self, module_name, vs, init_cons, prop):
+        super(SALTransSysRel, self).__init__(module_name, vs, init_cons, prop)
         # Store a mapping from a cell id: tuple -> sal loc name: str
         self.partid2Cid = {}
         self.id_ctr = itertools.count()
