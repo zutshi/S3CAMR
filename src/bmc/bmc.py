@@ -5,7 +5,9 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+
 import settings
+from globalopts import opts as gopts
 
 
 # def factory(bmc_engine_id,
@@ -16,15 +18,17 @@ import settings
 #             sys_name,
 #             model_type):
 def factory(bmc_engine,
+            sys,
+            prop,
             vs,
             pwa_model,
             init_state,
             final_states,
+            init_partitions,
             prop_partitions,
             fname_constructor,
             sys_name,
             model_type,
-            prec,
             *args):
     """factory
 
@@ -61,7 +65,6 @@ def factory(bmc_engine,
              fname_constructor,
              sys_name,
              model_type,
-             prec,
              *args)
     elif bmc_engine == 's3camsmt':
         from S3CAMSMT.s3camsmt.bmc.bmc_pwa import BMC_PWA
@@ -79,13 +82,31 @@ def factory(bmc_engine,
              final_states,
              sys_name,
              model_type,
-             prec,
+             gopts.bmc_prec,
+             *args)
+    elif bmc_engine == 'pwa':
+        from .pwa_bmc import linprogbmc
+        from modeling.pwa.pwagraph import convert_pwarel2pwagraph
+
+        return linprogbmc.BMC(
+             sys,
+             prop,
+             vs,
+             convert_pwarel2pwagraph(pwa_model),
+             init_state,
+             final_states,
+             init_partitions,
+             prop_partitions,
+             fname_constructor,
+             sys_name,
+             model_type,
              *args)
     else:
         raise NotImplementedError('Req. bmc engine: {}'.format(bmc_engine))
 
 
 # TODO: fix and remove the hack
+# ignores the constraints on pnexts
 def convert_KPath2Relational(pwa_model):
     import modeling.pwa.relational as R
     assert(isinstance(pwa_model, R.PWARelational))
