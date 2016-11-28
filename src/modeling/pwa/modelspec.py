@@ -75,6 +75,12 @@ class Partition(object):
         self.ID = part_id
         return
 
+    def __hash__(self):
+        return hash(self.ID)
+
+    def __eq__(self, p):
+        return self.ID == p.ID if isinstance(p, self.__class__) else False
+
     def __repr__(self):
         s = '({},{})'.format(self.C, self.d)
         return s
