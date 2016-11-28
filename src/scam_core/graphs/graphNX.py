@@ -105,7 +105,7 @@ class GraphNX(object):
         return self.G.node[node]
 
     def edge_attrs(self, edge):
-        return self.G.get_edge_data(edge[0], edge[1])
+        return self.G.get_edge_data(*edge)
 
     def edges(self, node):
         """Get edges of a node
@@ -126,6 +126,7 @@ class GraphNX(object):
     def add_edge(self, v1, v2, **attr_dict_arg):#ci=None, pi=None, weight=1):
         if self.G.has_edge(v1, v2):
             return
+        #TODO: remove default attrs
         attrs = {'ci': None, 'pi': None, 'weight': 1}
         #print('nx:', v1, v2)
         attrs.update(attr_dict_arg)
@@ -150,8 +151,14 @@ class GraphNX(object):
         attrs.update(attr_dict_arg)
         self.G.add_edges_from(edge_list, attrs)
 
-    def add_node(self, v):
-        self.G.add_node(v)
+    def add_node(self, v, **attrs):
+        self.G.add_node(v, attrs)
+
+    def has_edge(self, u, v):
+        return self.G.has_edge(u, v)
+
+    def has_node(self, v):
+        return self.G.has_node(v)
 
     def get_path_attr_list(self, path, attrs):
         attr_map = defaultdict(list)
@@ -390,6 +397,59 @@ class GraphNX(object):
         return path_list
 
     # ################################### KSP END ###########################
+
+    def get_all_path_generator(self, source_list, sink_list):
+
+        # Create a shallow copy of the graph
+        H = nx.DiGraph(self.G)
+
+        # All modifications are now done on this shallow copy H
+
+        # Define super source and sink nodes
+        # A Super source node has a directed edge to each source node in the
+        # source_list
+        # Similarily, a Super sink node has a directed edge from each sink node
+        # in the sink_list
+
+        dummy_super_source_node = 'source'
+        dummy_super_sink_node = 'sink'
+        num_source_nodes = len(source_list)
+        num_sink_nodes = len(sink_list)
+
+        # Add edges:
+        #   \forall source \in source_list. super source node -> source
+
+        edge_list = zip([dummy_super_source_node] * num_source_nodes,
+                        source_list)
+
+        H.add_edges_from(edge_list, weight=1)
+
+        logger.debug('source -> list')
+        for e in edge_list:
+            logger.debug(e)
+
+        # Add edges:
+        #   \forall sink \in sink_list. sink -> super sink node
+
+        edge_list = zip(sink_list, [dummy_super_sink_node] * num_sink_nodes)
+        H.add_edges_from(edge_list, weight=1)
+
+        logger.debug('sink -> list')
+        for e in edge_list:
+            logger.debug(e)
+
+        def path_gen():
+            # Remove the first (super source)
+            # and the last element (super sink)
+            logger.debug('======== Paths =========')
+            for p in nx.all_simple_paths(H, dummy_super_source_node, dummy_super_sink_node):
+                logger.debug(p[1:-1])
+                yield p[1:-1]
+
+        # return lambda: [yield i[1:-1] for i in nx.all_simple_paths(H,
+        # dummy_super_source_node, dummy_super_sink_node)]
+
+        return path_gen()
 
     def get_path_generator(
             self,
