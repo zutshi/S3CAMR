@@ -197,10 +197,10 @@ class Qxw(Q):
 
 
 class Qx(Q):
-    def __init__(self, a, xcell):
+    def __init__(self, xcell):
         assert(isinstance(xcell, CM.Cell))
 
-        self.a = a
+        #self.a = a
         self.xcell = xcell
         self.ival_constraints = xcell.ival_constraints
         self.xdim = xcell.dim
