@@ -298,6 +298,6 @@ class BMC(BMCSpec):
         return pwa_trace
 
     def get_new_disc_trace(self):
-        """makes trace = none, signifying no more traces..."""
-        self.trace = none
+        """makes trace = None, signifying no more traces..."""
+        self.trace = None
         return
