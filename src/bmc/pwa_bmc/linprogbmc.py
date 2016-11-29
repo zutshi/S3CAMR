@@ -34,7 +34,9 @@ class BMC(BMCSpec):
         targets = [p.ID for p in prop_partitions]
         #path_gen = pwa_model.get_all_path_generator(sources, targets, 1000000, 10000)
         path_gen = pwa_model.get_all_path_generator(sources, targets)
+        sentinal = 0
         for path in path_gen:
+            sentinal += 1
             ptrace = [pwa_model.node_p(qi) for qi in path]
             mtrace = [pwa_model.edge_m((qi, qj)) for qi, qj in U.pairwise(path)]
             pwa_trace = PWATRACE(partitions=ptrace, models=mtrace)
@@ -43,6 +45,7 @@ class BMC(BMCSpec):
                 print('Model Found')
                 #embed()
                 #U.pause()
+        assert(sentinal)
         return
 
     def check(*args):
