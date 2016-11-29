@@ -168,15 +168,16 @@ def get_qgraph_xw(sp, AA, error_paths, pi_seqs):
         # performance.
         pi_seq.append(None)
 
-        ###############################
-        # Add final and initial states
-        #TODO: Only works for AA.num_dims.pi = 0
-        a0, af = path[0], path[-1]
-        x0cell, xfcell = abs_state2cell(a0, AA), abs_state2cell(af, AA)
-        q0, qf = Qx(a0, x0cell), Qx(af, xfcell)
-        G.init.add(q0)
-        G.final.add(qf)
-        ###############################
+#         ###############################
+#         # Add final and initial states
+#         #TODO: Only works for AA.num_dims.pi = 0
+#         a0, af = path[0], path[-1]
+#         x0cell, xfcell = abs_state2cell(a0, AA), abs_state2cell(af, AA)
+#         #q0, qf = Qx(a0, x0cell), Qx(af, xfcell)
+#         q0, qf = Qx(x0cell), Qx(xfcell)
+#         G.init.add(q0)
+#         G.final.add(qf)
+#         ###############################
 
         # TODO: Merge the two branches?
         if AA.num_dims.pi:
@@ -208,21 +209,23 @@ def get_qgraph_xw(sp, AA, error_paths, pi_seqs):
 def error_graph2qgraph_xw(sp, AA, initial_state_set, final_state_set, error_graph):
     G = QGraph()
 
-    # Add all initial and final q
-    #TODO: works only for AA.num_dims.pi = 0
-    ################################
-    for a in error_graph.nodes():
-        if a in initial_state_set:
-            xcell = abs_state2cell(a, AA)
-            q = Qx(a, xcell)
-            G.init.add(q)
-        elif a in final_state_set:
-            xcell = abs_state2cell(a, AA)
-            q = Qx(a, xcell)
-            G.final.add(q)
-        else:
-            pass
-    ##############################
+#     # Add all initial and final q
+#     #TODO: works only for AA.num_dims.pi = 0
+#     ################################
+#     for a in error_graph.nodes():
+#         if a in initial_state_set:
+#             xcell = abs_state2cell(a, AA)
+#             #q = Qx(a, xcell)
+#             q = Qx(xcell)
+#             G.init.add(q)
+#         elif a in final_state_set:
+#             xcell = abs_state2cell(a, AA)
+#             #q = Qx(a, xcell)
+#             q = Qx(xcell)
+#             G.final.add(q)
+#         else:
+#             pass
+#     ##############################
 
     for edge in error_graph.all_edges():
 
@@ -241,7 +244,8 @@ def error_graph2qgraph_xw(sp, AA, initial_state_set, final_state_set, error_grap
 
             q1, q2 = Qxw(x1cell, w1cell), Qxw(x2cell, w2cell)
         else:
-            q1, q2 = Qx(a1, x1cell), Qx(a2, x2cell)
+            #q1, q2 = Qx(a1, x1cell), Qx(a2, x2cell)
+            q1, q2 = Qx(x1cell), Qx(x2cell)
 
         G.add_edge(q1, q2)
     return G
@@ -262,12 +266,21 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
                                        final_state_set, error_graph)
 
     # make sure init and final are not empty
-    assert(qgraph.init)
-    assert(qgraph.final)
     #qgraph = get_qgraph_xw(sp, AA, error_paths, pi_seqs)
     #qgraph = error_graph2qgraph_xw(sp, AA, error_graph)
 
+    # Add init and final states to qgraph
+    qgraph.init = {q for q in qgraph if q.xcell.ival_constraints & prop.init_cons}
+    qgraph.final = {q for q in qgraph if q.xcell.ival_constraints & prop.final_cons}
+#     assert(qgraph.init == init)
+#     assert(qgraph.final == final)
+    assert(qgraph.init)
+    assert(qgraph.final)
+
+    #pwa_sys_prop.pwa_model
+
     pwa_sys_prop = build_pwa_model(AA, prop, qgraph, sp, 'dft')
+
 
 #     if settings.debug:
 #         qg.draw_graphviz()
@@ -622,7 +635,7 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
     return pwa_models
 
 
-def model(X, Y, tol):
+def model(tol, X, Y):
     rm = AFM.OLS(X, Y)
     e_pc = rm.max_error_pc(X, Y)
     if settings.debug:
@@ -641,14 +654,18 @@ def mdl_1relational(AA, prop, tol, step_sim, qgraph, q, X, Y):
     assert(X.shape[0] == Y.shape[0])
 
     ms = []
-    for qi in it.chain([q], qgraph.neighbors(q)):
+    # prevent repetition in case a self loop exists
+    neighbors_including_self = set(qgraph.neighbors(q))
+    neighbors_including_self.add(q)
+
+    for qi in neighbors_including_self:
         if settings.debug:
             print('checking qi: ', qi)
         sat = qi.sat(Y)
 
         if any(sat):
-            rm_qseq = model(X[sat], Y[sat], tol)
-            l = [(rm_, (qi,), e_pc_, status_) for rm_, e_pc_, status_ in rm_qseq]
+            rm_qseq = model(tol, X[sat], Y[sat])
+            l = [(rm_, (q, qi), e_pc_, status_) for rm_, e_pc_, status_ in rm_qseq]
             ms.extend(l)
         else:
             if(qi == q):
@@ -671,7 +688,6 @@ def mdl_1relational(AA, prop, tol, step_sim, qgraph, q, X, Y):
 #         ms = [(rm, [], e_pc, status)]
 
     return ms
-
 
 
 def mdl(AA, prop, tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
@@ -731,6 +747,10 @@ def mdl(AA, prop, tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
                     gopts.plotting.acquire_global_fig()
                     gopts.plotting.single_color('b')
                     gopts.plotting.set_range((-2, 2), (-7, 7))
+                    # TODO: pull out abstract state from concrete
+                    # state Y_. q.a is no longer being mantained
+                    # It can be mantained, but it would then be an
+                    # abstract state w/o a valid abstraction
                     gopts.plotting.plot_abs_states(AA, prop, [q.a])
                     if any(sat):
                         gopts.plotting.plot(Y__[sat, 0], Y__[sat, 1], '*')
@@ -800,7 +820,7 @@ def dummy_sub_model(q):
     return sub_model
 
 
-def q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
+def q_affine_models_old(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
     """Find affine models for a given Q
 
     Parameters
@@ -938,6 +958,92 @@ def q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
             sub_models.append(sub_model)
     return sub_models
 
+
+# models can be split
+def q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
+    """Find affine models for a given Q
+
+    Parameters
+    ----------
+    cell : cell
+    step_sim : 1 time step (delta_t) simulator
+    tol : each abs state is split further into num_splits cells
+    in order to meet: modeling error < tol (module ntests samples)
+
+    Returns
+    -------
+    pwa.SubModel()
+
+    Notes
+    ------
+    """
+    sub_models = []
+
+    try_again = True
+    ntries = 1
+    MAX_TRIES = 2
+    while try_again:
+        last_node = not qgraph.edges(q)
+        X, Y = q.get_rels(prop, step_sim, ntrain)
+        assert(not X.size == 0 or Y.size == 0)
+        assert(not Y.size == 0 or X.size == 0)
+        if X.size == 0:
+            # make sure it is the last node: had no edges
+            assert(last_node)
+            # The cell is completely inside the property
+            # If not, it means that the volume of Cell - prop is very
+            # small and a sample wasnt found in there.
+            assert(prop.final_cons.contains(q.ival_constraints))
+            return [dummy_sub_model(q)]
+
+        try:
+            regression_models = mdl_1relational(AA, prop, tol, step_sim, qgraph, q, X, Y)
+            # we are done!
+            if regression_models:
+                try_again = False
+            # else try again
+            else:
+                err.warn('no model found')
+                if ntries > MAX_TRIES:
+                    if last_node:
+                        err.warn('giving up')
+                        try_again = False
+                    else:
+                        err.warn('can happen rarely...')
+        except AFM.UdetError:
+            pass
+        print('trying again')
+        # double the number of samples and try again
+        ntrain *= 2
+        # repeat!
+        ntries += 1
+
+    # try again on failure, and settle with non relational models
+    assert(regression_models)
+
+    for rm, (qi, qj), e_pc, status in regression_models:
+        A, b = qi.modelQ(rm)
+        e = qi.errorQ(include_err, rm)
+        dmap = rel.DiscreteAffineMap(A, b, e)
+
+        C, d = qi.ival_constraints.poly()
+        p = pwa.Partition(C, d, qi)
+
+        future_partitions = []
+
+        pnexts = []
+
+        # Relational modeling is available. Add the edge which was
+        # used to model this transition.
+        # Add the immediate next reachable state
+        C, d = qj.ival_constraints.poly()
+        pnexts.append(pwa.Partition(C, d, qj))
+
+        sub_model = rel.KPath(dmap, p, pnexts, future_partitions)
+        sub_model.max_error_pc = e_pc
+        sub_model.status = status
+        sub_models.append(sub_model)
+    return sub_models
 
 def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
     """Build a time continuous pwa model
