@@ -33,7 +33,12 @@ class PWAGraph(graph_class(gopts.graph_lib)):
         if not self.has_node(p2.ID):
             self.add_node(p2.ID, p=p2)
         # sm.p -> pi
-        assert(not self.has_edge(p1.ID, p2.ID))
+        try:
+            assert(not self.has_edge(p1.ID, p2.ID))
+        except AssertionError:
+            print('assert(not self.has_edge(p1.ID, p2.ID)) is false')
+            embed()
+
         self.add_edge(p1.ID, p2.ID, m=m)
 
     def node_p(self, n):
@@ -54,9 +59,42 @@ class Partition(modelspec.Partition):
 class DiscreteAffineMap(modelspec.DiscreteAffineMap):
     pass # calls super
 
+from modeling.pwa import pwa
+def recurse_add(q_split_map, pwa_graph, pi, pj, m):
+
+    pwa_graph.add_relation(pi, pj, m)
+
+    qj = pj.ID
+    for qjk in q_split_map[qj]:
+        recurse_add(q_split_map, pwa_graph,
+                    pi,
+                    pwa.Partition(*qjk.ival_constraints.poly(), part_id=qjk),
+                    m)
 
 # ignores the constraints on pnexts: p_future
 def convert_pwarel2pwagraph(pwa_rel_model):
+    assert(isinstance(pwa_rel_model, R.PWARelational))
+    from scam_core.modelrefine import q_split_map
+
+    pwa_graph = PWAGraph()
+
+    for sm in pwa_rel_model:
+        assert(isinstance(sm, R.KPath))
+#         for pi in sm.pnexts:
+#             pwa_graph.add_relation(sm.p, pi, sm.m)
+        # there should be only one pnext due to 1-relational modeling
+        assert(len(sm.pnexts) == 1)
+        pnext = sm.pnexts[0]
+        #pwa_graph.add_relation(sm.p, pnext, sm.m)
+
+        qi = pnext.ID
+        #pi = pwa.Partition(*qjk.ival_constraints.poly(), part_id=qjk)
+        recurse_add(q_split_map, pwa_graph, sm.p, pnext, sm.m)
+
+    return pwa_graph
+
+# ignores the constraints on pnexts: p_future
+def convert_pwarel2pwagraph_old(pwa_rel_model):
     assert(isinstance(pwa_rel_model, R.PWARelational))
 
     pwa_graph = PWAGraph()
