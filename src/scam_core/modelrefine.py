@@ -201,7 +201,8 @@ def get_qgraph_xw(sp, AA, error_paths, pi_seqs):
         else:
             for (a1, a2) in U.pairwise(path):
                 x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
-                q1, q2 = Qx(a1, x1cell), Qx(a2, x2cell)
+                #q1, q2 = Qx(a1, x1cell), Qx(a2, x2cell)
+                q1, q2 = Qx(x1cell), Qx(x2cell)
                 G.add_edge(q1, q2)
     return G
 
@@ -860,7 +861,6 @@ def q_affine_models_old(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q)
 
         try:
             regression_models = mdl(AA, prop, tol, step_sim, qgraph, q, (X, Y), X, k=0, kmin=KMIN, kmax=KMAX)
-            #regression_models = mdl_1relational(AA, prop, tol, step_sim, qgraph, q, X, Y)
             # we are done!
             if regression_models:
                 try_again = False
@@ -885,7 +885,6 @@ def q_affine_models_old(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q)
     if not regression_models:
         err.warn('No model found for q: {}'.format(q))
         regression_models = mdl(AA, prop, np.inf, step_sim, qgraph, q, (X, Y), X, k=0, kmin=0, kmax=1)
-        #regression_models = mdl_1relational(AA, prop, np.inf, step_sim, qgraph, q, X, Y)
         assert(regression_models)
         # No model found, get a non-relational model as the worst case
         pwa_non_relational = True
