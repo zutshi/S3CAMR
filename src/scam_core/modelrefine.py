@@ -36,6 +36,8 @@ from IPython import embed
 
 from globalopts import opts as gopts
 
+TESTCODE = True
+
 #np.set_printoptions(suppress=True, precision=2)
 
 # multiply num samples with the
@@ -252,35 +254,10 @@ def error_graph2qgraph_xw(sp, AA, initial_state_set, final_state_set, error_grap
     return G
 
 
-def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, sys_sim, sys, prop):
-
-    # initialize Qxw class
-    if AA.num_dims.pi:
-        Qxw.init(sp.pi_ref.i_cons)
-
-    if gopts.max_paths > 0:
-        error_paths, pi_seqs = errors
-        qgraph = get_qgraph_xw(sp, AA, error_paths, pi_seqs)
-    else:
-        error_graph = errors
-        qgraph = error_graph2qgraph_xw(sp, AA, initial_state_set,
-                                       final_state_set, error_graph)
-
-    # make sure init and final are not empty
-    #qgraph = get_qgraph_xw(sp, AA, error_paths, pi_seqs)
-    #qgraph = error_graph2qgraph_xw(sp, AA, error_graph)
-
-    # Add init and final states to qgraph
-    qgraph.init = {q for q in qgraph if q.xcell.ival_constraints & prop.init_cons}
-    qgraph.final = {q for q in qgraph if q.xcell.ival_constraints & prop.final_cons}
-#     assert(qgraph.init == init)
-#     assert(qgraph.final == final)
-    assert(qgraph.init)
-    assert(qgraph.final)
-
+def get_pwa_system(sys, prop, sp, qgraph):
     #pwa_sys_prop.pwa_model
 
-    pwa_sys_prop = build_pwa_model(AA, prop, qgraph, sp, 'dft')
+    pwa_sys_prop = build_pwa_model(sys, prop, qgraph, sp, 'dft')
 
 
 #     if settings.debug:
@@ -296,7 +273,7 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
     # path. This is 1 less than SAL depth and simulation length
     #depth = max(int(np.ceil(AA.T/AA.delta_t)), max_path_len - 1)
 
-    depth = int(np.ceil(AA.T/AA.delta_t))
+    depth = int(np.ceil(prop.T/sys.delta_t))
 
     assert(settings.CE) # adding a depth to accomodate the last
     # transition which takes a location to the CE
@@ -354,15 +331,102 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
 #     prop_partitions = [sm.p for sm in pwa_model if sm.p.ID.xcell in prop_cells]
 
 #     init_partitions = {sm.p.ID.xcell: sm.p for sm in pwa_model if sm.p.ID.xcell in init_cells}.values()
+    return pwa_sys_prop, depth
 
-    # Flush all plots: must block
+
+def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, sys_sim, sys, prop):
+
+    # initialize Qxw class
+    if AA.num_dims.pi:
+        Qxw.init(sp.pi_ref.i_cons)
+
+    if gopts.max_paths > 0:
+        error_paths, pi_seqs = errors
+        qgraph = get_qgraph_xw(sp, AA, error_paths, pi_seqs)
+    else:
+        error_graph = errors
+        qgraph = error_graph2qgraph_xw(sp, AA, initial_state_set,
+                                       final_state_set, error_graph)
+
+    # make sure init and final are not empty
+    #qgraph = get_qgraph_xw(sp, AA, error_paths, pi_seqs)
+    #qgraph = error_graph2qgraph_xw(sp, AA, error_graph)
+
+    # Add init and final states to qgraph
+    qgraph.init = {q for q in qgraph if q.xcell.ival_constraints & prop.init_cons}
+    qgraph.final = {q for q in qgraph if q.xcell.ival_constraints & prop.final_cons}
+#     assert(qgraph.init == init)
+#     assert(qgraph.final == final)
+
+    assert(qgraph.init)
+    assert(qgraph.final)
+
+    pwa_sys_prop, depth = get_pwa_system(sys, prop, sp, qgraph)
+
+    # flush all plots: must block
     gopts.plotting.show(block=True)
+
+    if TESTCODE:
+        bmc =\
+            lala(pwa_sys_prop.pwa_model, depth,
+                 pwa_sys_prop.init_partitions,
+                 pwa_sys_prop.final_partitions,
+                 sys.sys_name, 'dft', AA, sys, prop, sp)
+
+        qgraph_ref_gen = bmc.print_all_CE(1)
+        qgraphs = list(qgraph_ref_gen)
+
+        for qgraph_ref in qgraphs:
+            U.pause('qgraph refined, checking it')
+            pwa_sys_prop, depth = get_pwa_system(sys, prop, sp, qgraph_ref)
+            bmc =\
+                lala(pwa_sys_prop.pwa_model, depth,
+                     pwa_sys_prop.init_partitions,
+                     pwa_sys_prop.final_partitions,
+                     sys.sys_name, 'dft', AA, sys, prop, sp)
+            qqgraph_ref_gen = bmc.print_all_CE(2)
+            qqgraphs = list(qqgraph_ref_gen)
+            if not qqgraphs:
+                U.pause('refinement fails: NO CE!')
+
+        exit()
 
     check4CE(pwa_sys_prop.pwa_model, depth,
              pwa_sys_prop.init_partitions,
              pwa_sys_prop.final_partitions,
              sys.sys_name, 'dft', AA, sys, prop, sp)
 
+
+def lala(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
+
+    # Remove prop_partitions
+    assert(settings.CE)
+    # Extend both init set and final set to include inputs if any
+    dummy_cons = top2ic(AA.num_dims.pi) # T <=> [-inf, inf]
+    safety_prop = IntervalCons.concatenate(sp.final_cons, dummy_cons)
+    init_cons = (sp.init_cons if AA.num_dims.pi == 0
+                 else IntervalCons.concatenate(
+                     sp.init_cons,
+                     sp.pi_ref.i_cons))
+
+    xs = ['x'+str(i) for i in range(AA.num_dims.x)]
+    ws = ['w'+str(i) for i in range(AA.num_dims.pi)]
+    # Order is important
+    vs = xs + ws
+
+    bmc = BMC.factory(
+            gopts.bmc_engine,
+            sys,
+            prop,
+            vs,
+            pwa_model, init_cons, safety_prop,
+            init_partitions,
+            prop_partitions,
+            gopts.construct_path,
+            '{}_{}'.format(sys_name, model_type),
+            model_type)
+
+    return bmc
 
 def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
 
@@ -447,6 +511,10 @@ def verify_bmc_trace(AA, sys, prop, sp, bmc_trace, pwa_trace):
 
 
 def get_abstract_path(AA, x_array):
+    # old function, not sure about its current health: marking it non
+    # implemented
+    raise NotImplementedError
+
     abs_path = []
     t, d, pvt, ci, s, pi, u = [0]*7
     for x in x_array:
@@ -488,13 +556,12 @@ def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, bmc_engine
     bmc.check()
 
 
-def build_pwa_model(AA, prop, qgraph, sp, model_type):
+def build_pwa_model(sys, prop, qgraph, sp, model_type):
     """build_pwa_model
     Builds both dft and rel models
 
     Parameters
     ----------
-    AA : AA
     abs_objs : Either abs_states (for dft models) or relations
               [tuple(abs_state_src, abs_state_target)] for rel model
     sp : system params
@@ -507,11 +574,11 @@ def build_pwa_model(AA, prop, qgraph, sp, model_type):
 
     # number of training samples
     #TODO : should be min and not max!
-    ntrain = min(AA.num_samples * MORE_FACTOR, MAX_TRAIN)
+    ntrain = min(gopts.regression_sim_samples * MORE_FACTOR, MAX_TRAIN)
     # number of test samples
     #ntest = min(ntrain * TEST_FACTOR, MAX_TEST)
 
-    dt = AA.plant_abs.delta_t
+    dt = sys.delta_t
     step_sim = simsys.get_step_simulator(sp.controller_sim, sp.plant_sim, dt)
 
     #abs_state_models = {}
@@ -524,7 +591,7 @@ def build_pwa_model(AA, prop, qgraph, sp, model_type):
     for q in qgraph:
         if settings.debug:
             print('modeling: {}'.format(q))
-        for sub_model in q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
+        for sub_model in q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
             assert(sub_model is not None)
             # sub_model.pnexts[0] = sub_model.p.ID to enforce self loops
             print(U.colorize('{} -> {}, e%:{}, status: {}, e: {}, A:{}, b:{}'.format(
@@ -637,7 +704,10 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
 
 
 def model(tol, X, Y):
-    rm = AFM.OLS(X, Y)
+    try:
+        rm = AFM.OLS(X, Y)
+    except AFM.UdetError:
+        return []
     e_pc = rm.max_error_pc(X, Y)
     if settings.debug:
         err.imp('error%: {}'.format(e_pc))
@@ -649,7 +719,7 @@ def model(tol, X, Y):
     return [(rm, e_pc, status)]
 
 
-def mdl_1relational(AA, prop, tol, step_sim, qgraph, q, X, Y):
+def mdl_1relational(prop, tol, step_sim, qgraph, q, X, Y):
     assert(X.shape[1] == q.dim)
     assert(Y.shape[1] == q.dim)
     assert(X.shape[0] == Y.shape[0])
@@ -959,7 +1029,7 @@ def q_affine_models_old(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q)
 
 
 # models can be split
-def q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
+def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
     """Find affine models for a given Q
 
     Parameters
@@ -976,11 +1046,11 @@ def q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
     Notes
     ------
     """
-    sub_models = []
 
     try_again = True
     ntries = 1
-    MAX_TRIES = 2
+    #MAX_TRIES = 2
+    MAX_TRIES = 0
     while try_again:
         last_node = not qgraph.edges(q)
         X, Y = q.get_rels(prop, step_sim, ntrain)
@@ -996,7 +1066,7 @@ def q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
             return [dummy_sub_model(q)]
 
         try:
-            regression_models = mdl_1relational(AA, prop, tol, step_sim, qgraph, q, X, Y)
+            regression_models = mdl_1relational(prop, tol, step_sim, qgraph, q, X, Y)
             # we are done!
             if regression_models:
                 try_again = False
@@ -1005,21 +1075,23 @@ def q_affine_models(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
                 err.warn('no model found')
                 if ntries > MAX_TRIES:
                     if last_node:
-                        err.warn('giving up')
-                        try_again = False
+                        err.warn('giving up on last node')
                     else:
                         err.warn('can happen rarely...')
+                    try_again = False
         except AFM.UdetError:
             pass
-        print('trying again')
+        if try_again:
+            print('trying again')
         # double the number of samples and try again
         ntrain *= 2
         # repeat!
         ntries += 1
 
     # try again on failure, and settle with non relational models
-    assert(regression_models)
+    #assert(regression_models)
 
+    sub_models = []
     for rm, (qi, qj), e_pc, status in regression_models:
         A, b = qi.modelQ(rm)
         e = qi.errorQ(include_err, rm)
