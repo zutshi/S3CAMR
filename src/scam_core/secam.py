@@ -954,6 +954,10 @@ def main():
 
     opts.construct_path = setup_dir(sys, args.output)
 
+
+    # What a hack!
+    opts.regression_sim_samples = sys.plant_config_dict['num_samples']
+
     # TAG:MSH
     matlab_engine = args.meng
     sys.init_sims(opts.plotting, opts.property_checker, psim_args=matlab_engine)
