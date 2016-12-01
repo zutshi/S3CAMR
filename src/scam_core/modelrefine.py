@@ -36,7 +36,8 @@ from IPython import embed
 
 from globalopts import opts as gopts
 
-TESTCODE = True
+TESTCODE = False
+TESTCODE2 = False
 
 #np.set_printoptions(suppress=True, precision=2)
 
@@ -391,6 +392,17 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
 
         exit()
 
+    if TESTCODE2:
+        from . import path_by_path_bmc as pbypbmc
+        gen = pbypbmc.pbyp(pwa_sys_prop)
+        ctr = 0
+        for pwa_model, init_partitions, final_partitions in gen:
+            check4CE(pwa_model, depth, init_partitions, final_partitions, sys.sys_name, 'dft', AA, sys, prop, sp)
+            U.pause()
+            ctr += 1
+        print(ctr)
+        exit()
+
     check4CE(pwa_sys_prop.pwa_model, depth,
              pwa_sys_prop.init_partitions,
              pwa_sys_prop.final_partitions,
@@ -481,7 +493,8 @@ def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model
 
     elif status == InvarStatus.Unknown:
         print('Unknown...exiting')
-        exit()
+        #exit()
+        return
     else:
         raise err.Fatal('Internal')
 
@@ -704,10 +717,13 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
 
 
 def model(tol, X, Y):
-    try:
-        rm = AFM.OLS(X, Y)
-    except AFM.UdetError:
-        return []
+#     try:
+#         rm = AFM.OLS(X, Y)
+#     except AFM.UdetError:
+#         return []
+
+    rm = AFM.OLS(X, Y)
+
     e_pc = rm.max_error_pc(X, Y)
     if settings.debug:
         err.imp('error%: {}'.format(e_pc))
@@ -1050,7 +1066,7 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
     try_again = True
     ntries = 1
     #MAX_TRIES = 2
-    MAX_TRIES = 0
+    MAX_TRIES = 2
     while try_again:
         last_node = not qgraph.edges(q)
         X, Y = q.get_rels(prop, step_sim, ntrain)
