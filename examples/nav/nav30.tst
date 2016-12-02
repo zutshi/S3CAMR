@@ -28,7 +28,7 @@ R = [[1., 6., -inf, -inf],
 S = [[22., 11., -inf, -inf],
      [23., 12., inf, inf]]
 
-error_set = P
+error_set = S
 
 # P, Q, R
 T = 20.0
