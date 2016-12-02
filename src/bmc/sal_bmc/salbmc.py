@@ -130,6 +130,9 @@ class BMC(BMCSpec):
             p = sub_model.p
             pnexts = sub_model.pnexts
             l = sal_trans_sys.get_C(p.ID)
+            # TODO: implicitly assumes a self loop on the last state
+            # If it is not there, the last p form pnext, would have
+            # never been added and get_C will throw an exception.
             lnext = [sal_trans_sys.get_C(pnext.ID) for pnext in pnexts]
 
             g = slt_rel.Guard(l, p.C, p.d)

@@ -84,9 +84,7 @@ class BMC(BMCSpec):
 
     def print_all_CE(self, d):
         path_gen = self.pwa_model.get_all_path_generator(self.sources, self.targets)
-        sentinel = False
-        for path in path_gen:
-            sentinel = True
+        for ctr, path in enumerate(path_gen):
             ptrace = [self.pwa_model.node_p(qi) for qi in path]
             mtrace = [self.pwa_model.edge_m((qi, qj)) for qi, qj in U.pairwise(path)]
             pwa_trace = PWATRACE(partitions=ptrace, models=mtrace)
@@ -100,6 +98,7 @@ class BMC(BMCSpec):
                     continue
                 else:
                     yield qgraph
+        print('total paths checked:{}'.format(ctr))
         return
 
     def refine_edge(self, qi, qj):
