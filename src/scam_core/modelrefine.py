@@ -36,8 +36,8 @@ from IPython import embed
 
 from globalopts import opts as gopts
 
-TESTCODE = False
-TESTCODE2 = False
+PWA_MODE = False
+PATHBYPATHBMC_MODE = True
 
 #np.set_printoptions(suppress=True, precision=2)
 
@@ -367,7 +367,7 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
     # flush all plots: must block
     gopts.plotting.show(block=True)
 
-    if TESTCODE:
+    if PWA_MODE:
         bmc =\
             lala(pwa_sys_prop.pwa_model, depth,
                  pwa_sys_prop.init_partitions,
@@ -392,7 +392,7 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
 
         exit()
 
-    if TESTCODE2:
+    if PATHBYPATHBMC_MODE:
         from . import path_by_path_bmc as pbypbmc
         gen = pbypbmc.pbyp(pwa_sys_prop)
         ctr = 0
