@@ -367,28 +367,6 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
     gopts.plotting.show(block=True)
 
     if TESTCODE:
-#         bmc =\
-#             lala(pwa_sys_prop.pwa_model, depth,
-#                  pwa_sys_prop.init_partitions,
-#                  pwa_sys_prop.final_partitions,
-#                  sys.sys_name, 'dft', AA, sys, prop, sp)
-
-#         qgraph_ref_gen = bmc.print_all_CE(1)
-#         qgraphs = list(qgraph_ref_gen)
-
-#         for qgraph_ref in qgraphs:
-#             U.pause('qgraph refined, checking it')
-#             pwa_sys_prop, depth = get_pwa_system(sys, prop, sp, qgraph_ref)
-#             bmc =\
-#                 lala(pwa_sys_prop.pwa_model, depth,
-#                      pwa_sys_prop.init_partitions,
-#                      pwa_sys_prop.final_partitions,
-#                      sys.sys_name, 'dft', AA, sys, prop, sp)
-#             qqgraph_ref_gen = bmc.print_all_CE(2)
-#             qqgraphs = list(qqgraph_ref_gen)
-#             if not qqgraphs:
-#                 U.pause('refinement fails: NO CE!')
-
         bmc = lala(pwa_sys_prop.pwa_model, depth,
                    pwa_sys_prop.init_partitions,
                    pwa_sys_prop.final_partitions,
