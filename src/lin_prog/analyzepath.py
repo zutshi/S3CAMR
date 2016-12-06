@@ -5,10 +5,8 @@ from __future__ import unicode_literals
 
 import numpy as np
 import scipy.linalg as linalg
-import scipy.optimize as spopt
 import sympy as sym
 
-from . import pyglpklp
 from globalopts import opts as gopts
 
 import constraints as cons
@@ -278,7 +276,7 @@ def truncate(*args):
     return (trunc_array(X) for X in args)
 
 
-def overapprox_x0(num_dims, prop, pwa_trace, solver='glpk'):
+def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):#solver='glpk'):
     C, d = part_constraints(pwa_trace.partitions)
     A, b = dyn_constraints(pwa_trace.models)
     pA, pb = prop_constraints(num_dims, prop, len(pwa_trace.partitions))
@@ -309,15 +307,22 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver='glpk'):
     A_ub, b_ub = truncate(A_ub, b_ub)
 
     if solver == 'glpk':
+        from . import pyglpklp
         res = [pyglpklp.linprog(obj, A_ub, b_ub) for obj in directions_ext]
 
     elif solver == 'scipy':
+        import scipy.optimize as spopt
         disp_opt = True if settings.debug else False
         res = [
                spopt.linprog(obj, A_ub=A_ub, b_ub=b_ub,
                              bounds=bounds, method='simplex',
                              options={'disp': disp_opt})
                for obj in directions_ext]
+
+    elif solver == 'gurobi':
+        from . import pygurobi
+        res = [pygurobi.linprog(obj, A_ub, b_ub) for obj in directions_ext]
+
     else:
         raise NotImplementedError
 
