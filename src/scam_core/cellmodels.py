@@ -307,6 +307,10 @@ class Qx(Q):
              else cons.zero2ic(self.xdim))
         return e
 
+    def poly(self):
+        C, d = self.ival_constraints.poly()
+        return C, d
+
     def __hash__(self):
         return hash(self.xcell)
 
