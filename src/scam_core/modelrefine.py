@@ -367,11 +367,36 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
     gopts.plotting.show(block=True)
 
     if TESTCODE:
+
+
         bmc = lala(pwa_sys_prop.pwa_model, depth,
                    pwa_sys_prop.init_partitions,
                    pwa_sys_prop.final_partitions,
                    sys.sys_name, 'dft', AA, sys, prop, sp)
         list(bmc.print_all_CE(0))
+
+#         qgraph_ref_gen = bmc.print_all_CE(1)
+#         qgraphs = list(qgraph_ref_gen)
+
+#         for qgraph_ref in qgraphs:
+#             U.pause('qgraph refined, checking it')
+#             pwa_sys_prop, depth = get_pwa_system(sys, prop, sp, qgraph_ref)
+#             bmc =\
+#                 lala(pwa_sys_prop.pwa_model, depth,
+#                      pwa_sys_prop.init_partitions,
+#                      pwa_sys_prop.final_partitions,
+#                      sys.sys_name, 'dft', AA, sys, prop, sp)
+#             qqgraph_ref_gen = bmc.print_all_CE(2)
+#             qqgraphs = list(qqgraph_ref_gen)
+#             if not qqgraphs:
+#                 U.pause('refinement fails: NO CE!')
+
+
+# #         bmc = lala(pwa_sys_prop.pwa_model, depth,
+# #                    pwa_sys_prop.init_partitions,
+# #                    pwa_sys_prop.final_partitions,
+# #                    sys.sys_name, 'dft', AA, sys, prop, sp)
+# #         list(bmc.print_all_CE(0))
         exit()
 
     check4CE(pwa_sys_prop.pwa_model, depth,
@@ -587,15 +612,15 @@ def build_pwa_model(sys, prop, qgraph, sp, model_type):
                 sub_model.m.b)))
             pwa_model.add(sub_model)
             #abs_state_models[abs_state] = sub_model
-            # Even if a state gets split, its recorded
-            if q in qgraph.init:
-                init_partitions.add(sub_model.p)
-            # TODO: If we split a final cell to increase precision for
-            # the transition to concrete error_states and break the
-            # terminal self-loop, both will get recorded and get
-            # weird.
-            if q in qgraph.final:
-                final_partitions.add(sub_model.p)
+        # Even if a state gets split, its recorded
+        if q in qgraph.init:
+            init_partitions.add(pwa.Partition(*q.poly(), part_id=q))
+        # TODO: If we split a final cell to increase precision for
+        # the transition to concrete error_states and break the
+        # terminal self-loop, both will get recorded and get
+        # weird.
+        if q in qgraph.final:
+            final_partitions.add(pwa.Partition(*q.poly(), part_id=q))
 
     pwa_sys_prop = PWASYSPROP(pwa_model, init_partitions, final_partitions)
     return pwa_sys_prop
