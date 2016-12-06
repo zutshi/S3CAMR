@@ -19,6 +19,10 @@ import err
 
 from IPython import embed
 
+
+from blessed import Terminal
+term = Terminal()
+
 logger = logging.getLogger(__name__)
 
 
@@ -84,7 +88,16 @@ class BMC(BMCSpec):
 
     def print_all_CE(self, d):
         path_gen = self.pwa_model.get_all_path_generator(self.sources, self.targets)
+
+        print('')
+        print(term.move_up + term.move_up)
+        print('checking models: ', end='')
+
         for ctr, path in enumerate(path_gen):
+
+            with term.location():
+                print(ctr)
+
             ptrace = [self.pwa_model.node_p(qi) for qi in path]
             mtrace = [self.pwa_model.edge_m((qi, qj)) for qi, qj in U.pairwise(path)]
             pwa_trace = PWATRACE(partitions=ptrace, models=mtrace)
