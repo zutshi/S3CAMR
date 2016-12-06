@@ -693,42 +693,48 @@ def dump_trace(trace_list):
     print('dumping trace[0]')
     trace_list[0].dump_matlab()
 
-
-def run_secam(sys, prop):
-    MODE = globalopts.opts.MODE
+def simulate(sys, prop):
     plt = globalopts.opts.plotting
     #plot = globalopts.opts.plot
-
-    if MODE == 'simulate':
-        if not isinstance(
-                globalopts.opts.property_checker,
-                properties.PropertyChecker):
-            raise err.Fatal('property checker must be enabled when '
-                            'random testing!')
-        start_time = time.time()
-        trace_list = RT.simulate(sys, prop)
-        #print(len(list(trace_list)))
+    if not isinstance(
+            globalopts.opts.property_checker,
+            properties.PropertyChecker):
+        raise err.Fatal('property checker must be enabled when '
+                        'random testing!')
+    trace_list = RT.simulate(sys, prop)
+    #print(len(list(trace_list)))
 #         for trace in trace_list:
 #             print(trace)
-        if globalopts.opts.dump_trace:
-            dump_trace(trace_list)
+    #for trace in trace_list:
+    #    fp.append_data('trace_log', str(trace))
 
-        if settings.paper_plot:
-            # because the plot is craeted inside the simulator, get
-            # the global handle
-            plt.acquire_global_fig()
-            plt.plot_rect(prop.init_cons.rect(), 'g')
-            plt.plot_rect(prop.final_cons.rect(), 'r')
-            plt.set_range((-2.5, 2.5), (-8, 8))
+    if globalopts.opts.dump_trace:
+        dump_trace(trace_list)
 
-        plt.plot_trace_list(trace_list)
+    if settings.paper_plot:
+        # because the plot is craeted inside the simulator, get
+        # the global handle
+        plt.acquire_global_fig()
+        plt.plot_rect(prop.init_cons.rect(), 'g')
+        plt.plot_rect(prop.final_cons.rect(), 'r')
+        plt.set_range((-2.5, 2.5), (-8, 8))
+
+    plt.plot_trace_list(trace_list)
 
 #         if settings.paper_plot:
 #             plt.plot_rect(prop.init_cons.rect(), 'g')
 #             plt.plot_rect(prop.final_cons.rect(), 'r')
 #             plt.set_range((-2, 2), (-7, 7))
 
-        plt.show()
+    plt.show()
+
+def run_secam(sys, prop):
+    MODE = globalopts.opts.MODE
+
+    start_time = time.time()
+
+    if MODE == 'simulate':
+        simulate(sys, prop)
     elif MODE == 'falsify':
         # ignore time taken to create_abstraction: mainly to ignore parsing
         # time
