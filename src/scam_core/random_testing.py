@@ -263,7 +263,7 @@ def mp_imap(self, sim, concrete_states):
     #writer.write(pool.imap_unordered(sim, concrete_states, chunksize=CHNK))
     #with fops.StreamWrite(self.fname, mode='wb') as sw:
 #
-    pool = mp.Pool()
+    pool = mp.Pool(self.nworkers)
     with PickleStreamWriter(self.fname) as writer:
         for trace in pool.imap_unordered(sim, concrete_states, chunksize=CHNK):
             writer.write(trace)
@@ -293,7 +293,7 @@ def worker(prop, sim, writer, concrete_states):
 
 def mp_custom(self, sim, concrete_states):
     jobs = []
-    nworkers = 16#mp.cpu_count()
+    nworkers = self.nworkers
     work = len(concrete_states)
     work_load = int(work/nworkers)
     left_over_jobs = work % nworkers
@@ -330,7 +330,7 @@ def numap(self, sim, concrete_states):
 
 def mp_shared_mem(self, num_samples):
     CHNK = 6250
-    pool = mp.Pool(16)
+    pool = mp.Pool(self.nworkers)
     fd = open('delme.dump', 'w')
     ff = ft.partial(f, self.sys, self.prop, fd)
     for trace in pool.imap_unordered(ff, xrange(num_samples), chunksize=CHNK):
@@ -355,7 +355,7 @@ def jb_parallel(self, sim, concrete_states):
     large_memmap = load(filename, mmap_mode='r+')
 
     with PickleStreamWriter(self.fname) as writer:
-        for trace in jb.Parallel(n_jobs=16, verbose=0, batch_size='auto')(jb.delayed(sim, check_pickle=False)(i) for i in large_memmap):
+        for trace in jb.Parallel(n_jobs=self.nworkers, verbose=0, batch_size='auto')(jb.delayed(sim, check_pickle=False)(i) for i in large_memmap):
             writer.write(trace)
             if check_prop_violation(self.prop, trace):
                 num_violations += 1
@@ -363,34 +363,47 @@ def jb_parallel(self, sim, concrete_states):
 
 class simulate_par(object):
     def __init__(self, sys, prop):
+
+        self.par_option = 'mp_custom'
+
         self.sys = sys
         self.prop = prop
         fname = '{}.simdump'.format(sys.sys_name)
         self.fname = globalopts.opts.construct_path(fname)
+
+        #self.nworkers = mp.cpu_count()
+        self.nworkers = int(raw_input('Enter number of workers'))
+        print('Num workers: {}'.format(self.nworkers))
         return
 
     def trace_gen(self):
-        reader = PickleStreamReader(self.fname)
-        for trace in reader.read():
-            yield trace
+        # This case is different as multiple dumps are produced
+        if self.par_option == 'mp_custom':
+            # combine all files
+            readers = (PickleStreamReader(self.fname+str(i)) for i in range(self.nworkers))
+            for reader in readers:
+                for trace in reader.read():
+                    yield trace
+
+        else:
+            reader = PickleStreamReader(self.fname)
+            for trace in reader.read():
+                yield trace
 
     def __call__(self):
-        par_option = 'mp_custom'
+        par_option = self.par_option
+
+        num_samples = globalopts.opts.num_sim_samples
+        concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
+        sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
 
         if par_option == 'mp':
-            num_samples = self.globalopts.opts.num_sim_samples
-            concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
-            sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
             mp_imap(self, sim, concrete_states)
         elif par_option == 'mp_custom':
-            num_samples = self.globalopts.opts.num_sim_samples
-            concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
-            sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
             mp_custom(self, sim, concrete_states)
         elif par_option == 'mp_shared_mem':
-            num_samples = self.globalopts.opts.num_sim_samples
-            concrete_states = sample.sample_init_UR(self.sys, self.prop, num_samples)
-            sim = ft.partial(simsys.simulate_system, self.sys, self.prop.T)
+            raise NotImplementedError
+            #mp_shared_mem(self, num_samples)
         elif par_option == 'joblib':
             jb_parallel()
         else:
