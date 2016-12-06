@@ -10,6 +10,9 @@ from scipy import io
 
 import settings
 
+import fileops as fops
+from streampickle import PickleStreamReader
+
 ## commented off because matplotlib is not installed for python installation
 ## used with matlab
 #import matplotlib
@@ -133,3 +136,11 @@ class Trace(object):
             self.pi.tobytes(),
             )
         return s
+
+def get_simdump_gen(dirpath):
+    files = fops.get_file_list_matching('*.simdump*', dirpath)
+
+    for f in files:
+        reader = PickleStreamReader(f)
+        for trace in reader.read():
+            yield trace
