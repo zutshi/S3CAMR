@@ -52,4 +52,5 @@ def linprog(obj, A, b):
 
     lp.matrix = A.flatten()
     lp.simplex()
+    #lp.write(prob='glpk_out')
     return OPTRES(lp.obj.value, lp.status, lp.status == 'opt')
