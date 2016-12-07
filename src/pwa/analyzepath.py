@@ -307,7 +307,7 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):#solver='gl
     A_ub, b_ub = truncate(A_ub, b_ub)
 
     if solver == 'glpk':
-        from . import pyglpklp
+        from linprog import pyglpklp
         res = [pyglpklp.linprog(obj, A_ub, b_ub) for obj in directions_ext]
 
     elif solver == 'scipy':
@@ -320,7 +320,7 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):#solver='gl
                for obj in directions_ext]
 
     elif solver == 'gurobi':
-        from . import pygurobi
+        from linprog import pygurobi
         res = [pygurobi.linprog(obj, A_ub, b_ub) for obj in directions_ext]
 
     else:
