@@ -362,8 +362,9 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):#solver='gl
     try:
         ret_val = cons.IntervalCons(r[:, 0], r[:, 1])
     except:
-        from IPython import embed
-        print('Malformed Interval! Please fix.')
-        embed()
+        #from IPython import embed
+        err.warn('linprog fp failure: Malformed Interval! Please fix.')
+        #embed()
+        return None
 
     return ret_val
