@@ -24,7 +24,7 @@ import utils as U
 from utils import print
 import err
 
-from .graphs import graph as g
+from graphs import graph as g
 from . import state as st
 from . import cellmanager as CM
 

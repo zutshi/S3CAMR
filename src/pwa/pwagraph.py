@@ -11,7 +11,7 @@ from IPython import embed
 from . import modelspec
 from . import relational as R
 
-from scam_core.graphs.graph import class_factory as graph_class
+from graphs.graph import class_factory as graph_class
 #from .graphs.graph import factory as graph_factory
 from globalopts import opts as gopts
 

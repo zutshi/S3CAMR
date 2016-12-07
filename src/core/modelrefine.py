@@ -11,18 +11,18 @@ import collections
 import numpy as np
 
 from . import simulatesystem as simsys
-from modeling.pwa import pwa
-from modeling.pwa import simulator as pwa_sim
-from modeling.pwa import relational as rel
+from pwa import pwa
+from pwa import simulator as pwa_sim
+from pwa import relational as rel
 from . import random_testing as rt
 from bmc import bmc as BMC
 from bmc.bmc_spec import InvarStatus
 import modeling.affinemodel as AFM
 from .cellmodels import Qxw, Qx
 from . import cellmanager as CM
-from .graphs.graph import factory as graph_factory
-from .graphs.graph import class_factory as graph_class
-from lin_prog import analyzepath as azp
+from graphs.graph import factory as graph_factory
+from graphs.graph import class_factory as graph_class
+from pwa import analyzepath as azp
 from . import state
 
 import settings

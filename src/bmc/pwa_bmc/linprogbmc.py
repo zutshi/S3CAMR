@@ -6,9 +6,9 @@ from __future__ import unicode_literals
 import logging
 
 from bmc.bmc_spec import BMCSpec, InvarStatus, PWATRACE
-import lin_prog.analyzepath as azp
-from modeling.pwa import pwagraph
-from scam_core.graphs.graph import class_factory as graph_class
+import pwa.analyzepath as azp
+from pwa import pwagraph
+from graphs.graph import class_factory as graph_class
 from globalopts import opts as gopts
 
 #import fileops as fops

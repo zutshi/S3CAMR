@@ -86,7 +86,7 @@ def factory(bmc_engine,
              *args)
     elif bmc_engine == 'pwa':
         from .pwa_bmc import linprogbmc
-        from modeling.pwa.pwagraph import convert_pwarel2pwagraph
+        from pwa.pwagraph import convert_pwarel2pwagraph
 
         return linprogbmc.BMC(
              sys,
@@ -108,7 +108,7 @@ def factory(bmc_engine,
 # TODO: fix and remove the hack
 # ignores the constraints on pnexts
 def convert_KPath2Relational(pwa_model):
-    import modeling.pwa.relational as R
+    import pwa.relational as R
     assert(isinstance(pwa_model, R.PWARelational))
     new_pwa_model = R.PWARelational()
     for sm in pwa_model:

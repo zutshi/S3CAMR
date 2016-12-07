@@ -4,7 +4,7 @@ install:
 checkpy3compat:
 	pylint --py3k ./src/*|less
 clean:
-	find ./|grep '\.pyc'|xargs rm
-	find ./|grep '\.pyo'|xargs rm
-	find ./|grep '\.tstc'|xargs rm
-	find ./|grep '\.tsto'|xargs rm
+	find ./|grep '\.pyc'|xargs rm -f
+	find ./|grep '\.pyo'|xargs rm -f
+	find ./|grep '\.tstc'|xargs rm -f
+	find ./|grep '\.tsto'|xargs rm -f
