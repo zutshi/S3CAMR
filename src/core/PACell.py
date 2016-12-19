@@ -9,14 +9,11 @@ import logging
 import numpy as np
 
 import err
-from utils import print
 
 # import matplotlib.pyplot as plt
 #TAG:Z3_IND
 
-from . import concretePlant as cp
 from . import cellmanager as CM
-from .properties import PropertyChecker
 
 logger = logging.getLogger(__name__)
 
@@ -203,58 +200,6 @@ class PlantAbstraction:
 
         return abs_state
 
-    def get_reachable_abs_states_sym(
-            self,
-            sampled_state,
-            A,
-            system_params,
-            ):
-
-        pi_ref = system_params.pi_ref
-        state = sampled_state
-        total_num_samples = state.n
-
-        #property_checker = lambda t, Y: Y in system_params.final_cons
-        property_checker = PropertyChecker(system_params.final_cons)
-        rchd_concrete_state_array = cp.compute_concrete_plant_output(
-                A,
-                system_params.plant_sim,
-                state,
-                total_num_samples,
-                property_checker)
-
-        # ================= DIRECT MANIPULATION ===================
-        # of StateArray object
-        # rchd_cont_state_array = rchd_concrete_state_array.cont_states
-
-        # for each reached state, get the abstract state
-
-        # abs2rchd_abs_state_set = set()
-
-        abs2rchd_abs_state_pi_list = []
-        for rchd_concrete_state in rchd_concrete_state_array.iterable():
-
-            rchd_abs_state = \
-                self.get_abs_state_from_concrete_state(rchd_concrete_state)
-
-            # A.get_abs_state_from_concrete_state(rchd_concrete_state)
-
-            pi = rchd_concrete_state.pi
-            pi_cell = self.cell_id_from_concrete(pi, pi_ref.eps)
-
-            # TODO: which state becomes none?? Verfiy
-
-            if rchd_abs_state is not None:
-
-                # abs2rchd_abs_state_set.add(rchd_abs_state)
-
-                abs2rchd_abs_state_pi_list.append((rchd_abs_state, pi_cell))
-
-                # # ##!!##logger.debug('abs_state obtained {} from concrete_state {}'.format(rchd_abs_state, rchd_concrete_state))
-        # return abs2rchd_abs_state_set
-
-        return abs2rchd_abs_state_pi_list
-
     # Process the state only if the shortest simulation trace
     # TODO: <= or < ?
 
@@ -270,7 +215,7 @@ class PlantAbstraction:
 
         #property_checker = lambda t, Y: Y in system_params.final_cons
         #property_checker = PropertyChecker(system_params.final_cons)
-        rchd_concrete_state_array = cp.compute_concrete_plant_output(
+        rchd_concrete_state_array = compute_concrete_plant_output(
                 A,
                 system_params.plant_sim,
                 state,
@@ -329,6 +274,46 @@ class PlantAbstraction:
     def draw_2d(self):
         raise err.Fatal('unimplemented')
 
+
+
+def compute_concrete_plant_output(
+        A,
+        plant_sim,
+        states,
+        total_num_samples
+        ):
+
+    # ##!!##logger.debug(U.decorate('simulating plant'))
+
+    concrete_states = states
+
+    # simulate to get reached concrete states
+
+    # ##!!##logger.debug('input concrete states\n{}'.format(concrete_states))
+
+    rchd_concrete_state_array, property_violated_flag = plant_sim.simulate(
+            concrete_states, A.delta_t)
+
+    # ##!!##logger.debug('output concrete states\n{}'.format(rchd_concrete_state_array))
+
+    # ASSUMES:
+    #   simulation was successful for each sample
+    # This implies
+    #   - The plant_sim returned a valid concrete state for each supplied
+    #   sample
+    #   - \forall i. output_array[i] = SIM(input_array[i]) is valid
+    #     and len(output_array) = len(input_arra)
+    # This need not be true always and we need to add plant_sim errors,
+    # like returning (inf, inf, inf,...) ?
+    # Some indication that simulation failed for the given state, without
+    # destroying the assumed direct correspondance between
+    # input array and output array
+
+    assert(rchd_concrete_state_array.n == concrete_states.n)
+
+    # ##!!##logger.debug(U.decorate('simulating plant done'))
+
+    return rchd_concrete_state_array
 
 # Abs state is an object  (cell_id, n, d, p)
 

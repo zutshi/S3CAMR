@@ -31,18 +31,12 @@ class Trace(object):
         self.idx = 0
         self.t_array = np.empty(num_points)
         self.x_array = np.empty((num_points, num_dims.x))
-        self.s_array = np.empty((num_points, num_dims.s))
-        self.u_array = np.empty((num_points, num_dims.u))
         self.d_array = np.empty((num_points, num_dims.d))
-        self.ci = np.empty((num_points, num_dims.ci))
         self.pi = np.empty((num_points, num_dims.pi))
 
     def append(
             self,
-            s=None,
-            u=None,
             x=None,
-            ci=None,
             pi=None,
             t=None,
             d=None,
@@ -54,9 +48,6 @@ class Trace(object):
         i = self.idx
         self.t_array[i] = t
         self.x_array[i, :] = x
-        self.s_array[i, :] = s
-        self.u_array[i, :] = u
-        self.ci[i, :] = ci
         self.pi[i, :] = pi
         self.idx += 1
 
@@ -109,33 +100,26 @@ class Trace(object):
     def dump_matlab(self):
         data = {'T': self.t_array,
                 'X': self.x_array,
-                'S': self.s_array,
-                'U': self.u_array,
-                'CI': self.ci,
                 'PI': self.pi}
         io.savemat('mat_file.mat', data, appendmat=False, format='5',
                    do_compression=False, oned_as='column')
 
     def __str__(self):
-        s = '''t:{},\nx:{},\ns:{},\nu:{},\nci:{},\npi:{}'''.format(
+        s = '''t:{},\nx:{},\npi:{}'''.format(
             self.t_array,
             self.x_array,
-            self.s_array,
-            self.u_array,
-            self.ci,
             self.pi,
             )
         return s
+
     def serialize(self):
-        s = '''{}\n{}\n{}\n{}\n{}\n{}'''.format(
+        s = '''{}\n{}\n{}\n'''.format(
             self.t_array.tobytes(),
             self.x_array.tobytes(),
-            self.s_array.tobytes(),
-            self.u_array.tobytes(),
-            self.ci.tobytes(),
             self.pi.tobytes(),
             )
         return s
+
 
 def get_simdump_gen(dirpath):
     files = fops.get_file_list_matching('*.simdump*', dirpath)
