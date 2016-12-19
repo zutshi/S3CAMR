@@ -7,9 +7,7 @@ from __future__ import division
 from __future__ import unicode_literals
 
 
-# S: Controller States
 # X: Plant states
-# U: controller outputs
 
 # import time
 
@@ -32,12 +30,6 @@ import settings
 
 logger = logging.getLogger(__name__)
 
-class DummyControllerAbs(object):
-    pass
-
-# def abstraction_factory(des, plant_sim, T, sampler, init_cons, final_cons):
-#    return GridBasedAbstraction(des, plant_sim, T, sampler, init_cons, final_cons)
-    # return GridBasedAbstraction(*args, **kwargs)
 
 def abstraction_factory(*args, **kwargs):
     return TopLevelAbs(*args, **kwargs)
@@ -50,13 +42,11 @@ def abstraction_factory(*args, **kwargs):
 
 class TopLevelAbs:
 
-    # get_abs_state = collections.namedtuple('tpl_abs_state', ['plant_state', 'controller_state'], verbose=False)
-
     @staticmethod
-    def get_abs_state(plant_state, controller_state):
-        return AbstractState(plant_state, controller_state)
+    def get_abs_state(plant_state):
+        return AbstractState(plant_state)
 
-    # takes in the plant and the controller abstraction objects which are
+    # takes in the plant abstraction object which is
     # instatiation of their respective parameterized abstract classes
 
     #TODO: split this ugly init function into smaller ones
@@ -86,10 +76,8 @@ class TopLevelAbs:
         self.N = None
         self.state = None
         self.scale = None
-        self.controller_sym_path_obj = controller_sym_path_obj
         self.min_smt_sample_dist = min_smt_sample_dist
         self.plant_abstraction_type = plant_abstraction_type
-        self.controller_abstraction_type = controller_abstraction_type
 
         # The list of init_cons is interpreted as [ic0 \/ ic1 \/ ... \/ icn]
 #        self.init_cons_list = init_cons_list
@@ -110,44 +98,6 @@ class TopLevelAbs:
 
         # TAG:Z3_IND - default init
         smt_solver = None
-
-        # TAG:Z3_IND - shuffled the plant abstraction creation after controller
-        # abstraction. This lets us get the smt_solver depending upon the
-        # requeseted controller abstraction
-
-        if controller_abstraction_type == 'symbolic_pathcrawler':
-            from . import smtSolver as smt
-            smt_solver = smt.smt_solver_factory('z3')
-            from . import CASymbolicPCrawler as CA
-            controller_abs = CA.ControllerSymbolicAbstraction(self.num_dims,
-                    controller_sym_path_obj, min_smt_sample_dist, smt_solver)
-        elif controller_abstraction_type == 'symbolic_klee':
-            from . import CASymbolicKLEE as CA
-            controller_abs = CA.ControllerSymbolicAbstraction(self.num_dims,
-                    controller_sym_path_obj, min_smt_sample_dist)
-        #elif controller_abstraction_type == 'concolic':
-        #    import CAConcolic as CA
-        #    controller_abs = CA.ControllerCollectionAbstraction(self.num_dims)
-        elif controller_abstraction_type == 'concrete':
-            from . import CAConcolic as CA
-            controller_abs = CA.ControllerCollectionAbstraction(self.num_dims)
-        elif controller_abstraction_type == 'concrete_no_controller':
-            #DummyControllerAbs = type(str('DummyControllerAbs'), (), {})
-            controller_abs = DummyControllerAbs()
-            controller_abs.is_symbolic = False
-
-            # can not use None because of a check in
-            # get_abs_state_from_concrete_state() which silently makes
-            # the entire abstract state None if a None is encountered
-            # in either plant or contorller abs state.
-            def dummy(*args): return 0
-
-            controller_abs.get_abs_state_from_concrete_state = dummy
-            controller_abs.get_reachable_abs_states = sample_abs_state
-            controller_abs.get_concrete_states_from_abs_state = dummy
-        else:
-            print(controller_abstraction_type)
-            raise NotImplementedError
 
         if plant_abstraction_type == 'cell':
             #from PACell import *
@@ -203,14 +153,7 @@ class TopLevelAbs:
         # self.sanity_check()
 
         self.plant_abs = plant_abs
-        self.controller_abs = controller_abs
 
-        #if self.controller_abstraction_type.startswith('symbolic'):
-        if self.controller_abs.is_symbolic:
-            self.get_reachable_states = self.get_reachable_states_sym
-        else:
-            self.get_reachable_states = self.get_reachable_states_conc
-        return
 
     def parse_config(self, config_dict):
 
@@ -274,7 +217,6 @@ class TopLevelAbs:
             self,
             abs_state_src,
             rchd_abs_state,
-            ci,
             pi
             ):
 
@@ -287,34 +229,10 @@ class TopLevelAbs:
         #   - get it from simulation trace:
         #       n = int(np.floor(t/self.delta_t))
 
-        self.G.add_edge(abs_state_src, rchd_abs_state, ci=ci, pi=pi)
+        self.G.add_edge(abs_state_src, rchd_abs_state, pi=pi)
         return
 
-    # TODO: does not have access to step plant and step controller!
-
-    def get_reachable_states_sym(self, abs_state, system_params):
-        abs2rchd_abs_state_set = set()
-        reachable_state_list = \
-            self.controller_abs.get_reachable_abs_states(abs_state, self, system_params)
-        for (cs, c) in reachable_state_list:
-
-            # reachable_plant_state_set = self.plant_abs.get_reachable_abs_states_sym(c, self, system_params)
-
-            reachable_plant_state_ci_pi_list = self.plant_abs.get_reachable_abs_states_sym(
-                c,
-                self,
-                system_params)
-            for (ps, ci, pi_cell) in reachable_plant_state_ci_pi_list:
-                reachable_abs_state = AbstractState(ps, cs)
-                abs2rchd_abs_state_set.add(reachable_abs_state)
-
-                # why making a tuple?
-                # edge_attr = (ci,)
-
-                self.add_relation(abs_state, reachable_abs_state, ci, pi_cell)
-        return abs2rchd_abs_state_set
-
-    def get_reachable_states_conc(self, abs_state, system_params):
+    def get_reachable_states(self, abs_state, system_params):
         abs2rchd_abs_state_set = set()
         #print(abs_state.ps.cell_id)
         # TODO: RECTIFY the below GIANT MESS
@@ -323,16 +241,11 @@ class TopLevelAbs:
 
         logger.debug('getting reachable states for: {}'.format(abs_state))
 
-        intermediate_state = \
-            self.controller_abs.get_reachable_abs_states(abs_state, self, system_params)
-        abs2rchd_abs_state_ci_pi_list = \
-            self.plant_abs.get_reachable_abs_states(intermediate_state, self, system_params)
+        intermediate_state = sample_abs_state(abs_state, self, system_params)
+        abs2rchd_abs_state_pi_list = self.plant_abs.get_reachable_abs_states(intermediate_state, self, system_params)
 
-        for (rchd_abs_state, ci_cell, pi_cell) in abs2rchd_abs_state_ci_pi_list:
-
-            # print(ci)
-
-            self.add_relation(abs_state, rchd_abs_state, ci_cell, pi_cell)
+        for (rchd_abs_state, pi_cell) in abs2rchd_abs_state_pi_list:
+            self.add_relation(abs_state, rchd_abs_state, pi_cell)
             abs2rchd_abs_state_set.add(rchd_abs_state)
 
         logger.debug('found reachable abs_states: {}'.format(abs2rchd_abs_state_set))
@@ -356,41 +269,34 @@ class TopLevelAbs:
     # memoized because the same function is called twice for ci and pi
     # FIXME: Need to fix it
     #@U.memodict
-    def get_seq_of_ci_pi(self, path):
-        attr_map = self.G.get_path_attr_list(path, ['ci', 'pi'])
+    def get_seq_of_pi(self, path):
+        attr_map = self.G.get_path_attr_list(path, ['pi'])
         #print('attr_map:', attr_map)
-        return attr_map['ci'], attr_map['pi']
+        return attr_map['pi']
 
 
     def get_error_paths_not_normalized(self, initial_state_set,
                         final_state_set, pi_ref,
-                        ci_ref, pi_cons, ci_cons,
+                        pi_cons,
                         max_paths):
         '''
         @type pi_cons: constraints.IntervalCons
-        @type ci_cons: constraints.IntervalCons
         '''
 
         MAX_ERROR_PATHS = max_paths
-        ci_dim = self.num_dims.ci
         pi_dim = self.num_dims.pi
         path_list = []
-        ci_seq_list = []
         pi_seq_list = []
 
         error_paths = self.compute_error_paths(initial_state_set, final_state_set, MAX_ERROR_PATHS)
         bounded_error_paths = error_paths
 
-        def get_ci_seq(path):
-            return self.get_seq_of_ci_pi(path)[0]
-
         def get_pi_seq(path):
-            return self.get_seq_of_ci_pi(path)[1]
+            return self.get_seq_of_pi(path)[1]
 
         def get_empty(_):
             return []
 
-        get_ci = get_ci_seq if ci_dim != 0 else get_empty
         get_pi = get_pi_seq if pi_dim != 0 else get_empty
 
         unique_paths = set()
@@ -398,164 +304,21 @@ class TopLevelAbs:
             pi_seq_cells = get_pi(path)
             pi_ref.update_from_path(path, pi_seq_cells)
             pi_seq = [CM.ival_constraints(pi_cell, pi_ref.eps) for pi_cell in pi_seq_cells]
-            if ci_ref is not None:
-                ci_seq_cells = get_ci(path)
-                ci_ref.update_from_path(path, ci_seq_cells)
-                ci_seq = [CM.ival_constraints(ci_cell, ci_ref.eps) for ci_cell in ci_seq_cells]
-            else:
-                ci_seq = get_ci(path)
 
             #FIXME: Why are uniqe paths found only for the case when dim(ci) != 0?
             plant_states_along_path = tuple(state.plant_state for state in path)
             if plant_states_along_path not in unique_paths:
                 unique_paths.add(plant_states_along_path)
-                ci_seq_list.append(ci_seq)
                 pi_seq_list.append(pi_seq)
                 path_list.append(path)
 
-
-        return (path_list, ci_seq_list, pi_seq_list)
-
-    def get_error_paths(self, initial_state_set,
-                        final_state_set, pi_ref,
-                        ci_ref, pi_cons, ci_cons,
-                        max_paths):
-        '''
-        @type pi_cons: constraints.IntervalCons
-        @type ci_cons: constraints.IntervalCons
-        '''
-
-        MAX_ERROR_PATHS = max_paths
-        ci_dim = self.num_dims.ci
-        pi_dim = self.num_dims.pi
-#         init_set = set()
-        path_list = []
-        ci_seq_list = []
-        pi_seq_list = []
-
-        error_paths = self.compute_error_paths(initial_state_set, final_state_set, MAX_ERROR_PATHS)
-        #bounded_error_paths = U.bounded_iter(error_paths, MAX_ERROR_PATHS)
-        bounded_error_paths = error_paths
-
-        def get_ci_seq(path):
-            return self.get_seq_of_ci_pi(path)[0]
-
-        def get_pi_seq(path):
-            return self.get_seq_of_ci_pi(path)[1]
-
-        def get_empty(_):
-            return []
-
-        get_ci = get_ci_seq if ci_dim != 0 else get_empty
-        get_pi = get_pi_seq if pi_dim != 0 else get_empty
-
-#         if ci_dim == 0:
-#             for path in bounded_error_paths:
-#                 ci_seq = []
-#                 ci_seq_list.append(ci_seq)
-#                 init_set.add(path[0])
-
-#             return (list(init_set), ci_seq_list)
-#         else:
-        max_len = -np.inf
-        min_len = np.inf
-        unique_paths = set()
-        for path in bounded_error_paths:
-#             ci_seq = self.get_seq_of_ci(path)
-            pi_seq_cells = get_pi(path)
-            pi_ref.update_from_path(path, pi_seq_cells)
-            # convert pi_cells to ival constraints
-            #pi_seq = map(self.plant_abs.get_ival_cons_pi_cell, get_pi(path))
-            pi_seq = [CM.ival_constraints(pi_cell, pi_ref.eps) for pi_cell in pi_seq_cells]
-            if ci_ref is not None:
-                ci_seq_cells = get_ci(path)
-                ci_ref.update_from_path(path, ci_seq_cells)
-                ci_seq = [CM.ival_constraints(ci_cell, ci_ref.eps) for ci_cell in ci_seq_cells]
-            else:
-                ci_seq = get_ci(path)
-
-            #print(pi_seq)
-
-            #FIXME: Why are uniqe paths found only for the case when dim(ci) != 0?
-            plant_states_along_path = tuple(state.plant_state for state in path)
-            if plant_states_along_path not in unique_paths:
-                unique_paths.add(plant_states_along_path)
-
-                if ci_dim != 0:
-                    assert(len(ci_seq) == len(path) - 1)
-                else:
-                    assert(len(ci_seq) == 0)
-                if pi_dim != 0:
-                    assert(len(pi_seq) == len(path) - 1)
-                else:
-                    assert(len(pi_seq) == 0)
-
-#                 max_len = max(len(ci_seq), max_len)
-#                 min_len = min(len(ci_seq), min_len)
-
-                max_len = max(len(path), max_len)
-                min_len = min(len(path), min_len)
-
-                ci_seq_list.append(ci_seq)
-                pi_seq_list.append(pi_seq)
-                path_list.append(path)
-
-        assert(max_len <= self.N + 1)
-
-        # normalize list lens by appending 0
-
-#         if max_len != min_len or max_len < self.N:
-
-#             # TODO: many a times we find paths, s.t. len(path) > self.N
-#             # How should those paths be handled?
-#             #   - Should they be ignored, shortened, or what?
-#             #   - or should nothing be done about them?
-
-#             for (idx, ci_seq) in enumerate(ci_seq_list):
-#                 # instead of zeros, use random!
-#                 num_of_missing_ci_tail = max(max_len, self.N) - len(ci_seq)
-#                 ci_seq_list[idx] = ci_seq \
-#                     + list(np.random.random((num_of_missing_ci_tail, ci_dim)))
-
-#             for (idx, pi_seq) in enumerate(pi_seq_list):
-#                 num_of_missing_pi_tail = max(max_len, self.N) - len(pi_seq)
-#                 pi_seq_list[idx] = pi_seq \
-#                     + list(np.random.random((num_of_missing_pi_tail, pi_dim)))
-
-        for (idx, (ci_seq, pi_seq)) in enumerate(zip(ci_seq_list, pi_seq_list)):
-            missing_ci_len = self.N - len(ci_seq)
-            missing_pi_len = self.N - len(pi_seq)
-            # row, column
-            r, c_ci = missing_ci_len, ci_dim
-            #FIXME: default random values
-            if ci_ref is not None:
-                ci_seq_list[idx] = ci_seq + [ci_cons] * missing_ci_len
-            else:
-                ci_seq_list[idx] = ci_seq + list(np.random.uniform(ci_cons.l, ci_cons.h, (r, c_ci)))
-            #pi_seq_list[idx] = pi_seq + list(np.random.uniform(pi_cons.l, pi_cons.h, (r, c_pi)))
-            pi_seq_list[idx] = pi_seq + [pi_cons] * missing_pi_len
-
-
-        if settings.debug:
-            print('path states, min_len:{}, max_len:{}'.format(min_len, max_len))
-
-        # ##!!##logger.debug('init_list:{}\n'.format(init_list))
-        # ##!!##logger.debug('ci_seq_list:{}\n'.format(ci_seq_list))
-        # print('len(init_list)', len(init_list))
-        # print('len(ci_seq_list)', len(ci_seq_list))
-
-#         for ci_seq in ci_seq_list:
-#             print(ci_seq)
-#         for pi_seq in pi_seq_list:
-#             print(pi_seq)
-
-        return (path_list, ci_seq_list, pi_seq_list)
+        return (path_list, pi_seq_list)
 
     def get_initial_states_from_error_paths(self, *args):
         '''extracts the initial state from the error paths'''
-        path_list, ci_seq_list, pi_seq_list = self.get_error_paths(*args)
+        path_list, pi_seq_list = self.get_error_paths(*args)
         init_list = [path[0] for path in path_list]
-        return init_list, ci_seq_list, pi_seq_list
+        return init_list, pi_seq_list
 
     def get_abs_state_from_concrete_state(self, concrete_state):
 
@@ -563,15 +326,12 @@ class TopLevelAbs:
 
         abs_plant_state = \
             self.plant_abs.get_abs_state_from_concrete_state(concrete_state)
-        abs_controller_state = \
-            self.controller_abs.get_abs_state_from_concrete_state(concrete_state.s)
 
         #TODO: why do we have the below code?
-        if abs_plant_state is None or abs_controller_state is None:
+        if abs_plant_state is None:
             return None
         else:
-            abs_state = TopLevelAbs.get_abs_state(abs_plant_state,
-                    abs_controller_state)
+            abs_state = TopLevelAbs.get_abs_state(abs_plant_state)
 
         # ##!!##logger.debug('concrete state = {}'.format(concrete_state))
         # ##!!##logger.debug('abstract state = {}'.format(abs_state))
@@ -613,13 +373,11 @@ def sample_abs_state(abs_state,
     total_num_samples = samples.n
 
     x_array = samples.x_array
-    s_array = samples.s_array
 
     # print s_array
 
     t_array = samples.t_array
     pi_array = samples.pi_array
-    ci_array = samples.ci_array
 
     d = np.array([abs_state.plant_state.d])
     pvt = np.array([abs_state.plant_state.pvt])
@@ -631,26 +389,14 @@ def sample_abs_state(abs_state,
     assert(len(d_array) == total_num_samples)
     assert(len(pvt_array) == total_num_samples)
     assert(len(x_array) == total_num_samples)
-    assert(len(s_array) == total_num_samples)
     assert(len(t_array) == total_num_samples)
-
-
-
-    # can not use None because of a check in
-    # get_abs_state_from_concrete_state() which silently makes
-    # the entire abstract state None if a None is encountered
-    # in either plant or contorller abs state.
-    (s_array_, u_array) = U.inf_list(0), U.inf_list(0)
 
     state = st.StateArray(
         t=t_array,
         x=x_array,
         d=d_array,
         pvt=pvt_array,
-        s=s_array_,
-        u=u_array,
         pi=pi_array,
-        ci=ci_array,
         )
 
     return state
@@ -658,9 +404,8 @@ def sample_abs_state(abs_state,
 
 class AbstractState(object):
 
-    def __init__(self, plant_state, controller_state):
+    def __init__(self, plant_state):
         self.plant_state = plant_state
-        self.controller_state = controller_state
         return
 
     # rename/shorten name hack
@@ -669,16 +414,9 @@ class AbstractState(object):
     def ps(self):
         return self.plant_state
 
-    @property
-    def cs(self):
-        return self.controller_state
-
     def __eq__(self, x):
-
-        # print('abstraction_eq_invoked')
-        # return hash((self.plant_state, self.controller_state)) == hash(as)
         if isinstance(x, AbstractState):
-            return (self.ps, self.cs) == (x.ps, x.cs)
+            return self.ps == x.ps
         else:
             return False
 
@@ -686,8 +424,7 @@ class AbstractState(object):
 
         # print('abstraction_hash_invoked')
 
-        return hash((self.ps, self.cs))
+        return hash(self.ps)
 
     def __repr__(self):
-        return 'p={' + self.plant_state.__repr__() + '},c={' \
-            + self.controller_state.__repr__() + '}'
+        return 'p={' + self.plant_state.__repr__() + '}'

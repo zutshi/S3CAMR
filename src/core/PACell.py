@@ -231,7 +231,7 @@ class PlantAbstraction:
 
         # abs2rchd_abs_state_set = set()
 
-        abs2rchd_abs_state_ci_pi_list = []
+        abs2rchd_abs_state_pi_list = []
         for rchd_concrete_state in rchd_concrete_state_array.iterable():
 
             rchd_abs_state = \
@@ -239,7 +239,6 @@ class PlantAbstraction:
 
             # A.get_abs_state_from_concrete_state(rchd_concrete_state)
 
-            ci = rchd_concrete_state.ci
             pi = rchd_concrete_state.pi
             pi_cell = self.cell_id_from_concrete(pi, pi_ref.eps)
 
@@ -249,12 +248,12 @@ class PlantAbstraction:
 
                 # abs2rchd_abs_state_set.add(rchd_abs_state)
 
-                abs2rchd_abs_state_ci_pi_list.append((rchd_abs_state, ci, pi_cell))
+                abs2rchd_abs_state_pi_list.append((rchd_abs_state, pi_cell))
 
                 # # ##!!##logger.debug('abs_state obtained {} from concrete_state {}'.format(rchd_abs_state, rchd_concrete_state))
         # return abs2rchd_abs_state_set
 
-        return abs2rchd_abs_state_ci_pi_list
+        return abs2rchd_abs_state_pi_list
 
     # Process the state only if the shortest simulation trace
     # TODO: <= or < ?
@@ -285,17 +284,14 @@ class PlantAbstraction:
 
         # for each reached state, get the abstract state
         pi_ref = system_params.pi_ref
-        ci_ref = system_params.ci_ref
 
-        abs2rchd_abs_state_ci_pi_list = []
+        abs2rchd_abs_state_pi_list = []
         for rchd_concrete_state in rchd_concrete_state_array.iterable():
 
             rchd_abs_state = \
                 A.get_abs_state_from_concrete_state(rchd_concrete_state)
-            ci = rchd_concrete_state.ci
             pi = rchd_concrete_state.pi
             pi_cell = self.cell_id_from_concrete(pi, pi_ref.eps)
-            ci_cell = self.cell_id_from_concrete(ci, ci_ref.eps)
 
 #             print('{} -> {} -> {}'.format(
 #                 rchd_concrete_state.x,
@@ -312,11 +308,11 @@ class PlantAbstraction:
 #                     raise err.Fatal('cant happen!')
 
             if rchd_abs_state is not None:
-                abs2rchd_abs_state_ci_pi_list.append((rchd_abs_state, ci_cell, pi_cell))
+                abs2rchd_abs_state_pi_list.append((rchd_abs_state, pi_cell))
 
                 logger.debug('abs_state obtained {} from concrete_state {}'.format(rchd_abs_state, rchd_concrete_state))
 
-        return abs2rchd_abs_state_ci_pi_list
+        return abs2rchd_abs_state_pi_list
 
     # Process the state only if the shortest simulation trace
     # TODO: <= or < ?

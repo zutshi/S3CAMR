@@ -21,21 +21,9 @@ def compute_concrete_plant_output(
 
     concrete_states = states
 
-#    concrete_states = st.StateArray(
-#        t_array,
-#        x_array,                      # cont_state_array
-#        d_array,                      # abs_state.discrete_state,
-#        p_array,  # abs_state.pvt_state
-#        None,   # don't need it
-#        u_array)
-
     # simulate to get reached concrete states
 
     # ##!!##logger.debug('input concrete states\n{}'.format(concrete_states))
-
-#    rchd_concrete_state_array = plant_sim.simulate(concrete_states,
-#                                                     A.delta_t,
-#                                                     property_checker=None)
 
     rchd_concrete_state_array, property_violated_flag = plant_sim.simulate(
             concrete_states, A.delta_t)

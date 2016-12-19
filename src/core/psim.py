@@ -210,7 +210,6 @@ class NativeSim(Simulator):
                 state.x,
                 state.d,
                 state.pvt,
-                state.u,
                 state.pi,
                 self._property_checker
                 )
@@ -226,10 +225,7 @@ class NativeSim(Simulator):
             x=X_array,
             d=D_array,
             pvt=P_array,
-            s=sim_states.controller_states,
-            u=sim_states.controller_outputs,
             pi=sim_states.plant_extraneous_inputs,
-            ci=sim_states.controller_extraneous_inputs,
             ), property_violated_flag
 
     def check_property(self, trace):

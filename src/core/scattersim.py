@@ -31,7 +31,7 @@ def init(
         controller_init_state,
         ):
 
-    PA, CA = A.plant_abs, A.controller_abs
+    PA = A.plant_abs
     d, pvt, n = init_d, (0, ), 0
 
     plant_initial_state_set = set()
@@ -70,13 +70,10 @@ def init(
     # TODO: ideally the initial control states should be supplied by the
     # user and the below initialization should be agnostic to the type
 
-    controller_init_abs_state = \
-        CA.get_abs_state_from_concrete_state(controller_init_state)
 
     initial_state_list = []
     for plant_init_state in plant_initial_state_set:
-        initial_state_list.append(AA.TopLevelAbs.get_abs_state(plant_state=plant_init_state,
-                                  controller_state=controller_init_abs_state))
+        initial_state_list.append(AA.TopLevelAbs.get_abs_state(plant_state=plant_init_state))
 
     #final_state_list = []
 
@@ -283,23 +280,23 @@ def discover_batch(A, budget=None):
     # ##!!##logger.debug('Printing Abstraction\n {}'.format(str(A)))
 
 
-def refine_state(A, RA, abs_state):
-    ps = abs_state.ps
-    cs = abs_state.cs
-    ps_ival = A.plant_abs.get_ival_cons_abs_state(ps)
-    refined_ps_set = RA.plant_abs.get_abs_state_set_from_ival_constraints(ps_ival, ps.n, ps.d, ps.pvt)
-    abs_state_list = []
-    if A.controller_abs.is_symbolic:
-        for rps in refined_ps_set:
-            x_smt2 = RA.plant_abs.get_smt2_constraints(rps, cs.x)
-            cs.C = RA.controller_abs.solver.And(cs.C, x_smt2)
-            AA.AbstractState(rps, cs)
-            abs_state_list.append(abs_state)
-    else:
-        for rps in refined_ps_set:
-            AA.AbstractState(rps, cs)
-            abs_state_list.append(abs_state)
-    return abs_state_list
+# def refine_state(A, RA, abs_state):
+#     ps = abs_state.ps
+#     cs = abs_state.cs
+#     ps_ival = A.plant_abs.get_ival_cons_abs_state(ps)
+#     refined_ps_set = RA.plant_abs.get_abs_state_set_from_ival_constraints(ps_ival, ps.n, ps.d, ps.pvt)
+#     abs_state_list = []
+#     if A.controller_abs.is_symbolic:
+#         for rps in refined_ps_set:
+#             x_smt2 = RA.plant_abs.get_smt2_constraints(rps, cs.x)
+#             cs.C = RA.controller_abs.solver.And(cs.C, x_smt2)
+#             AA.AbstractState(rps, cs)
+#             abs_state_list.append(abs_state)
+#     else:
+#         for rps in refined_ps_set:
+#             AA.AbstractState(rps, cs)
+#             abs_state_list.append(abs_state)
+#     return abs_state_list
 
 
 def refine_param_dict(A):

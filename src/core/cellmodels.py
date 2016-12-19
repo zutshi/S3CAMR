@@ -36,7 +36,7 @@ class Q(object):
 
 #     @abc.abstractmethod
 #     def getxy_ignoramous(self, N, sim, t0=0):
-#         """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
+#         """TODO: EXPLICITLY ignores t, d, pvt, pi
 #         """
 #         return
 
@@ -105,27 +105,25 @@ class Qxw(Q):
         return [Qxw(qsplits, self.wcell) for q in qsplits]
 
     def sim(self, step_sim, xw_array):
-        """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
+        """TODO: EXPLICITLY ignores t, d, pvt, pi
         """
-        d, pvt, s = [np.array([])]*3
-        ci = [np.array([])]*2
+        d, pvt = [np.array([])]*2
         t0 = 0
         Yl = []
         x_array = xw_array[:, 0:self.xdim]
         w_array = xw_array[:, self.xdim:]
 
         for x, pi in zip(x_array, w_array):
-            (t_, x_, s_, d_, pvt_, u_) = step_sim(t0, x, s, d, pvt, ci, pi)
+            (t_, x_, d_, pvt_) = step_sim(t0, x, d, pvt, pi)
             Yl.append(x_)
 
         # return yw_array
         return np.hstack((np.vstack(Yl), w_array))
 
     def get_rels(self, prop, sim, N):
-        """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
+        """TODO: EXPLICITLY ignores t, d, pvt, pi
         """
-        d, pvt, s = [np.array([])]*3
-        ci = np.array([])
+        d, pvt = [np.array([])]*2
         t0 = 0
         Yl = []
 
@@ -133,7 +131,7 @@ class Qxw(Q):
         pi_array = self.sample_UR_w(N)
         for x, pi in zip(x_array, pi_array):
             #print(pi)
-            (t_, x_, s_, d_, pvt_, u_) = sim(t0, x, s, d, pvt, ci, pi)
+            (t_, x_, d_, pvt_) = sim(t0, x, d, pvt, pi)
             Yl.append(x_)
 
         return np.hstack((x_array, pi_array)), np.vstack(Yl)
@@ -213,13 +211,13 @@ class Qx(Q):
     def sim(self, step_sim, x_array):
         """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
         """
-        d, pvt, s = [np.array([])]*3
-        ci, pi = [np.array([])]*2
+        d, pvt = [np.array([])]*2
+        pi = [np.array([])]
         t0 = 0
         Yl = []
 
         for x in x_array:
-            (t_, x_, s_, d_, pvt_, u_) = step_sim(t0, x, s, d, pvt, ci, pi)
+            (t_, x_, d_, pvt_) = step_sim(t0, x, d, pvt, pi)
             Yl.append(x_)
 
 #         if settings.debug and settings.plot:
@@ -261,8 +259,8 @@ class Qx(Q):
     def get_rels(self, prop, sim, N):
         """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
         """
-        d, pvt, s = [np.array([])]*3
-        ci, pi = [np.array([])]*2
+        d, pvt = [np.array([])]*2
+        pi = [np.array([])]
         t0 = 0
         Yl = []
 
@@ -277,7 +275,7 @@ class Qx(Q):
         #print(t0)
         #print(x_array)
         for x in x_array:
-            (t_, x_, s_, d_, pvt_, u_) = sim(t0, x, s, d, pvt, ci, pi)
+            (t_, x_, d_, pvt_) = sim(t0, x, d, pvt, pi)
             Yl.append(x_)
         if settings.debug_plot:
             # close intermediate plots which can not be switched off;
@@ -366,17 +364,16 @@ class Qqxw(Q):
         return [Qxw(qsplits, self.wcell) for q in qsplits]
 
     def get_rels(self, prop, sim, N):
-        """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
+        """TODO: EXPLICITLY ignores t, d, pvt, pi
         """
-        d, pvt, s = [np.array([])]*3
-        ci = np.array([])
+        d, pvt = [np.array([])]*2
         t0 = 0
         Yl = []
 
         x_array = self.sample_UR_x(N)
         pi_array = self.sample_UR_w(N)
         for x, pi in zip(x_array, pi_array):
-            (t_, x_, s_, d_, pvt_, u_) = sim(t0, x, s, d, pvt, ci, pi)
+            (t_, x_, d_, pvt_) = sim(t0, x, d, pvt, pi)
             Yl.append(x_)
 
         return np.hstack((x_array, pi_array)), np.vstack(Yl)
