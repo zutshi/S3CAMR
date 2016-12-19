@@ -26,8 +26,6 @@ from graphs import graph as g
 from . import state as st
 from . import cellmanager as CM
 
-import settings
-
 logger = logging.getLogger(__name__)
 
 
@@ -137,23 +135,11 @@ class TopLevelAbs:
         # ##!!##logger.debug('==========abstraction parameters==========')
         # ##!!##logger.debug('eps: {}, refinement_factor: {}, num_samples: {},delta_t: {}'.format(str(self.eps), self.refinement_factor, self.num_samples, self.delta_t))
 
-        initial_state_list = []
-
-        # WHy was this needed in the first place?
-#        for node in self.initial_state_set:
-#            self.G.add_node(node)
-#        for node in self.final_state_set:
-#            self.G.add_node(node)
-
-        # Not very useful when the graph is discovered incrementally from the
-        # intial states!
-
         self.final_augmented_state_set = set()
 
         # self.sanity_check()
 
         self.plant_abs = plant_abs
-
 
     def parse_config(self, config_dict):
 
@@ -339,29 +325,11 @@ class TopLevelAbs:
 
         return abs_state
 
-    def get_concrete_states_from_abs_state(self, abstract_state):
-        raise NotImplementedError
-
 #    def get_ival_cons_from_abs_state(self, abstract_state):
 #        return (PlantAbstraction.get_concrete_state_constraints(abstract_state.plant_state, ))
 
     def __repr__(self):
-        return ''
-
-        # return self.G.__repr__()
-
-    def draw_2d(self):
-        pos_dict = {}
-        for n in self.G.nodes():
-            if len(n.plant_state.cell_id) != 2:
-                raise err.Fatal('only 2d abstractions can be drawn, with each node representing the coordinates (x,y)!. Was given {}-d'.format(len(n.plant_state.cell_id)))
-            pos_dict[n] = n.plant_state.cell_id
-        self.G.draw(pos_dict)
-
-
-        # nx.draw_networkx(self.G, pos=pos_dict, labels=pos_dict, with_labels=True)
-        # TODO: whats the use of draw?
-        # plt.draw()
+        return '<abstraction_object>'
 
 
 def sample_abs_state(abs_state,
