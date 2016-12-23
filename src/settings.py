@@ -9,8 +9,6 @@ plot = False
 
 paper_plot = False
 
-# CE hack is ON
-CE = True
 BLOCK = False
 
 

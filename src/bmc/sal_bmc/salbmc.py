@@ -95,9 +95,6 @@ class BMC(BMCSpec):
         # stores info to convert the bmc back to pwa
         self.conversion_info = {}
 
-        # Remove prop_partitions
-        assert(settings.CE)
-
         if model_type == 'dft':
             self.sal_trans_sys = self.sal_module_dft(
                     vs, pwa_model, init_state, safety_prop,
@@ -119,8 +116,6 @@ class BMC(BMCSpec):
 
     def sal_module_dft(self, vs, pwa_model, init_set, safety_prop,
                        prop_partitions, module_name):
-        # Remove prop_partitions
-        assert(settings.CE)
         #sal_trans_sys = slt_rel.SALTransSysRel(module_name, vs, init_set, safety_prop)
         sal_trans_sys = slt_dft.SALTransSys(module_name, vs, init_set, safety_prop)
 
@@ -133,52 +128,25 @@ class BMC(BMCSpec):
         for idx, sub_model in enumerate(pwa_model):
             p = sub_model.p
             pnexts = sub_model.pnexts
+            assert(len(pnexts) == 1)
             l = sal_trans_sys.get_C(p.ID)
             # TODO: implicitly assumes a self loop on the last state
             # If it is not there, the last p form pnext, would have
             # never been added and get_C will throw an exception.
-            lnext = [sal_trans_sys.get_C(pnext.ID) for pnext in pnexts]
+            lnext = [sal_trans_sys.get_C(pnext.ID) for pnext in pnexts][0]
 
-            g = trans.Guard(p.C, p.d, l)
-            g.vs = vs
-            r = trans.Reset(sub_model.m.A, sub_model.m.b, sub_model.m.error, lnext)
-            r.vs = vs
-            r.vs_ = vs
+            p_ = pnexts[0]
+
+            #g = trans.Guard((p.C, p.d), None, vs, l)
+            g = trans.Guard(None, (p_.C, p_.d), vs, l, lnext)
+            r = trans.Reset(sub_model.m.A, sub_model.m.b, sub_model.m.error, vs)
             t = trans.Transition('T_{}'.format(idx), g, r)
             sal_trans_sys.add_transition(t)
             self.conversion_info[t.name] = sub_model
 
-        #####################################################################
-        # TODO: This is the hack to fix the encoding issue.
-        # Here, we add the transitions from the error partitions -> CE
-        # The below code expemplifies bad practices by doing all kinds
-        # of shenanigans!
-        assert(settings.CE)
-        #####################################################################
-        idx += 1
-        import numpy as np
-        import constraints as cons
-        nvs = len(vs)
-        sal_trans_sys.partid2Cid['CE'] = 'CE'
-        for part in prop_partitions:
-            p = part
-            l = sal_trans_sys.get_C(p.ID)
-            g = trans.Guard(p.C, p.d, l)
-            g.vs = vs
-            r = trans.Reset(np.eye(nvs), np.zeros(nvs), cons.zero2ic(nvs), ['CE'])
-            r.vs = vs
-            r.vs_ = vs
-            t = trans.Transition('T_{}'.format(idx), g, r)
-            sal_trans_sys.add_transition(t)
-            # TODO: 'CE' is used as a placeholder. It should never
-            # happen that it is used.
-            self.conversion_info[t.name] = 'CE'
-            idx += 1
-        #####################################################################
         logger.debug('================ bmc - pwa conversion dict ==================')
         logger.debug(self.conversion_info)
         return sal_trans_sys
-
 
     def check(self, depth):
         yices2_not_found = 'yices2: not found'

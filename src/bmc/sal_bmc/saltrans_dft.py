@@ -1,4 +1,3 @@
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
@@ -6,10 +5,9 @@ from __future__ import unicode_literals
 
 '''
 Creates a SAL transition system: DFT
+Each transition of the pwa system is encoded as a transition of SAL
 '''
-#TODO: rename to saltrans_dft.py
 
-#import sympy as sm
 import textwrap as tw
 from math import isinf
 import itertools
@@ -17,7 +15,6 @@ import itertools
 from bmc.helpers.expr2str import Expr2Str
 from globalopts import opts as gopts
 
-#import utils as U
 import settings
 
 ##############################################
@@ -234,8 +231,6 @@ class SALTransSys(object):
              ]
         prop_str = ' AND '.join(ls + hs)
 
-        # Remove AND cell' = CE
-        assert(settings.CE)
         s = tw.dedent('''
         MONITOR: MODULE =
         BEGIN
@@ -248,7 +243,7 @@ class SALTransSys(object):
         TRANSITION
         [
         TRUE -->
-        unsafe' IN {{r : BOOLEAN | r <=> ({} AND cell' = CE)}}
+        unsafe' IN {{r : BOOLEAN | r <=> ({})}}
         ]
         END;''').format(self.outputs, prop_str)
         return s

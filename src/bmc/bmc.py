@@ -51,9 +51,6 @@ def factory(bmc_engine,
     ------
     """
 
-    # remove prop_partitions
-    assert(settings.CE)
-
     if bmc_engine == 'sal':
         from .sal_bmc import salbmc
         return salbmc.BMC(

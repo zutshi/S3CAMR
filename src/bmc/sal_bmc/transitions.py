@@ -1,5 +1,3 @@
-import collections
-
 from bmc.helpers.expr2str import Expr2Str
 
 
@@ -16,73 +14,71 @@ class Transition(object):
 
 
 class Guard(object):
-    def __init__(self, C, d, cell_id=None):
-        '''Cx - d <= 0'''
-        self.C = C
-        self.d = d
-        self.cell_id = cell_id
+    def __init__(self, Cd, Cd_, vs=None, cell_id=None, next_cell_id=None):
+        ''' Cx - d <= 0 '''
 
-        self.ncons, self.nvars = self.C.shape
-        assert(self.ncons == d.size)
-        self._vs = None
+        if Cd is not None:
+            C, d = Cd
 
-    @property
-    def vs(self):
-        if self._vs is None:
-            return ['x'+str(j) for j in range(self.nvars)]
+            assert(C.shape[0] == d.size)
+            assert(vs is not None)
+            self.C, self.d = C, d
         else:
-            return self._vs
+            self.C, self.d = [], []
 
-    @vs.setter
-    def vs(self, vs):
-        self._vs = vs
+        if Cd_ is not None:
+            C_, d_ = Cd_
+
+            assert(C_.shape[0] == d_.size)
+            assert(vs is not None)
+
+            self.C_, self.d_ = C_, d_
+            self.vs_ = [vsi + "'" for vsi in vs]
+        else:
+            self.C_, self.d_ = [], []
+
+        self.cell_id = cell_id
+        self.next_cell_id = next_cell_id
+        self.vs = vs
+
+        if Cd is not None and Cd_ is not None:
+            assert(C.shape == C_.shape)
+            assert(d.shape == d_.shape)
 
     def __str__(self):
-        cons = (Expr2Str.linexpr2str(self.vs, self.C[i, :], -self.d[i]) + ' <= 0'
-                for i in range(self.ncons))
-        cons_str = ' AND '.join(cons)
-        cell_str = '' if self.cell_id is None else 'cell = ' + self.cell_id + ' AND '
-        return cell_str + cons_str
+        pre_cons = (Expr2Str.linexpr2str(self.vs, ci, -di) + ' <= 0'
+                    for ci, di in zip(self.C, self.d))
+
+        post_cons = (Expr2Str.linexpr2str(self.vs_, ci, -di) + ' <= 0'
+                     for ci, di in zip(self.C_, self.d_))
+
+        cons_str = ' AND '.join(pre_cons) + ' AND '.join(post_cons)
+        cell_str = 'TRUE' if self.cell_id is None else 'cell = ' + self.cell_id
+
+#         cell_assignment = (";\ncell' IN {" + ', '.join(self.next_cell_ids) + "}"
+#                            if self.next_cell_ids else '')
+        cell_assignment = ("cell' = {}".format(self.next_cell_id)
+                           if self.next_cell_id else '')
+
+        return cell_str + ' AND ' + cell_assignment + ' AND ' + cons_str
 
 
 class Reset(object):
-    def __init__(self, A, b, error, next_cell_ids=[]):
+    def __init__(self, A, b, error, vs):
+        ''' x' = Ax + b +- [error] '''
         self.A = A
         self.b = b
         self.e = error
-        assert(isinstance(next_cell_ids, collections.Iterable))
-        self.next_cell_ids = next_cell_ids
 
         self.nlhs, self.nrhs = self.A.shape
         assert(self.nlhs == b.size)
-        self._vs = None
-        self._vs_ = None
-
-    @property
-    def vs(self):
-        if self._vs is None:
-            return ['x'+str(j) for j in range(self.nrhs)]
-        else:
-            return self._vs
-
-    @property
-    def vs_(self):
-        if self._vs_ is None:
-            return ["x{}".format(i) for i in range(self.nlhs)]
-        else:
-            return self._vs_
-
-    @vs.setter
-    def vs(self, vs):
-        self._vs = vs
-
-    @vs_.setter
-    def vs_(self, vs_):
-        self._vs_ = vs_
+        self.vs = vs
+        self.vs_ = vs
 
     def __str__(self):
         s = []
 
+        # new state assignments
         delta_h = self.b + self.e.h
         delta_l = self.b + self.e.l
         set_def = ("{xi_}' IN {{ r : REAL| "
@@ -102,7 +98,5 @@ class Reset(object):
                         )
             s.append(assignment_stmt)
 
-        new_cell = (";\ncell' IN {" + ', '.join(self.next_cell_ids) + "}"
-                    if self.next_cell_ids else '')
-
-        return ';\n'.join(s) + new_cell
+        cell_assignment = "cell' IN {c : CELL | TRUE}"
+        return ';\n'.join(s) + ';\n' + cell_assignment

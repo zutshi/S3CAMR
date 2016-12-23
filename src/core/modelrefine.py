@@ -275,9 +275,6 @@ def get_pwa_system(sys, prop, sp, qgraph):
 
     depth = int(np.ceil(prop.T/sys.delta_t))
 
-    assert(settings.CE) # adding a depth to accomodate the last
-    # transition which takes a location to the CE
-    depth += 1
     print('depth :',  depth)
 
 #     if settings.debug_plot:
@@ -407,8 +404,6 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
 
 def lala(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
 
-    # Remove prop_partitions
-    assert(settings.CE)
     # Extend both init set and final set to include inputs if any
     dummy_cons = top2ic(AA.num_dims.pi) # T <=> [-inf, inf]
     safety_prop = IntervalCons.concatenate(sp.final_cons, dummy_cons)
@@ -436,11 +431,10 @@ def lala(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_typ
 
     return bmc
 
+
 def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
 
 
-    # Remove prop_partitions
-    assert(settings.CE)
     # Extend both init set and final set to include inputs if any
     dummy_cons = top2ic(AA.num_dims.pi) # T <=> [-inf, inf]
     safety_prop = IntervalCons.concatenate(sp.final_cons, dummy_cons)
