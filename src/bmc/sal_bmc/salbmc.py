@@ -6,9 +6,11 @@ from __future__ import unicode_literals
 import os
 import logging
 
-#import saltrans as slt_dft
-from . import saltrans_rel as slt_rel
-from . import saltrans_dmt as slt_dmt
+#from . import saltrans_rel as slt_rel
+from . import saltrans_dft as slt_dft
+from . import transitions as trans
+
+#from . import saltrans_dmt as slt_dmt
 from bmc.bmc_spec import BMCSpec, InvarStatus, PWATRACE
 from . import sal_op_parser
 
@@ -100,15 +102,16 @@ class BMC(BMCSpec):
             self.sal_trans_sys = self.sal_module_dft(
                     vs, pwa_model, init_state, safety_prop,
                     prop_partitions, module_name)
+
         elif model_type == 'dmt':
+            raise NotImplementedError
             dts = pwa_model.keys()
             self.sal_trans_sys = BMC.sal_module_dmt(
                     dts, vs, pwa_model, init_state, safety_prop, module_name)
         elif model_type == 'ct':
             raise NotImplementedError
         elif model_type == 'rel':
-            self.sal_trans_sys = BMC.sal_module_rel(
-                    vs, pwa_model, init_state, safety_prop, module_name)
+            raise NotImplementedError
         else:
             raise SALBMCError('unknown model type')
 
@@ -118,7 +121,8 @@ class BMC(BMCSpec):
                        prop_partitions, module_name):
         # Remove prop_partitions
         assert(settings.CE)
-        sal_trans_sys = slt_rel.SALTransSysRel(module_name, vs, init_set, safety_prop)
+        #sal_trans_sys = slt_rel.SALTransSysRel(module_name, vs, init_set, safety_prop)
+        sal_trans_sys = slt_dft.SALTransSys(module_name, vs, init_set, safety_prop)
 
         for sub_model in pwa_model:
             Cid = sal_trans_sys.add_C(sub_model.p.ID)
@@ -135,12 +139,12 @@ class BMC(BMCSpec):
             # never been added and get_C will throw an exception.
             lnext = [sal_trans_sys.get_C(pnext.ID) for pnext in pnexts]
 
-            g = slt_rel.Guard(l, p.C, p.d)
+            g = trans.Guard(p.C, p.d, l)
             g.vs = vs
-            r = slt_rel.Reset(lnext, sub_model.m.A, sub_model.m.b, sub_model.m.error)
+            r = trans.Reset(sub_model.m.A, sub_model.m.b, sub_model.m.error, lnext)
             r.vs = vs
             r.vs_ = vs
-            t = slt_rel.Transition('T_{}'.format(idx), g, r)
+            t = trans.Transition('T_{}'.format(idx), g, r)
             sal_trans_sys.add_transition(t)
             self.conversion_info[t.name] = sub_model
 
@@ -159,12 +163,12 @@ class BMC(BMCSpec):
         for part in prop_partitions:
             p = part
             l = sal_trans_sys.get_C(p.ID)
-            g = slt_rel.Guard(l, p.C, p.d)
+            g = trans.Guard(p.C, p.d, l)
             g.vs = vs
-            r = slt_rel.Reset(['CE'], np.eye(nvs), np.zeros(nvs), cons.zero2ic(nvs))
+            r = trans.Reset(np.eye(nvs), np.zeros(nvs), cons.zero2ic(nvs), ['CE'])
             r.vs = vs
             r.vs_ = vs
-            t = slt_rel.Transition('T_{}'.format(idx), g, r)
+            t = trans.Transition('T_{}'.format(idx), g, r)
             sal_trans_sys.add_transition(t)
             # TODO: 'CE' is used as a placeholder. It should never
             # happen that it is used.
@@ -175,20 +179,6 @@ class BMC(BMCSpec):
         logger.debug(self.conversion_info)
         return sal_trans_sys
 
-    @staticmethod
-    def sal_module_dmt(dts, vs, pwa_models, init_set, safety_prop, module_name):
-        sal_trans_sys = slt_dmt.SALTransSysDMT(dts, module_name, vs, init_set, safety_prop)
-        for dt, pwa_model in pwa_models.iteritems():
-            # replace decimal point with _ else SAL will throw an
-            # error due to incorrect identifier
-            dt_str = str(dt).replace('.', '_')
-            for idx, sub_model in enumerate(pwa_model):
-                g = slt_dmt.Guard(sub_model.p.C, sub_model.p.d)
-                r = slt_dmt.Reset(sub_model.m.A, sub_model.m.b)
-                t = slt_dmt.Transition(
-                        dt, dts, 'C_{}_{}'.format(idx, dt_str), g, r)
-                sal_trans_sys.add_transition(t)
-        return sal_trans_sys
 
     def check(self, depth):
         yices2_not_found = 'yices2: not found'
@@ -304,3 +294,23 @@ class BMC(BMCSpec):
         """makes trace = None, signifying no more traces..."""
         self.trace = None
         return
+
+
+################################################
+# ############# CEMETERY #######################
+################################################
+
+#     @staticmethod
+#     def sal_module_dmt(dts, vs, pwa_models, init_set, safety_prop, module_name):
+#         sal_trans_sys = slt_dmt.SALTransSysDMT(dts, module_name, vs, init_set, safety_prop)
+#         for dt, pwa_model in pwa_models.iteritems():
+#             # replace decimal point with _ else SAL will throw an
+#             # error due to incorrect identifier
+#             dt_str = str(dt).replace('.', '_')
+#             for idx, sub_model in enumerate(pwa_model):
+#                 g = slt_dmt.Guard(sub_model.p.C, sub_model.p.d)
+#                 r = slt_dmt.Reset(sub_model.m.A, sub_model.m.b)
+#                 t = slt_dmt.Transition(
+#                         dt, dts, 'C_{}_{}'.format(idx, dt_str), g, r)
+#                 sal_trans_sys.add_transition(t)
+#         return sal_trans_sys

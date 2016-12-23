@@ -36,7 +36,7 @@ from IPython import embed
 
 from globalopts import opts as gopts
 
-TESTCODE = True
+TESTCODE = False
 
 #np.set_printoptions(suppress=True, precision=2)
 
