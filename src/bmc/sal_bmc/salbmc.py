@@ -8,17 +8,16 @@ import logging
 
 #from . import saltrans_rel as slt_rel
 from . import saltrans_dft as slt_dft
-from . import transitions as trans
+#from . import transitions as trans
 
 #from . import saltrans_dmt as slt_dmt
 from bmc.bmc_spec import BMCSpec, InvarStatus, PWATRACE
 from . import sal_op_parser
+from . import pwa2salconvertor as pwa2sal
 
 import fileops as fops
 import utils as U
 import err
-
-import settings
 
 logger = logging.getLogger(__name__)
 
@@ -92,8 +91,6 @@ class BMC(BMCSpec):
         self.sal_file = fname_constructor(fname)
         self.trace = None
         self.vs = vs
-        # stores info to convert the bmc back to pwa
-        self.conversion_info = {}
 
         if model_type == 'dft':
             self.sal_trans_sys = self.sal_module_dft(
@@ -116,36 +113,12 @@ class BMC(BMCSpec):
 
     def sal_module_dft(self, vs, pwa_model, init_set, safety_prop,
                        prop_partitions, module_name):
-        #sal_trans_sys = slt_rel.SALTransSysRel(module_name, vs, init_set, safety_prop)
-        sal_trans_sys = slt_dft.SALTransSys(module_name, vs, init_set, safety_prop)
 
-        for sub_model in pwa_model:
-            Cid = sal_trans_sys.add_C(sub_model.p.ID)
-            self.conversion_info[Cid] = sub_model.p
-
-        # sal_trans_sys.add_locations(pwa_model.relation_ids)
-
-        for idx, sub_model in enumerate(pwa_model):
-            p = sub_model.p
-            pnexts = sub_model.pnexts
-            assert(len(pnexts) == 1)
-            l = sal_trans_sys.get_C(p.ID)
-            # TODO: implicitly assumes a self loop on the last state
-            # If it is not there, the last p form pnext, would have
-            # never been added and get_C will throw an exception.
-            lnext = [sal_trans_sys.get_C(pnext.ID) for pnext in pnexts][0]
-
-            p_ = pnexts[0]
-
-            #g = trans.Guard((p.C, p.d), None, vs, l)
-            g = trans.Guard(None, (p_.C, p_.d), vs, l, lnext)
-            r = trans.Reset(sub_model.m.A, sub_model.m.b, sub_model.m.error, vs)
-            t = trans.Transition('T_{}'.format(idx), g, r)
-            sal_trans_sys.add_transition(t)
-            self.conversion_info[t.name] = sub_model
+        sal_transitions, self.sal2pwa_map, partid2Cid = pwa2sal.convert_transitions(pwa_model, vs)
+        sal_trans_sys = slt_dft.SALTransSys(module_name, vs, init_set, safety_prop, sal_transitions, partid2Cid)
 
         logger.debug('================ bmc - pwa conversion dict ==================')
-        logger.debug(self.conversion_info)
+        logger.debug(self.sal2pwa_map)
         return sal_trans_sys
 
     def check(self, depth):
@@ -231,8 +204,8 @@ class BMC(BMCSpec):
         steps = list(self.trace)
 #         # each step, but the last, corresponds to a transition
 #         for step in steps[:-1]:
-#             part_id = self.conversion_info[step.assignments['cell']]
-#             sub_model = self.conversion_info[step.tid]
+#             part_id = self.sal2pwa_map[step.assignments['cell']]
+#             sub_model = self.sal2pwa_map[step.tid]
 
 #             # Assumption of trace building is that each submodel only
 #             # has 1 unique next location. If this violated, we need to
@@ -247,13 +220,15 @@ class BMC(BMCSpec):
 #             #pwa_trace.extend((part_id, sub_model))
 #             pwa_trace.append(sub_model)
 
-        submodels = [self.conversion_info[step.tid] for step in steps[:-1]]
-        models = [sm.m for sm in submodels]
-        partitions = [self.conversion_info[step.assignments['cell']] for step in steps]
+        s2p = self.sal2pwa_map
+        models = [s2p[step.tid].m for step in steps[:-1]]
+        #partitions = [self.sal2pwa_map[step.assignments['cell']] for step in steps]
+        partitions = [s2p[step.tid].p for step in steps[:-1]]
+        partitions.append(s2p[step.tid].pnext)
 
         # append the last location/cell/partition id
         #last_step = steps[-1]
-        #last_part_id = self.conversion_info[last_step.assignments['cell']]
+        #last_part_id = self.sal2pwa_map[last_step.assignments['cell']]
         #pwa_trace.append(last_part_id)
         pwa_trace = PWATRACE(partitions, models)
         return pwa_trace

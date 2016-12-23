@@ -10,12 +10,9 @@ Each transition of the pwa system is encoded as a transition of SAL
 
 import textwrap as tw
 from math import isinf
-import itertools
 
 from bmc.helpers.expr2str import Expr2Str
 from globalopts import opts as gopts
-
-import settings
 
 ##############################################
 # ############ SAL Keywords ##################
@@ -40,7 +37,7 @@ PROP = tw.dedent('''
 # Make classes out of every header, prop, init, etc
 class SALTransSys(object):
 
-    def __init__(self, module_name, vs, init_cons, prop):
+    def __init__(self, module_name, vs, init_cons, prop, transitions, partid2Cid):
         """
         Parameters
         ----------
@@ -54,70 +51,11 @@ class SALTransSys(object):
         self.prop_name = 'safety'
         self.init_cons = init_cons
         self.module_name = module_name
-        self.transitions = []
         self.prop = prop
+        self.transitions = transitions
         # initialize the class with the prec
         Expr2Str.set_prec(gopts.bmc_prec)
-
-
-        #TODO:
-        # Store a mapping from a cell id: tuple -> sal loc name: str
-        self.partid2Cid = {}
-        self.id_ctr = itertools.count()
-
-        return
-
-
-        #TODO:
-    def get_C(self, partid):
-        """Gets the bmc Cid corresponding to a pwa partition id
-        Assumes all Cid have been added using add_C.
-        Will raise an error if the requested location has not been
-        added."""
-        #return self.partid2Cid.setdefault(loc, 'C' + str(next(self.id_ctr)))
-        return self.partid2Cid[partid]
-
-        #TODO:
-    def add_C(self, c):
-        """Add a cell
-
-        Parameters
-        ----------
-        c : cell id
-
-        Notes
-        ------
-        Assumes every C is hashable and unique, else an
-        overwrite will occur!
-        """
-        # TODO: Fix the ugliness using setdefault
-        # simplified equivalent code from above
-        if c not in self.partid2Cid:
-            self.partid2Cid[c] = 'C' + str(next(self.id_ctr))
-        return self.partid2Cid[c]
-
-        #TODO:
-    def add_Cs(self, Cs):
-        """add_Cs
-        Add all locations/cells in one-shot
-
-        Parameters
-        ----------
-        Cs : cells
-
-        Notes
-        ------
-        Assumes every location in locations is unique
-        """
-        # just to make sure
-        Cs = set(Cs)
-        self.partid2Cid = {c: 'C' + str(next(self.id_ctr)) for c in Cs}
-        return
-
-
-
-    def add_transition(self, tran):
-        self.transitions.append(tran)
+        self.partid2Cid = partid2Cid
 
     def __str__(self):
         return self.sal_file
@@ -193,7 +131,6 @@ class SALTransSys(object):
     def init_set_def(self):
         return INIT + self.init_set
 
-    # sal description
     @property
     def trans(self):
         ts = '[]\n'.join(('{}'.format(i) for i in self.transitions))
@@ -247,3 +184,31 @@ class SALTransSys(object):
         ]
         END;''').format(self.outputs, prop_str)
         return s
+
+
+class Transition(object):
+
+    def __init__(self, name, g, r):
+        self.g = g
+        self.r = r
+        self.name = name
+
+    def __str__(self):
+        s = '{}:\n{} -->\n{}\n'.format(self.name, self.g, self.r)
+        return s
+
+
+class Guard(object):
+    def __init__(self, conjuncts):
+        self.conjuncts = conjuncts
+
+    def __str__(self):
+        return ' AND '.join(self.conjuncts)
+
+
+class Reset(object):
+    def __init__(self, assignments):
+        self.assignments = assignments
+
+    def __str__(self):
+        return ';\n'.join(self.assignments)
