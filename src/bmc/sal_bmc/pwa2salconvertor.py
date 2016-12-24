@@ -90,7 +90,7 @@ def reset(A, b, error, vs):
 
 
 def convert_transitions(pwa_model, vs):
-    conversion_info = collections.OrderedDict()
+    sal2pwa_map = collections.OrderedDict()
 
     #TODO:
     # Store a mapping from a cell id: tuple -> sal loc name: str
@@ -116,9 +116,9 @@ def convert_transitions(pwa_model, vs):
         lnext = getC(pnext.ID)
 
         t = transition(idx, p, pnext, sub_model.m, vs, l, lnext)
-        conversion_info[t.name] = PWA_TRANS(p, pnext, sub_model.m, l, lnext)
+        sal2pwa_map[t.name] = PWA_TRANS(p, pnext, sub_model.m, l, lnext)
         transitions.append(t)
-    return transitions, conversion_info, partid2Cid
+    return transitions, sal2pwa_map, partid2Cid
 
 
 def transition(idx, p, pnext, m, vs, l, lnext):
@@ -126,3 +126,10 @@ def transition(idx, p, pnext, m, vs, l, lnext):
     r = slt_dft.Reset(reset(m.A, m.b, m.error, vs))
     t = slt_dft.Transition('T_{}'.format(idx), g, r)
     return t
+
+
+def convert(module_name, init_set, safety_prop, pwa_model, vs):
+        sal_transitions, sal2pwa_map, partid2Cid = convert_transitions(pwa_model, vs)
+        sal_trans_sys = slt_dft.SALTransSys(
+                module_name, vs, init_set, safety_prop, sal_transitions, partid2Cid)
+        return sal_trans_sys, sal2pwa_map

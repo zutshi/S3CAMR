@@ -6,11 +6,6 @@ from __future__ import unicode_literals
 import os
 import logging
 
-#from . import saltrans_rel as slt_rel
-from . import saltrans_dft as slt_dft
-#from . import transitions as trans
-
-#from . import saltrans_dmt as slt_dmt
 from bmc.bmc_spec import BMCSpec, InvarStatus, PWATRACE
 from . import sal_op_parser
 from . import pwa2salconvertor as pwa2sal
@@ -93,9 +88,12 @@ class BMC(BMCSpec):
         self.vs = vs
 
         if model_type == 'dft':
-            self.sal_trans_sys = self.sal_module_dft(
-                    vs, pwa_model, init_state, safety_prop,
-                    prop_partitions, module_name)
+            self.sal_trans_sys, self.sal2pwa_map = pwa2sal.convert(
+                    module_name,
+                    init_state,
+                    safety_prop,
+                    pwa_model,
+                    vs)
 
         elif model_type == 'dmt':
             raise NotImplementedError
@@ -109,17 +107,10 @@ class BMC(BMCSpec):
         else:
             raise SALBMCError('unknown model type')
 
-        return
-
-    def sal_module_dft(self, vs, pwa_model, init_set, safety_prop,
-                       prop_partitions, module_name):
-
-        sal_transitions, self.sal2pwa_map, partid2Cid = pwa2sal.convert_transitions(pwa_model, vs)
-        sal_trans_sys = slt_dft.SALTransSys(module_name, vs, init_set, safety_prop, sal_transitions, partid2Cid)
-
         logger.debug('================ bmc - pwa conversion dict ==================')
         logger.debug(self.sal2pwa_map)
-        return sal_trans_sys
+
+        return
 
     def check(self, depth):
         yices2_not_found = 'yices2: not found'
