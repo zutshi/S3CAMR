@@ -16,7 +16,7 @@ OPTRES = collections.namedtuple('optres', ('fun', 'status', 'success'))
 # also eschew the time required to re-create the LP. WIll need to
 # research if such an optimization is legal and does it actually save
 # enough time?
-def linprog(obj, A, b):
+def linprog(obj, A, b, exact=False):
     """linprog
 
     Parameters
@@ -51,6 +51,9 @@ def linprog(obj, A, b):
     lp.obj[:] = obj.tolist()
 
     lp.matrix = A.flatten()
-    lp.simplex()
+    if exact:
+        lp.exact()
+    else:
+        lp.simplex()
     #lp.write(prob='glpk_out')
     return OPTRES(lp.obj.value, lp.status, lp.status == 'opt')

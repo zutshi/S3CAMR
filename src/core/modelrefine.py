@@ -508,6 +508,8 @@ def verify_bmc_trace(AA, sys, prop, sp, bmc_trace, pwa_trace):
 
     gopts.plotting.new_session()
     init_cons_subset = azp.overapprox_x0(AA.num_dims, prop, pwa_trace)
+    if init_cons_subset is None:
+        raise err.Fatal('BMC (feasible) and LP (infeasible?) solution do not agree!')
     rt.concretize_init_cons_subset(sys, prop, AA, sp, num_trace_states, x_array, pi_seq, init_cons_subset)
     return
 
@@ -753,7 +755,7 @@ def mdl_1relational(prop, tol, step_sim, qgraph, q, X, Y):
         # This means, all samples which landed are in a cell which
         # was never initially explored by S3CAM. Can happen, but
         # possibility is very very low.
-        err.Fatal('Very low prob. of happening. Check code')
+        raise err.Fatal('Very low prob. of happening. Check code')
 #     else:
 #         status = SUCCESS
 #         if settings.debug:
@@ -863,7 +865,7 @@ def mdl(AA, prop, tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
             # This means, all samples which landed are in a cell which
             # was never initially explored by S3CAM. Can happen, but
             # possibility is very very low.
-            err.Fatal('Very low prob. of happening. Check code')
+            raise err.Fatal('Very low prob. of happening. Check code')
     else:
         status = SUCCESS
         if settings.debug:

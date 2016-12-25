@@ -118,7 +118,7 @@ def setup_dir(sys, dirname):
     if dirname is None:
         dirname = '{}_{}'.format(sys.sys_name, TIME_STR)
     if fp.file_exists(dirname):
-        err.Fatal('output dir exists! Please provide a new dir name to prevent override.')
+        raise err.Fatal('output dir exists! Please provide a new dir name to prevent override.')
 
     def construct_path(fname): return fp.construct_path(fname, dirname)
     # create otuput directory

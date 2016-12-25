@@ -14,7 +14,6 @@ class Expr2Str(object):
     @staticmethod
     def set_prec(prec):
         assert(type(prec) == int)
-        prec = '.' + str(prec)
         Expr2Str.PREC = prec
 
     @staticmethod
@@ -30,7 +29,7 @@ class Expr2Str(object):
         String notation truncated to PREC
         """
         assert(Expr2Str.PREC is not None)
-        return '{n:{p}f}'.format(p=Expr2Str.PREC, n=n).rstrip('0').rstrip('.')
+        return '{n:0.{p}f}'.format(p=Expr2Str.PREC, n=n).rstrip('0').rstrip('.')
 
     @staticmethod
     def cx2str(c, x):
