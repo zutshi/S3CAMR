@@ -13,6 +13,9 @@ import constraints as cons
 
 import settings
 
+from IPython import embed
+
+import err
 
 # def part_constraints(pwa_trace):
 #     """constraints due to partitions of the pwa model
@@ -276,7 +279,7 @@ def truncate(*args):
     return (trunc_array(X) for X in args)
 
 
-def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):#solver='glpk'):
+def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
     C, d = part_constraints(pwa_trace.partitions)
     A, b = dyn_constraints(pwa_trace.models)
     pA, pb = prop_constraints(num_dims, prop, len(pwa_trace.partitions))

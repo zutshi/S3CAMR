@@ -5,7 +5,8 @@ from __future__ import unicode_literals
 
 import logging
 
-from bmc.bmc_spec import BMCSpec, InvarStatus, PWATRACE
+from bmc.bmc_spec import BMCSpec, InvarStatus
+from bmc.sal_bmc.pwa2salconverter import PWATRACE
 import pwa.analyzepath as azp
 from pwa import pwagraph
 from graphs.graph import class_factory as graph_class
@@ -14,11 +15,6 @@ from globalopts import opts as gopts
 #import fileops as fops
 import utils as U
 import err
-
-#import settings
-
-from IPython import embed
-
 
 from blessed import Terminal
 term = Terminal()

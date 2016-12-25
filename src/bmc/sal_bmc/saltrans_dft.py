@@ -8,14 +8,15 @@ Creates a SAL transition system: DFT
 Each transition of the pwa system is encoded as a transition of SAL
 '''
 
+import itertools as it
+
 import textwrap as tw
-from math import isinf
 
 from bmc.helpers.expr2str import Expr2Str
 from globalopts import opts as gopts
 
 ##############################################
-# ############ SAL Keywords ##################
+# ############ SAL Skeleton ##################
 HDR = tw.dedent('''
         {}: CONTEXT =
         BEGIN
@@ -31,27 +32,36 @@ PROP = tw.dedent('''
         {} : THEOREM
         system |- G(NOT unsafe);
         ''')
+
+PROP_NAME = 'safety'
 ##############################################
 
 
 # Make classes out of every header, prop, init, etc
 class SALTransSys(object):
 
-    def __init__(self, module_name, vs, init_cons, prop, transitions, partid2Cid):
+    def __init__(self, module_name, vs,
+                 init_cons, final_cons,
+                 init_ps, final_ps,
+                 transitions, partid2Cid):
         """
         Parameters
         ----------
         module_name : Module name string
         vs : list of variable names
         init_cons : X0 described as an interval constraint
-        prop : Unsafe Set described as an interval constraint
+        final_cons : final Set described as an interval constraint
         """
 
         self.vs = vs
-        self.prop_name = 'safety'
-        self.init_cons = init_cons
+        self.vs_ = [vi + "'" for vi in vs]
         self.module_name = module_name
-        self.prop = prop
+
+        self.init_cons = init_cons
+        self.final_cons = final_cons
+        self.init_ps = init_ps
+        self.final_ps = final_ps
+
         self.transitions = transitions
         # initialize the class with the prec
         Expr2Str.set_prec(gopts.bmc_prec)
@@ -126,7 +136,12 @@ class SALTransSys(object):
         iv = self.init_cons
         s = ['\n\t{v} IN {{ r : REAL | r >=  {l} AND r <= {h} }}'.format(
             v=v, l=Expr2Str.float2str(iv.l[i]), h=Expr2Str.float2str(iv.h[i])) for i, v in enumerate(self.vs)]
-        return ';'.join(s)
+        init_cons_str = ';'.join(s)
+
+        init_cells = [self.partid2Cid[p.ID] for p in self.init_ps]
+        init_cells_str = '\n\tcell IN {' + ', '.join(init_cells) + '}'
+
+        return init_cons_str + ';' + init_cells_str
 
     def init_set_def(self):
         return INIT + self.init_set
@@ -150,23 +165,16 @@ class SALTransSys(object):
 
     @property
     def safety_prop(self):
-        return PROP.format(self.prop_name)
+        return PROP.format(PROP_NAME)
 
     def monitor_module(self):
-        prop = self.prop
-        expr = "{v}' {gle} {c}"
+        state_cons = ' AND '.join(it.chain(
+                                *self.final_cons.linexpr_str(self.vs_)))
 
-        ls = [
-                expr.format(v=v, gle='>=', c=prop.l[i])
-                for i, v in enumerate(self.vs)
-                if not isinf(prop.l[i])
-             ]
-        hs = [
-                expr.format(v=v, gle='<=', c=prop.h[i])
-                for i, v in enumerate(self.vs)
-                if not isinf(prop.h[i])
-             ]
-        prop_str = ' AND '.join(ls + hs)
+        final_cells = (self.partid2Cid[p.ID] for p in self.final_ps)
+        cell_cons = ' OR '.join("cell' = {}".format(c) for c in final_cells)
+
+        prop_str = state_cons + ' AND ' + '({})'.format(cell_cons)
 
         s = tw.dedent('''
         MONITOR: MODULE =

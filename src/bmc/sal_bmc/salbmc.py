@@ -6,9 +6,9 @@ from __future__ import unicode_literals
 import os
 import logging
 
-from bmc.bmc_spec import BMCSpec, InvarStatus, PWATRACE
+from bmc.bmc_spec import BMCSpec, InvarStatus
 from . import sal_op_parser
-from . import pwa2salconvertor as pwa2sal
+from . import pwa2salconverter as pwa2sal
 
 import fileops as fops
 import utils as U
@@ -59,16 +59,16 @@ def sal_run_cmd(sal_path, depth, sal_file, prop_name, opts=SalOpts()):
 
 
 class BMC(BMCSpec):
-    def __init__(self, vs, pwa_model, init_state, safety_prop,
-                 prop_partitions, fname_constructor, module_name, model_type):
+    def __init__(self, vs, pwa_model, init_cons, final_cons,
+                 init_ps, final_ps, fname_constructor, module_name, model_type):
         """__init__
 
         Parameters
         ----------
         vs : list of variables. Order is important.
         pwa_model :
-        init_state :
-        safety_prop :
+        init_cons :
+        final_cons :
         module_name :
         model_type :
 
@@ -86,29 +86,27 @@ class BMC(BMCSpec):
         self.sal_file = fname_constructor(fname)
         self.trace = None
         self.vs = vs
+        self.init_ps = init_ps
+        self.final_ps = final_ps
 
         if model_type == 'dft':
-            self.sal_trans_sys, self.sal2pwa_map = pwa2sal.convert(
-                    module_name,
-                    init_state,
-                    safety_prop,
-                    pwa_model,
-                    vs)
+            self.pwa2sal = pwa2sal.Pwa2Sal(
+                    module_name, init_cons,
+                    final_cons, pwa_model, vs,
+                    init_ps, final_ps)
+            self.sal_trans_sys = self.pwa2sal.trans_sys()
 
         elif model_type == 'dmt':
             raise NotImplementedError
             dts = pwa_model.keys()
             self.sal_trans_sys = BMC.sal_module_dmt(
-                    dts, vs, pwa_model, init_state, safety_prop, module_name)
+                    dts, vs, pwa_model, init_cons, final_cons, module_name)
         elif model_type == 'ct':
             raise NotImplementedError
         elif model_type == 'rel':
             raise NotImplementedError
         else:
             raise SALBMCError('unknown model type')
-
-        logger.debug('================ bmc - pwa conversion dict ==================')
-        logger.debug(self.sal2pwa_map)
 
         return
 
@@ -191,38 +189,26 @@ class BMC(BMCSpec):
         modeling is being done with KMIN = 1. Hence, there is no
         ambiguity.
         """
+    #         # each step, but the last, corresponds to a transition
+    #         for step in steps[:-1]:
+    #             part_id = self.sal2pwa_map[step.assignments['cell']]
+    #             sub_model = self.sal2pwa_map[step.tid]
 
-        steps = list(self.trace)
-#         # each step, but the last, corresponds to a transition
-#         for step in steps[:-1]:
-#             part_id = self.sal2pwa_map[step.assignments['cell']]
-#             sub_model = self.sal2pwa_map[step.tid]
+    #             # Assumption of trace building is that each submodel only
+    #             # has 1 unique next location. If this violated, we need to
+    #             # add cell ids/part ids to resolve the ambiguity.
+    #             assert(len(sub_model.pnexts) == 1)
 
-#             # Assumption of trace building is that each submodel only
-#             # has 1 unique next location. If this violated, we need to
-#             # add cell ids/part ids to resolve the ambiguity.
-#             assert(len(sub_model.pnexts) == 1)
+    #             assert(sub_model.p.ID == part_id)
+    #             # this is still untested, so in case assert is off...
+    #             assert(sub_model.p.ID == part_id)
+    #                 #err.warn('gone case')
 
-#             assert(sub_model.p.ID == part_id)
-#             # this is still untested, so in case assert is off...
-#             assert(sub_model.p.ID == part_id)
-#                 #err.warn('gone case')
-
-#             #pwa_trace.extend((part_id, sub_model))
-#             pwa_trace.append(sub_model)
-
-        s2p = self.sal2pwa_map
-        models = [s2p[step.tid].m for step in steps[:-1]]
-        #partitions = [self.sal2pwa_map[step.assignments['cell']] for step in steps]
-        partitions = [s2p[step.tid].p for step in steps[:-1]]
-        partitions.append(s2p[step.tid].pnext)
-
-        # append the last location/cell/partition id
-        #last_step = steps[-1]
-        #last_part_id = self.sal2pwa_map[last_step.assignments['cell']]
-        #pwa_trace.append(last_part_id)
-        pwa_trace = PWATRACE(partitions, models)
-        return pwa_trace
+    #             #pwa_trace.extend((part_id, sub_model))
+    #             pwa_trace.append(sub_model)
+        steps = self.trace
+        transitions = [step.tid for step in steps[:-1]]
+        return self.pwa2sal.trace(transitions)
 
     def get_new_disc_trace(self):
         """makes trace = None, signifying no more traces..."""
@@ -235,8 +221,8 @@ class BMC(BMCSpec):
 ################################################
 
 #     @staticmethod
-#     def sal_module_dmt(dts, vs, pwa_models, init_set, safety_prop, module_name):
-#         sal_trans_sys = slt_dmt.SALTransSysDMT(dts, module_name, vs, init_set, safety_prop)
+#     def sal_module_dmt(dts, vs, pwa_models, init_set, final_cons, module_name):
+#         sal_trans_sys = slt_dmt.SALTransSysDMT(dts, module_name, vs, init_set, final_cons)
 #         for dt, pwa_model in pwa_models.iteritems():
 #             # replace decimal point with _ else SAL will throw an
 #             # error due to incorrect identifier

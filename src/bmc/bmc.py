@@ -6,14 +6,13 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 
-import settings
 from globalopts import opts as gopts
 
 
 # def factory(bmc_engine_id,
 #             vars,
 #             pwa_model,
-#             init_state,
+#             init_cons,
 #             safety_prop,
 #             sys_name,
 #             model_type):
@@ -22,10 +21,10 @@ def factory(bmc_engine,
             prop,
             vs,
             pwa_model,
-            init_state,
-            final_states,
-            init_partitions,
-            prop_partitions,
+            init_cons,
+            final_cons,
+            init_ps,
+            final_ps,
             fname_constructor,
             sys_name,
             model_type,
@@ -37,8 +36,8 @@ def factory(bmc_engine,
     bmc_engine :
     vs :
     pwa_model :
-    init_state :
-    final_states :
+    init_cons :
+    final_cons :
     sys_name :
     model_type :
     prec : number of digits after the decimal
@@ -56,9 +55,10 @@ def factory(bmc_engine,
         return salbmc.BMC(
              vs,
              pwa_model,
-             init_state,
-             final_states,
-             prop_partitions,
+             init_cons,
+             final_cons,
+             init_ps,
+             final_ps,
              fname_constructor,
              sys_name,
              model_type,
@@ -75,8 +75,8 @@ def factory(bmc_engine,
         return BMC_PWA(
              vs,
              pwa_model,
-             init_state,
-             final_states,
+             init_cons,
+             final_cons,
              sys_name,
              model_type,
              gopts.bmc_prec,
@@ -90,10 +90,10 @@ def factory(bmc_engine,
              prop,
              vs,
              convert_pwarel2pwagraph(pwa_model),
-             init_state,
-             final_states,
-             init_partitions,
-             prop_partitions,
+             init_cons,
+             final_cons,
+             init_ps,
+             final_ps,
              fname_constructor,
              sys_name,
              model_type,

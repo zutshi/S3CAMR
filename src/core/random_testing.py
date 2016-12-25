@@ -121,9 +121,6 @@ def traces_violates(sys_sim, sys, prop, trace_len, x0_samples, x_array_bmc, pi_s
 
     z = np.array(np.empty((1, 0)))
     pvt = z
-    ci_array = np.empty((1, num_segments, 0))
-    s = z
-    u = z
     t = np.array([[0]])
     d = np.array([prop.initial_discrete_state])
     pi_array = np.array([pi_seq])
@@ -132,7 +129,7 @@ def traces_violates(sys_sim, sys, prop, trace_len, x0_samples, x_array_bmc, pi_s
     for x0 in x0_samples:
         concrete_states = state.StateArray(
                 t, np.array([x0]), d,
-                pvt, s, u, pi_array, ci_array)
+                pvt, pi_array)
 
         traces.append(simsys.simulate(sys_sim, sys.delta_t*num_segments, concrete_states[0]))
 

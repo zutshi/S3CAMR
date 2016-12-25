@@ -434,10 +434,10 @@ def lala(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_typ
 
 def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
 
-
+    # TODO: Why?
     # Extend both init set and final set to include inputs if any
     dummy_cons = top2ic(AA.num_dims.pi) # T <=> [-inf, inf]
-    safety_prop = IntervalCons.concatenate(sp.final_cons, dummy_cons)
+    final_cons2 = IntervalCons.concatenate(sp.final_cons, dummy_cons)
     init_cons = (sp.init_cons if AA.num_dims.pi == 0
                  else IntervalCons.concatenate(
                      sp.init_cons,
@@ -453,7 +453,7 @@ def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model
             sys,
             prop,
             vs,
-            pwa_model, init_cons, safety_prop,
+            pwa_model, init_cons, final_cons2,
             init_partitions,
             prop_partitions,
             gopts.construct_path,
@@ -466,7 +466,7 @@ def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model
         exit()
     elif status == InvarStatus.Unsafe:
         bmc_trace = bmc.get_last_trace()
-        print(bmc_trace)
+        #print(bmc_trace)
         print(bmc_trace.to_array())
         while bmc_trace is not None:
             pwa_trace = bmc.get_last_pwa_trace()
