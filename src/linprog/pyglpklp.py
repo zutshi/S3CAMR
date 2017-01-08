@@ -7,8 +7,12 @@ import collections
 
 import glpk
 
+from IPython import embed
+
 # Tuple contains lp results. It follows the scipy convention
 OPTRES = collections.namedtuple('optres', ('fun', 'status', 'success'))
+
+EPS = 1e-5
 
 
 # TODO: make it handle multiple objectives?
@@ -16,7 +20,7 @@ OPTRES = collections.namedtuple('optres', ('fun', 'status', 'success'))
 # also eschew the time required to re-create the LP. WIll need to
 # research if such an optimization is legal and does it actually save
 # enough time?
-def linprog(obj, A, b, exact=False):
+def linprog(obj, A, b, exact=True):
     """linprog
 
     Parameters
@@ -32,6 +36,9 @@ def linprog(obj, A, b, exact=False):
     Notes
     ------
     """
+
+    #b += EPS
+
     lp = glpk.LPX()
     lp.name = 'min x0'
     lp.obj.maximize = False
@@ -55,5 +62,13 @@ def linprog(obj, A, b, exact=False):
         lp.exact()
     else:
         lp.simplex()
+
+    # doenst work for some reason: solution is 0 all the time
+    #kkt = lp.kkt()
+    #print(kkt.pe_ae_max, kkt.pe_ae_row, kkt.pe_quality, kkt.pe_re_max, kkt.pe_re_row)
+    #print(kkt.de_ae_max, kkt.de_ae_row, kkt.de_quality, kkt.de_re_max, kkt.de_re_row)
+    #embed()
+
+    #lp.write('glpk_out')
     #lp.write(prob='glpk_out')
     return OPTRES(lp.obj.value, lp.status, lp.status == 'opt')

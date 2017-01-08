@@ -2,6 +2,9 @@ import itertools as it
 import collections
 import logging
 
+import numpy as np
+import scipy.linalg as linalg
+
 from bmc.helpers.expr2str import Expr2Str
 from . import saltrans_dft as slt_dft
 
@@ -20,12 +23,94 @@ def next_var_eq(var, val):
     return "{}' = {}".format(var, val)
 
 
+def next_real_true(var):
+    return "{}' IN {{ r : REAL | TRUE }}".format(var)
+
+
 def bounded_real_set_def(var, lb, ub):
     return "{var}' IN {{ r : REAL| " "r >= {lb} AND " "r <= {ub} }}".format(
             var=var, lb=lb, ub=ub)
 
 
-def guard(Cd, Cd_, vs=None, cell_id=None, next_cell_id=None):
+def Axb_constraints(A, b, error):
+    ''' Matrix conversion from A, b, error -> C, d
+        s.t.
+        x' = Ax + b +- [error]
+        is converted to
+        x' >= Ax + b - error /\ x' <= Ax + b + error
+    '''
+
+    nlhs, nrhs = A.shape
+    assert(nlhs == b.size)
+
+    # new state assignments
+    delta_h, delta_l = b + error.h, b + error.l
+
+#     x_ = Ax + [dl, dh]
+#     x_ <= Ax + dh, x_ >= Ax + dl
+
+#     x_ - Ax - dh <= 0
+#     - x_ + Ax + dl <= 0
+
+
+#     [1          a00 a01 a02] [x0_] + [d]
+#     [    1      a10 a11 a12] [x1_] + [d]
+#     [        1  a20 a21 a22] [x2_] + [d]
+#                              [x0 ]
+#                              [x1 ]
+#                              [x2 ]
+    # find the dim(x) using any submodel's b vector
+    num_dim_x = nlhs
+
+    I = np.eye(num_dim_x)
+    C_ub = np.hstack((I, -A))
+    C_lb = np.hstack((-I, A))
+    C = np.vstack((C_ub, C_lb))
+    d = np.hstack((delta_h, -delta_l))
+
+    return C, d
+
+
+# def guard(Cd, Cd_, vs=None, cell_id=None, next_cell_id=None):
+#     ''' Cx - d <= 0 '''
+
+#     if Cd is not None:
+#         C, d = Cd
+
+#         assert(C.shape[0] == d.size)
+#         assert(vs is not None)
+#         C, d = C, d
+#     else:
+#         C, d = [], []
+
+#     if Cd_ is not None:
+#         C_, d_ = Cd_
+
+#         assert(C_.shape[0] == d_.size)
+#         assert(vs is not None)
+
+#         C_, d_ = C_, d_
+#         vs_ = [vsi + "'" for vsi in vs]
+#     else:
+#         C_, d_ = [], []
+
+#     if Cd is not None and Cd_ is not None:
+#         assert(C.shape == C_.shape)
+#         assert(d.shape == d_.shape)
+
+#     pre_state_cons = (Expr2Str.linexpr2str(vs, ci, -di) + ' <= 0'
+#                       for ci, di in zip(C, d))
+
+#     post_state_cons = (Expr2Str.linexpr2str(vs_, ci, -di) + ' <= 0'
+#                        for ci, di in zip(C_, d_))
+
+#     pre_cell = '' if cell_id is None else var_eq('cell', cell_id)
+#     post_cell = '' if next_cell_id is None else next_var_eq('cell', next_cell_id)
+
+#     return it.chain((pre_cell, post_cell), pre_state_cons, post_state_cons)
+
+
+def guard(Cd, vs=None, cell_id=None, next_cell_id=None):
     ''' Cx - d <= 0 '''
 
     if Cd is not None:
@@ -37,31 +122,15 @@ def guard(Cd, Cd_, vs=None, cell_id=None, next_cell_id=None):
     else:
         C, d = [], []
 
-    if Cd_ is not None:
-        C_, d_ = Cd_
+    vs_vs = [vsi + "'" for vsi in vs] + vs
 
-        assert(C_.shape[0] == d_.size)
-        assert(vs is not None)
-
-        C_, d_ = C_, d_
-        vs_ = [vsi + "'" for vsi in vs]
-    else:
-        C_, d_ = [], []
-
-    if Cd is not None and Cd_ is not None:
-        assert(C.shape == C_.shape)
-        assert(d.shape == d_.shape)
-
-    pre_state_cons = (Expr2Str.linexpr2str(vs, ci, -di) + ' <= 0'
-                      for ci, di in zip(C, d))
-
-    post_state_cons = (Expr2Str.linexpr2str(vs_, ci, -di) + ' <= 0'
-                       for ci, di in zip(C_, d_))
+    state_cons = (Expr2Str.linexpr2str(vs_vs, ci, -di) + ' <= 0'
+                  for ci, di in zip(C, d))
 
     pre_cell = '' if cell_id is None else var_eq('cell', cell_id)
     post_cell = '' if next_cell_id is None else next_var_eq('cell', next_cell_id)
 
-    return it.chain((pre_cell, post_cell), pre_state_cons, post_state_cons)
+    return it.chain((pre_cell, post_cell), state_cons)
 
 
 def reset(A, b, error, vs):
@@ -92,6 +161,18 @@ def reset(A, b, error, vs):
 
     cell_assignment = "cell' IN {c : CELL | TRUE}"
     return it.chain(assignments, (cell_assignment, ))
+
+
+def reset_states_true(vs):
+    ''' resets all states to True '''
+
+    state_assignments = (next_real_true(vi) for vi in vs)
+    return state_assignments
+
+
+def reset_cell_true():
+    cell_assignments = ("cell' IN {c : CELL | TRUE}", )
+    return cell_assignments
 
 
 class Pwa2Sal(object):
@@ -145,8 +226,16 @@ class Pwa2Sal(object):
         return transitions, partid2Cid
 
     def sal_transition(self, idx, p, pnext, m, vs, l, lnext):
-        g = slt_dft.Guard(guard(None, (pnext.C, pnext.d), vs, l, lnext))
-        r = slt_dft.Reset(reset(m.A, m.b, m.error, vs))
+        num_states = len(vs)
+        assert(num_states == m.b.size)
+        assert(num_states == pnext.C.shape[1])
+        C1, d1 = Axb_constraints(m.A, m.b, m.error)
+        C2 = np.hstack((pnext.C, np.zeros((pnext.C.shape[0], num_states))))
+        d2 = pnext.d
+        C, d = np.vstack((C1, C2)), np.hstack((d1, d2))
+        g = slt_dft.Guard(guard((C, d), vs, l, lnext))
+        #r = slt_dft.Reset(reset(m.A, m.b, m.error, vs))
+        r = slt_dft.Reset(it.chain(reset_states_true(vs), reset_cell_true()))
         t = slt_dft.Transition('T_{}'.format(idx), g, r)
         return t
 
