@@ -232,7 +232,9 @@ class Pwa2Sal(object):
         C1, d1 = Axb_constraints(m.A, m.b, m.error)
         C2 = np.hstack((pnext.C, np.zeros((pnext.C.shape[0], num_states))))
         d2 = pnext.d
-        C, d = np.vstack((C1, C2)), np.hstack((d1, d2))
+        C3 = np.hstack((np.zeros((p.C.shape[0], num_states)), p.C))
+        d3 = p.d
+        C, d = np.vstack((C1, C2, C3)), np.hstack((d1, d2, d3))
         g = slt_dft.Guard(guard((C, d), vs, l, lnext))
         #r = slt_dft.Reset(reset(m.A, m.b, m.error, vs))
         r = slt_dft.Reset(it.chain(reset_states_true(vs), reset_cell_true()))

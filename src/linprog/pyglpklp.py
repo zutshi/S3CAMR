@@ -20,7 +20,7 @@ EPS = 1e-5
 # also eschew the time required to re-create the LP. WIll need to
 # research if such an optimization is legal and does it actually save
 # enough time?
-def linprog(obj, A, b, exact=True):
+def linprog(obj, A, b, exact=False):
     """linprog
 
     Parameters
