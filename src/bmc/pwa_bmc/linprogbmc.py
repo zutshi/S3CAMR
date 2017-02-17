@@ -60,14 +60,14 @@ class BMC(BMCSpec):
         # can fake a bmc trace by sapling and simulation if required
         #return self.last_trace
 
-    def get_new_disc_trace(self):
+    def gen_new_disc_trace(self):
         raise NotImplementedError
         # check
         self.last_pwa_trace, self.last_X0 = next(self.CE_gen)
         return None
 
     def get_pwa_trace(self):
-        return Trace(self.pwa_trace)
+        return self.pwa_trace
 
     #def get_last_X0(self):
     #    return self.last_X0
@@ -150,25 +150,5 @@ class QGraph(graph_class(gopts.graph_lib)):
 class Trace(TraceSimple):
     """Simple Trace: provides minimal functionality"""
 
-    def __init__(self, pwa_trace):
-        self.pwa_trace = pwa_trace
-        partitions models
-
-    def __getitem__(self, idx):
-        raise NotImplementedError
-        return
-
-    def __iter__(self):
-        raise NotImplementedError
-        return
-
     def to_array(self):
         return None
-
-    def __len__(self):
-        raise NotImplementedError
-        return
-
-    def __str__(self):
-        raise NotImplementedError
-        return

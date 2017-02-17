@@ -219,7 +219,7 @@ class BMC(BMCSpec):
         transitions = [step.tid for step in steps[:-1]]
         return self.pwa2sal.trace(transitions)
 
-    def get_new_disc_trace(self):
+    def gen_new_disc_trace(self):
         """makes trace = None, signifying no more traces..."""
         self.trace = None
         return

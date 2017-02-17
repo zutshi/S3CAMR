@@ -482,7 +482,7 @@ def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model
             #verify_bmc_trace(AA, sys, prop, sp, bmc.trace, xs, ws)
             #xw_array = bmc_trace.to_array()
             verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace)
-            bmc.get_new_disc_trace()
+            bmc.gen_new_disc_trace()
             #bmc_trace = bmc.get_last_trace()
             #xw_array, pwa_trace = bmc.get_last_traces()
             bmc_trace = bmc.get_trace()
