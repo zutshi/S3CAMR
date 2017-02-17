@@ -31,7 +31,7 @@ class BMCSpec():
         return
 
     @abc.abstractmethod
-    def get_last_trace(self):
+    def get_last_bmc_trace(self):
         """Returns the last trace found or None if no trace exists."""
         return
 
@@ -43,52 +43,30 @@ class BMCSpec():
     def get_last_pwa_trace(self):
         return
 
-
-class TraceSimple(object):
-    """Simple Trace: provides minimal functionality"""
-    def __init__(self, trace, vs):
-        self.xvars = None
-        self.trace = trace
-        self.vs = vs
-
-#         for step in trace:
-#             for ass in step.assignments:
-#                 print(ass.lhs, ass.rhs)
+    @abc.abstractmethod
+    def get_last_traces(self):
         return
 
+@six.add_metaclass(abc.ABCMeta)
+class TraceSimple(object):
+    """Simple Trace: provides minimal functionality"""
+
+    @abc.abstractmethod
     def __getitem__(self, idx):
-        return self.trace[idx]
+        return
 
-#     def to_assignments(self):
-#         assignments = [
-#                 {ass.lhs: ass.rhs for ass in step.assignments}
-#                 for step in self.trace
-#                 ]
-#         return assignments
+    @abc.abstractmethod
     def __iter__(self):
-        return (step for step in self.trace)
+        return
 
-    #def set_vars(self, vs):
-        #self.vs = vs
-        #return
-
+    @abc.abstractmethod
     def to_array(self):
-        # vars must have been set before this is called
-        assert(self.vs is not None)
-        xvars = self.vs
+        return
 
-        x_array = []
-        for step in self.trace:
-            # jth step
-            xj = []
-            for xi in xvars:
-                xival = step.assignments[xi]
-                xj.append(xival)
-            x_array.append(xj)
-        return np.array(x_array)
-
+    @abc.abstractmethod
     def __len__(self):
-        return len(self.trace)
+        return
 
+    @abc.abstractmethod
     def __str__(self):
-        return '\n'.join(str(step) for step in self.trace)
+        return

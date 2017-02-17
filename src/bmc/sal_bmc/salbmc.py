@@ -166,11 +166,20 @@ class BMC(BMCSpec):
         fops.write_data(self.sal_file, str(self.sal_trans_sys))
         return
 
-    def get_last_trace(self):
+    def get_trace(self):
         """Returns the last trace found or None if no trace exists."""
         return self.trace
 
-    def get_last_pwa_trace(self):
+    def get_last_traces(self):
+        # Code works, but should be removed due to change in
+        # interfaces
+        raise NotImplementedError
+        if self.trace is not None:
+            return self.trace.to_array(), self.get_last_pwa_trace()
+        else:
+            return None, None
+
+    def get_pwa_trace(self):
         """Converts a bmc trace to a sequence of sub_models in the original pwa.
 
         Parameters

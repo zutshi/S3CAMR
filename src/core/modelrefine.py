@@ -14,7 +14,8 @@ from . import simulatesystem as simsys
 from pwa import pwa
 from pwa import simulator as pwa_sim
 from pwa import relational as rel
-from . import random_testing as rt
+#from . import random_testing as rt
+from . import concretize as cnc
 from bmc import bmc as BMC
 from bmc.bmc_spec import InvarStatus
 import modeling.affinemodel as AFM
@@ -363,14 +364,14 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
     # flush all plots: must block
     gopts.plotting.show(block=True)
 
-    if TESTCODE:
+#     if TESTCODE:
 
 
-        bmc = lala(pwa_sys_prop.pwa_model, depth,
-                   pwa_sys_prop.init_partitions,
-                   pwa_sys_prop.final_partitions,
-                   sys.sys_name, 'dft', AA, sys, prop, sp)
-        list(bmc.print_all_CE(0))
+#         bmc = lala(pwa_sys_prop.pwa_model, depth,
+#                    pwa_sys_prop.init_partitions,
+#                    pwa_sys_prop.final_partitions,
+#                    sys.sys_name, 'dft', AA, sys, prop, sp)
+#         list(bmc.print_all_CE(0))
 
 #         qgraph_ref_gen = bmc.print_all_CE(1)
 #         qgraphs = list(qgraph_ref_gen)
@@ -394,7 +395,7 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
 # #                    pwa_sys_prop.final_partitions,
 # #                    sys.sys_name, 'dft', AA, sys, prop, sp)
 # #         list(bmc.print_all_CE(0))
-        exit()
+#         exit()
 
     check4CE(pwa_sys_prop.pwa_model, depth,
              pwa_sys_prop.init_partitions,
@@ -462,23 +463,30 @@ def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model
 
     status = bmc.check(depth)
     if status == InvarStatus.Safe:
-        print('Safe')
+        print("The system has been determined to be 'Safe'")
         exit()
     elif status == InvarStatus.Unsafe:
-        bmc_trace = bmc.get_last_trace()
+        #bmc_trace = bmc.get_last_trace()
         #print(bmc_trace)
-        print(bmc_trace.to_array())
+        #print(bmc_trace.to_array())
+        bmc_trace = bmc.get_trace()
+        pwa_trace = bmc.get_pwa_trace()
+        #xw_array = bmc_trace.to_array()
+        #pwa_trace = bmc.get_last_traces()
         while bmc_trace is not None:
-            pwa_trace = bmc.get_last_pwa_trace()
+            #pwa_trace = bmc.get_last_pwa_trace()
             if settings.debug:
-                print(pwa_trace)
                 print(bmc_trace)
-            print('Unsafe...trying to concretize...')
+                print(pwa_trace)
+            print('Unsafe behavior found...trying to concretize...')
             #verify_bmc_trace(AA, sys, prop, sp, bmc.trace, xs, ws)
-            verify_bmc_trace(AA, sys, prop, sp, bmc_trace, pwa_trace)
-
+            #xw_array = bmc_trace.to_array()
+            verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace)
             bmc.get_new_disc_trace()
-            bmc_trace = bmc.get_last_trace()
+            #bmc_trace = bmc.get_last_trace()
+            #xw_array, pwa_trace = bmc.get_last_traces()
+            bmc_trace = bmc.get_trace()
+            pwa_trace = bmc.get_pwa_trace()
             #U.pause()
 
     elif status == InvarStatus.Unknown:
@@ -488,30 +496,37 @@ def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model
         raise err.Fatal('Internal')
 
 
-def verify_bmc_trace(AA, sys, prop, sp, bmc_trace, pwa_trace):
-    """Get multiple traces and send them for random testing
-    """
-
+def verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace):
     xw_array = bmc_trace.to_array()
     x_array, w_array = np.split(xw_array, [AA.num_dims.x], axis=1)
     pi_seq = w_array
+    if gopts.bmc_engine == 'sal':
+        res = verify_bmc_trace(AA, sys, prop, sp, x_array, pi_seq)
+    res = verify_pwa_trace(AA, sys, prop, sp, x_array, pi_seq, pwa_trace)
+
+
+def verify_bmc_trace(AA, sys, prop, sp, x_array, pi_seq):
+    """Get multiple traces and send them for random testing
+    """
+
     #init_assignments = trace[0].assignments
     #x0_array = np.array([init_assignments[x] for x in xs])
     # Trace consists of transitions, but we want to interpret it as
     # locations (abs_states + wi). Hence, subtract 1 from trace.
-    num_trace_states = len(bmc_trace)-1
 
     # TODO: fix inputs!!
     #pi_seq = [[step.assignments[w] for w in ws] for step in bmc_trace[:-1]]
     gopts.plotting.new_session()
-    res = rt.concretize_bmc_trace(sys, prop, AA, sp, num_trace_states, x_array, pi_seq)
+    res = cnc.concretize_bmc_trace(sys, prop, AA, sp, x_array, pi_seq)
+    return res
 
+
+def verify_pwa_trace(AA, sys, prop, sp, x_array, pi_seq, pwa_trace):
     gopts.plotting.new_session()
     init_cons_subset = azp.overapprox_x0(AA.num_dims, prop, pwa_trace)
     if init_cons_subset is None:
         raise err.Fatal('BMC (feasible) and LP (infeasible?) solution do not agree!')
-    rt.concretize_init_cons_subset(sys, prop, AA, sp, num_trace_states, x_array, pi_seq, init_cons_subset)
-    return
+    return cnc.concretize_init_cons_subset(sys, prop, AA, sp, x_array, pi_seq, init_cons_subset)
 
 
 def get_abstract_path(AA, x_array):
@@ -755,7 +770,8 @@ def mdl_1relational(prop, tol, step_sim, qgraph, q, X, Y):
         # This means, all samples which landed are in a cell which
         # was never initially explored by S3CAM. Can happen, but
         # possibility is very very low.
-        raise err.Fatal('Very low prob. of happening. Check code')
+        pass
+        #raise err.Fatal('Very low prob. of happening. Check code')
 #     else:
 #         status = SUCCESS
 #         if settings.debug:

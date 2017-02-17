@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import logging
 
-from bmc.bmc_spec import BMCSpec, InvarStatus
+from bmc.bmc_spec import BMCSpec, InvarStatus, TraceSimple
 from bmc.sal_bmc.pwa2salconverter import PWATRACE
 import pwa.analyzepath as azp
 from pwa import pwagraph
@@ -54,21 +54,23 @@ class BMC(BMCSpec):
         else:
             raise err.Fatal('check should be called only once!')
 
-    def get_last_trace(self):
+    def get_trace(self):
         raise NotImplementedError
+        return None
         # can fake a bmc trace by sapling and simulation if required
         #return self.last_trace
 
     def get_new_disc_trace(self):
+        raise NotImplementedError
         # check
         self.last_pwa_trace, self.last_X0 = next(self.CE_gen)
         return None
 
-    def get_last_pwa_trace(self):
-        return self.pwa_last_trace
+    def get_pwa_trace(self):
+        return Trace(self.pwa_trace)
 
-    def get_last_X0(self):
-        return self.last_X0
+    #def get_last_X0(self):
+    #    return self.last_X0
 
     def get_CE_gen(self):
         path_gen = self.pwa_model.get_all_path_generator(self.sources, self.targets)
@@ -76,6 +78,7 @@ class BMC(BMCSpec):
             ptrace = [self.pwa_model.node_p(qi) for qi in path]
             mtrace = [self.pwa_model.edge_m((qi, qj)) for qi, qj in U.pairwise(path)]
             pwa_trace = PWATRACE(partitions=ptrace, models=mtrace)
+            #TODO: replace with feasible()
             ret_val = azp.overapprox_x0(self.num_dims, self.prop, pwa_trace)
             if ret_val is not None:
                 print('Model Found')
@@ -97,6 +100,7 @@ class BMC(BMCSpec):
             ptrace = [self.pwa_model.node_p(qi) for qi in path]
             mtrace = [self.pwa_model.edge_m((qi, qj)) for qi, qj in U.pairwise(path)]
             pwa_trace = PWATRACE(partitions=ptrace, models=mtrace)
+            #TODO: replace with feasible()
             ret_val = azp.overapprox_x0(self.num_dims, self.prop, pwa_trace)
             if ret_val is not None:
                 print('Model Found: {}'.format(d))
@@ -141,3 +145,30 @@ class QGraph(graph_class(gopts.graph_lib)):
         super(self.__class__, self).__init__()
         self.init = set()
         self.final = set()
+
+
+class Trace(TraceSimple):
+    """Simple Trace: provides minimal functionality"""
+
+    def __init__(self, pwa_trace):
+        self.pwa_trace = pwa_trace
+        partitions models
+
+    def __getitem__(self, idx):
+        raise NotImplementedError
+        return
+
+    def __iter__(self):
+        raise NotImplementedError
+        return
+
+    def to_array(self):
+        return None
+
+    def __len__(self):
+        raise NotImplementedError
+        return
+
+    def __str__(self):
+        raise NotImplementedError
+        return

@@ -14,7 +14,7 @@ import err
 
 import functools
 
-from bmc.bmc_spec import TraceSimple
+import bmc.sal_bmc.trace as bmc_trace
 
 # global tokens
 SEMI = pp.Literal(";").suppress()
@@ -89,7 +89,7 @@ def Trace(vs, s):
     # remove NOPs
     trace = [step for step in trace_with_NOP if step.tid != 'NOP']
 
-    return TraceSimple(trace, vs)
+    return bmc_trace.Trace(trace, vs)
 
 
 def extract_label(s):

@@ -279,6 +279,11 @@ def truncate(*args):
     return (trunc_array(X) for X in args)
 
 
+def feasible(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
+    raise NotImplementedError
+    return is_feasible
+
+
 def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
     C, d = part_constraints(pwa_trace.partitions)
     A, b = dyn_constraints(pwa_trace.models)
