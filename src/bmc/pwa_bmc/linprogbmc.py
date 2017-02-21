@@ -16,6 +16,8 @@ from globalopts import opts as gopts
 import utils as U
 import err
 
+from IPython import embed
+
 from blessed import Terminal
 term = Terminal()
 
@@ -55,7 +57,7 @@ class BMC(BMCSpec):
             raise err.Fatal('check should be called only once!')
 
     def get_trace(self):
-        return Trace()
+        return self.trace
         # can fake a bmc trace by sapling and simulation if required
         #return self.last_trace
 
@@ -78,10 +80,11 @@ class BMC(BMCSpec):
             mtrace = [self.pwa_model.edge_m((qi, qj)) for qi, qj in U.pairwise(path)]
             pwa_trace = PWATRACE(partitions=ptrace, models=mtrace)
             #TODO: replace with feasible()
-            feasible = azp.feasible(self.num_dims, self.prop, pwa_trace)
-            if feasible:
+            x_array = azp.feasible(self.num_dims, self.prop, pwa_trace)
+            self.trace = Trace(x_array, pwa_trace)
+            if x_array:
                 print('Model Found')
-                ret_val = azp.feasible(self.num_dims, self.prop, pwa_trace)
+                ret_val = azp.overapprox_x0(self.num_dims, self.prop, pwa_trace)
                 yield pwa_trace, ret_val
         return
 
@@ -154,8 +157,13 @@ class QGraph(graph_class(gopts.graph_lib)):
 class Trace(TraceSimple):
     """Simple Trace: provides minimal functionality"""
 
+    def __init__(self, x_array, pwa_trace):
+        self.x_array = x_array
+        self.pwa_trace = pwa_trace
+
     def to_array(self):
-        return None
+        embed()
+        return self.x_array
 
     def __getitem__(self, idx):
         raise NotImplementedError

@@ -307,7 +307,7 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
     res = lp_fun(obj)
 
     if res.success:
-        return res.x
+        return reshape_x(np.array(res.x), len(pwa_trace))
     else:
         if settings.debug:
             print('LP failed')
@@ -424,12 +424,19 @@ def generic_lp(solver, A_ub, b_ub):
     return lp_fun
 
 
+# TODO: make this part of generic_lp transformation
+def reshape_x(x, trace_len):
+    assert(x.ndim == 1)
+    num_vars = len(x)//trace_len
+    return np.reshape(num_vars, trace_len)
+
+
 # raise an exception as soon as the first lp fails...better than
 # solving all directions when the problem in infeasible
 def solve_mult_lp(lp_fun, directions_ext):
     res = []
     for obj in directions_ext:
-        ret_val = generic_lp(lp_fun, obj)
+        ret_val = lp_fun(obj)
         if not ret_val.success:
             raise LpFaliure('lp solver failed')
         else:
