@@ -497,12 +497,14 @@ def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model
 
 
 def verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace):
-    xw_array = bmc_trace.to_array()
-    x_array, w_array = np.split(xw_array, [AA.num_dims.x], axis=1)
-    pi_seq = w_array
     if gopts.bmc_engine == 'sal':
+        xw_array = bmc_trace.to_array()
+        x_array, w_array = np.split(xw_array, [AA.num_dims.x], axis=1)
+        pi_seq = w_array
+        # TODO: res is ignored
         res = verify_bmc_trace(AA, sys, prop, sp, x_array, pi_seq)
     res = verify_pwa_trace(AA, sys, prop, sp, x_array, pi_seq, pwa_trace)
+    return res
 
 
 def verify_bmc_trace(AA, sys, prop, sp, x_array, pi_seq):

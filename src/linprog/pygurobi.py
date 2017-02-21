@@ -7,10 +7,10 @@ from __future__ import unicode_literals
 import collections
 
 import gurobipy as GB
-from IPython import embed
+#from IPython import embed
 
 # Tuple contains lp results. It follows the scipy convention
-OPTRES = collections.namedtuple('optres', ('fun', 'status', 'success'))
+OPTRES = collections.namedtuple('optres', ('fun', 'x', 'status', 'success'))
 
 
 # TODO: make it handle multiple objectives?
@@ -20,14 +20,14 @@ OPTRES = collections.namedtuple('optres', ('fun', 'status', 'success'))
 # enough time?
 
 
-def linprog(obj, A, b):
-    """ Minimize obj, given Ax <= b
+def linprog(obj, A_ub, b_ub):
+    """ Minimize obj, given A_ub*x <= b_ub
 
     Parameters
     ----------
     c : obj as a list
-    A : as an numpy array
-    b : as a numpy array
+    A_ub : as an numpy array
+    b_ub : as a numpy array
 
     Returns
     -------
@@ -38,7 +38,7 @@ def linprog(obj, A, b):
     """
     model = GB.Model()
 
-    ncons, nvars = A.shape
+    ncons, nvars = A_ub.shape
 
     # Add variables to model
     #for i in range(nvars):
@@ -48,14 +48,14 @@ def linprog(obj, A, b):
     Vars = [model.addVar(lb=-GB.GRB.INFINITY, ub=GB.GRB.INFINITY, vtype=GB.GRB.CONTINUOUS) for i in range(nvars)]
     model.update()
 
-#     for ri, bi in zip(A, b):
+#     for ri, bi in zip(A_ub, b_ub):
 #         expr = GB.LinExpr()
 #         for cij, vj in zip(ri, Vars):
 #             if cij != 0:
 #                 expr += cij * vj
 #         model.addConstr(expr, GB.GRB.LESS_EQUAL, bi)
 
-    for ri, bi in zip(A, b):
+    for ri, bi in zip(A_ub, b_ub):
         # XXX: This API usage was found on web, does not have its
         # usage documented.
         expr = GB.LinExpr(((cij, vj) for (cij, vj) in zip(ri, Vars) if cij != 0.0))
@@ -79,9 +79,9 @@ def linprog(obj, A, b):
     #model.write('gurobi_out.lp')
 
     if model.status == GB.GRB.Status.OPTIMAL:
-        res = OPTRES(model.objVal, model.status, model.status == GB.GRB.Status.OPTIMAL)
+        res = OPTRES(model.objVal, x, model.status, model.status == GB.GRB.Status.OPTIMAL)
     else:
         dummy_obj = 0
-        res = OPTRES(dummy_obj, model.status, model.status == GB.GRB.Status.OPTIMAL)
+        res = OPTRES(dummy_obj, None, model.status, model.status == GB.GRB.Status.OPTIMAL)
 
     return res

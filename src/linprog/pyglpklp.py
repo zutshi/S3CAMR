@@ -7,10 +7,10 @@ import collections
 
 import glpk
 
-from IPython import embed
+#from IPython import embed
 
 # Tuple contains lp results. It follows the scipy convention
-OPTRES = collections.namedtuple('optres', ('fun', 'status', 'success'))
+OPTRES = collections.namedtuple('optres', ('fun', 'x', 'status', 'success'))
 
 EPS = 1e-5
 
@@ -20,14 +20,14 @@ EPS = 1e-5
 # also eschew the time required to re-create the LP. WIll need to
 # research if such an optimization is legal and does it actually save
 # enough time?
-def linprog(obj, A, b, exact=False):
+def linprog(obj, A_ub, b_ub, exact=False):
     """linprog
 
     Parameters
     ----------
     c : obj as a list
-    A : as an numpy array
-    b : as a numpy array
+    A_ub : as an numpy array
+    b_ub : as a numpy array
 
     Returns
     -------
@@ -37,19 +37,19 @@ def linprog(obj, A, b, exact=False):
     ------
     """
 
-    #b += EPS
+    #b_ub += EPS
 
     lp = glpk.LPX()
     lp.name = 'min x0'
     lp.obj.maximize = False
 
-    lp.rows.add(len(b))
+    lp.rows.add(len(b_ub))
 
     for idx, r in enumerate(lp.rows):
         r.name = 'r{}'.format(idx)
-        r.bounds = None, b[idx]
+        r.bounds = None, b_ub[idx]
 
-    lp.cols.add(A.shape[1])
+    lp.cols.add(A_ub.shape[1])
 
     for idx, c in enumerate(lp.cols):
         c.name = 'x{}'.format(idx)
@@ -57,7 +57,7 @@ def linprog(obj, A, b, exact=False):
 
     lp.obj[:] = obj.tolist()
 
-    lp.matrix = A.flatten()
+    lp.matrix = A_ub.flatten()
     if exact:
         lp.exact()
     else:
@@ -71,4 +71,5 @@ def linprog(obj, A, b, exact=False):
 
     #lp.write('glpk_out')
     #lp.write(prob='glpk_out')
-    return OPTRES(lp.obj.value, lp.status, lp.status == 'opt')
+    x = lp.cols
+    return OPTRES(lp.obj.value, x, lp.status, lp.status == 'opt')

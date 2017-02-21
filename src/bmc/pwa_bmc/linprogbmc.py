@@ -55,8 +55,7 @@ class BMC(BMCSpec):
             raise err.Fatal('check should be called only once!')
 
     def get_trace(self):
-        raise NotImplementedError
-        return None
+        return Trace()
         # can fake a bmc trace by sapling and simulation if required
         #return self.last_trace
 
@@ -67,7 +66,7 @@ class BMC(BMCSpec):
         return None
 
     def get_pwa_trace(self):
-        return self.pwa_trace
+        return self.last_pwa_trace
 
     #def get_last_X0(self):
     #    return self.last_X0
@@ -79,9 +78,10 @@ class BMC(BMCSpec):
             mtrace = [self.pwa_model.edge_m((qi, qj)) for qi, qj in U.pairwise(path)]
             pwa_trace = PWATRACE(partitions=ptrace, models=mtrace)
             #TODO: replace with feasible()
-            ret_val = azp.overapprox_x0(self.num_dims, self.prop, pwa_trace)
-            if ret_val is not None:
+            feasible = azp.feasible(self.num_dims, self.prop, pwa_trace)
+            if feasible:
                 print('Model Found')
+                ret_val = azp.feasible(self.num_dims, self.prop, pwa_trace)
                 yield pwa_trace, ret_val
         return
 
@@ -139,6 +139,9 @@ class BMC(BMCSpec):
 
         return qgraph
 
+    def trace_generator(self):
+        raise NotImplementedError
+
 
 class QGraph(graph_class(gopts.graph_lib)):
     def __init__(self):
@@ -152,3 +155,15 @@ class Trace(TraceSimple):
 
     def to_array(self):
         return None
+
+    def __getitem__(self, idx):
+        raise NotImplementedError
+
+    def __iter__(self):
+        raise NotImplementedError
+
+    def __len__(self):
+        raise NotImplementedError
+
+    def __str__(self):
+        raise NotImplementedError

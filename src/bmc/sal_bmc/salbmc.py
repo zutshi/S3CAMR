@@ -215,6 +215,8 @@ class BMC(BMCSpec):
 
     #             #pwa_trace.extend((part_id, sub_model))
     #             pwa_trace.append(sub_model)
+        if self.trace is None:
+            return None
         steps = self.trace
         transitions = [step.tid for step in steps[:-1]]
         return self.pwa2sal.trace(transitions)
@@ -223,6 +225,9 @@ class BMC(BMCSpec):
         """makes trace = None, signifying no more traces..."""
         self.trace = None
         return
+
+    def trace_generator(self):
+        raise NotImplementedError
 
 
 ################################################

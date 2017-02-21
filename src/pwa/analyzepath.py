@@ -3,6 +3,8 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import functools as ft
+
 import numpy as np
 import scipy.linalg as linalg
 import sympy as sym
@@ -16,6 +18,10 @@ import settings
 from IPython import embed
 
 import err
+
+
+class LpFaliure(Exception):
+    pass
 
 # def part_constraints(pwa_trace):
 #     """constraints due to partitions of the pwa model
@@ -280,8 +286,29 @@ def truncate(*args):
 
 
 def feasible(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
-    raise NotImplementedError
-    return is_feasible
+    C, d = part_constraints(pwa_trace.partitions)
+    A, b = dyn_constraints(pwa_trace.models)
+    pA, pb = prop_constraints(num_dims, prop, len(pwa_trace.partitions))
+
+    # num vars are the same
+    assert(C.shape[1] == A.shape[1])
+    assert(C.shape[1] == pA.shape[1])
+
+    A_ub = np.vstack((C, A, pA))
+    b_ub = np.hstack((d, b, pb))
+
+    num_opt_vars = A.shape[1]
+
+    #nvars = num_dims.x + num_dims.pi
+
+    A_ub, b_ub = truncate(A_ub, b_ub)
+    lp_fun = generic_lp(solver, A_ub, b_ub)
+    obj = np.zeros(num_opt_vars)
+    res = lp_fun(obj)
+
+#         if settings.debug:
+#             print('LP failed')
+    return res.success, res.x
 
 
 def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
@@ -299,7 +326,6 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
     num_opt_vars = A.shape[1]
 
     nvars = num_dims.x + num_dims.pi
-    bounds = [(-np.inf, np.inf)] * num_opt_vars
 
     #directions = [(1, 0), (-1, 0), (0, 1), (0, -1)]
     I = np.eye(nvars)
@@ -314,25 +340,9 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
 
     A_ub, b_ub = truncate(A_ub, b_ub)
 
-    if solver == 'glpk':
-        from linprog import pyglpklp
-        res = [pyglpklp.linprog(obj, A_ub, b_ub) for obj in directions_ext]
-
-    elif solver == 'scipy':
-        import scipy.optimize as spopt
-        disp_opt = True if settings.debug else False
-        res = [
-               spopt.linprog(obj, A_ub=A_ub, b_ub=b_ub,
-                             bounds=bounds, method='simplex',
-                             options={'disp': disp_opt})
-               for obj in directions_ext]
-
-    elif solver == 'gurobi':
-        from linprog import pygurobi
-        res = [pygurobi.linprog(obj, A_ub, b_ub) for obj in directions_ext]
-
-    else:
-        raise NotImplementedError
+    lp_fun = generic_lp(solver, A_ub, b_ub)
+    res = solve_mult_lp(lp_fun, directions_ext)
+    #res = lp_fun(solver, A_ub, b_ub, directions_ext)
 
     l = len(res)
     assert(l % 2 == 0)
@@ -376,3 +386,47 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
         return None
 
     return ret_val
+
+
+def generic_lp(solver, A_ub, b_ub):
+    if solver == 'glpk':
+        from linprog import pyglpklp
+        #res = [pyglpklp.linprog(obj, A_ub, b_ub) for obj in directions_ext]
+        lp_fun = ft.partial(pyglpklp.linprog, A_ub=A_ub, b_ub=b_ub)
+
+    if solver == 'gurobi':
+        from linprog import pygurobi
+        #res = [pygurobi.linprog(obj, A_ub, b_ub) for obj in directions_ext]
+        lp_fun = ft.partial(pygurobi.linprog, A_ub=A_ub, b_ub=b_ub)
+
+    if solver == 'scipy':
+        import scipy.optimize as spopt
+        disp_opt = True if settings.debug else False
+        # columns of A_ub
+        num_opt_vars = A_ub.shape[1]
+        bounds = [(-np.inf, np.inf)] * num_opt_vars
+#         res = [
+#                spopt.linprog(obj, A_ub=A_ub, b_ub=b_ub,
+#                              bounds=bounds, method='simplex',
+#                              options={'disp': disp_opt})
+#                for obj in directions_ext]
+        lp_fun = ft.partial(spopt.linprog, A_ub=A_ub, b_ub=b_ub,
+                            bounds=bounds, method='simplex',
+                            options={'disp': disp_opt})
+    else:
+        raise NotImplementedError
+
+    return lp_fun
+
+
+# raise an exception as soon as the first lp fails...better than
+# solving all directions when the problem in infeasible
+def solve_mult_lp(lp_fun, directions_ext):
+    res = []
+    for obj in directions_ext:
+        ret_val = generic_lp(lp_fun, obj)
+        if not ret_val.success:
+            raise LpFaliure('lp solver failed')
+        else:
+            res.append(ret_val)
+    return res
