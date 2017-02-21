@@ -79,8 +79,15 @@ def linprog(obj, A_ub, b_ub):
     #model.write('gurobi_out.lp')
 
     if model.status == GB.GRB.Status.OPTIMAL:
+        #x = [v.x for v in model.getVars()]
+        #assert(model.getVars() == Vars)
+        #x = [v.x for v in model.getVars()]
+
+        # TODO:double check
+        x = [v.x for v in Vars]
         res = OPTRES(model.objVal, x, model.status, model.status == GB.GRB.Status.OPTIMAL)
     else:
+        # TODO: Make dummy_obj = None?
         dummy_obj = 0
         res = OPTRES(dummy_obj, None, model.status, model.status == GB.GRB.Status.OPTIMAL)
 

@@ -306,9 +306,12 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
     obj = np.zeros(num_opt_vars)
     res = lp_fun(obj)
 
-#         if settings.debug:
-#             print('LP failed')
-    return res.success, res.x
+    if res.success:
+        return res.x
+    else:
+        if settings.debug:
+            print('LP failed')
+        return None
 
 
 def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
@@ -332,6 +335,8 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
     directions = np.vstack((I, -I))
     left_over_vars = num_opt_vars - nvars
     directions_ext = np.pad(directions, [(0, 0), (0, left_over_vars)], 'constant')
+
+    # LP structure: A_ub [x x'] <= b_ub
 
     x_arr = np.array(
             sym.symbols(
@@ -394,12 +399,12 @@ def generic_lp(solver, A_ub, b_ub):
         #res = [pyglpklp.linprog(obj, A_ub, b_ub) for obj in directions_ext]
         lp_fun = ft.partial(pyglpklp.linprog, A_ub=A_ub, b_ub=b_ub)
 
-    if solver == 'gurobi':
+    elif solver == 'gurobi':
         from linprog import pygurobi
         #res = [pygurobi.linprog(obj, A_ub, b_ub) for obj in directions_ext]
         lp_fun = ft.partial(pygurobi.linprog, A_ub=A_ub, b_ub=b_ub)
 
-    if solver == 'scipy':
+    elif solver == 'scipy':
         import scipy.optimize as spopt
         disp_opt = True if settings.debug else False
         # columns of A_ub
@@ -414,7 +419,7 @@ def generic_lp(solver, A_ub, b_ub):
                             bounds=bounds, method='simplex',
                             options={'disp': disp_opt})
     else:
-        raise NotImplementedError
+        raise NotImplementedError('solver selected: {}'.format(solver))
 
     return lp_fun
 

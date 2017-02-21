@@ -71,5 +71,6 @@ def linprog(obj, A_ub, b_ub, exact=False):
 
     #lp.write('glpk_out')
     #lp.write(prob='glpk_out')
-    x = lp.cols
+    # TODO:double check
+    x = [col.value for col in lp.cols]
     return OPTRES(lp.obj.value, x, lp.status, lp.status == 'opt')

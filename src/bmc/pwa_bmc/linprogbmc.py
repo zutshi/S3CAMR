@@ -100,9 +100,10 @@ class BMC(BMCSpec):
             ptrace = [self.pwa_model.node_p(qi) for qi in path]
             mtrace = [self.pwa_model.edge_m((qi, qj)) for qi, qj in U.pairwise(path)]
             pwa_trace = PWATRACE(partitions=ptrace, models=mtrace)
-            #TODO: replace with feasible()
-            ret_val = azp.overapprox_x0(self.num_dims, self.prop, pwa_trace)
-            if ret_val is not None:
+            x_array = azp.feasible(self.num_dims, self.prop, pwa_trace)
+            #ret_val = azp.overapprox_x0(self.num_dims, self.prop, pwa_trace)
+            #if ret_val is not None:
+            if x_array is not None:
                 print('Model Found: {}'.format(d))
                 U.pause()
                 qgraph = self.refine_CE(pwa_trace)
