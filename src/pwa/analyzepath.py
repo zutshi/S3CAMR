@@ -262,7 +262,7 @@ def prop_constraints(num_dims, prop, num_partitions):
 
     # Add 1, because trace captures transitions,
     # and num_states = num_trans + 1
-    #A = np.zeros((num_cons, dimX * (trace_len + 1)))
+    #A = np.zeros((num_cons, dimX * (trace_len)))
     A = np.zeros((num_cons, dimX * (num_partitions)))
     A[0:nr, 0:nc] = iA
     A[-nr:, -nc:] = fA
@@ -289,6 +289,7 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
     C, d = part_constraints(pwa_trace.partitions)
     A, b = dyn_constraints(pwa_trace.models)
     pA, pb = prop_constraints(num_dims, prop, len(pwa_trace.partitions))
+    #embed()
 
     # num vars are the same
     assert(C.shape[1] == A.shape[1])
@@ -428,7 +429,7 @@ def generic_lp(solver, A_ub, b_ub):
 def reshape_x(x, trace_len):
     assert(x.ndim == 1)
     num_vars = len(x)//trace_len
-    return np.reshape(num_vars, trace_len)
+    return np.reshape(x, (trace_len, num_vars))
 
 
 # raise an exception as soon as the first lp fails...better than

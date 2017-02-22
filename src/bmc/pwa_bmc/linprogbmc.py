@@ -41,18 +41,23 @@ class BMC(BMCSpec):
         self.prop = prop
 
         self.CE_gen = None
-        #self.last_trace = None
-        self.last_pwa_trace = None
-        self.last_X0 = None
+        self.pwa_trace = None
+        #self.X0 = None
 
+        return None
+
+    def compute_next_trace(self):
+        try:
+            next(self.CE_gen)
+        except StopIteration:
+            pass
         return None
 
     def check(self, *args):
         if self.CE_gen is None:
             self.CE_gen = self.get_CE_gen()
-            # check
-            self.last_pwa_trace, self.last_X0 = next(self.CE_gen)
-            return InvarStatus.Safe if self.last_pwa_trace is None else InvarStatus.Unsafe
+            self.compute_next_trace()
+            return InvarStatus.Safe if self.pwa_trace is None else InvarStatus.Unsafe
         else:
             raise err.Fatal('check should be called only once!')
 
@@ -62,13 +67,10 @@ class BMC(BMCSpec):
         #return self.last_trace
 
     def gen_new_disc_trace(self):
-        raise NotImplementedError
-        # check
-        self.last_pwa_trace, self.last_X0 = next(self.CE_gen)
-        return None
+        self.compute_next_trace()
 
     def get_pwa_trace(self):
-        return self.last_pwa_trace
+        return self.pwa_trace
 
     #def get_last_X0(self):
     #    return self.last_X0
@@ -79,16 +81,23 @@ class BMC(BMCSpec):
             ptrace = [self.pwa_model.node_p(qi) for qi in path]
             mtrace = [self.pwa_model.edge_m((qi, qj)) for qi, qj in U.pairwise(path)]
             pwa_trace = PWATRACE(partitions=ptrace, models=mtrace)
-            #TODO: replace with feasible()
             x_array = azp.feasible(self.num_dims, self.prop, pwa_trace)
-            self.trace = Trace(x_array, pwa_trace)
-            if x_array:
+            if x_array is not None:
+                self.trace = Trace(x_array, pwa_trace)
                 print('Model Found')
-                ret_val = azp.overapprox_x0(self.num_dims, self.prop, pwa_trace)
-                yield pwa_trace, ret_val
+                #ret_val = azp.overapprox_x0(self.num_dims, self.prop, pwa_trace)
+                #self.pwa_trace, self.X0 = pwa_trace, ret_val
+                self.pwa_trace = pwa_trace
+                yield
+            else:
+                #self.tace, self.pwa_trace, self.X0 = None, None, None
+                self.trace, self.pwa_trace = None, None
         return
 
     def print_all_CE(self, d):
+        # XXX:Works OK...but remove in the future
+        raise NotImplementedError
+
         path_gen = self.pwa_model.get_all_path_generator(self.sources, self.targets)
 
         print('')
@@ -162,7 +171,6 @@ class Trace(TraceSimple):
         self.pwa_trace = pwa_trace
 
     def to_array(self):
-        embed()
         return self.x_array
 
     def __getitem__(self, idx):

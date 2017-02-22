@@ -8,8 +8,6 @@ import scipy.linalg as linalg
 from bmc.helpers.expr2str import Expr2Str
 from . import saltrans_dft as slt_dft
 
-PWATRACE = collections.namedtuple('pwatrace', 'partitions models')
-
 logger = logging.getLogger(__name__)
 
 PWA_TRANS = collections.namedtuple('TransitionID', ('p pnext m l lnext'))
@@ -177,8 +175,7 @@ def reset_cell_true():
 
 class Pwa2Sal(object):
 
-    def __init__(self, module_name, init_cons, final_cons, pwa_model,
-                 vs, init_ps, final_ps):
+    def __init__(self, module_name, init_cons, final_cons, pwa_model, vs, init_ps, final_ps):
         self.module_name = module_name
         self.init_cons = init_cons
         self.final_cons = final_cons
@@ -260,3 +257,13 @@ class Pwa2Sal(object):
         partitions.append(s2p[tid].pnext)
 
         return PWATRACE(partitions, models)
+
+
+class PWATRACE(object):
+    def __init__(self, partitions, models):
+        self.partitions = partitions
+        self.models = models
+        return
+
+    def __len__(self):
+        return len(self.partitions)

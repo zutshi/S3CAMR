@@ -73,4 +73,6 @@ def linprog(obj, A_ub, b_ub, exact=False):
     #lp.write(prob='glpk_out')
     # TODO:double check
     x = [col.value for col in lp.cols]
+    #print(A_ub.shape, b_ub.shape)
+    #print('x len = ', len(x), lp.status)
     return OPTRES(lp.obj.value, x, lp.status, lp.status == 'opt')
