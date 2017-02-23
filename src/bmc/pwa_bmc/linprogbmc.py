@@ -42,9 +42,21 @@ class BMC(BMCSpec):
 
         self.CE_gen = None
         self.pwa_trace = None
-        #self.X0 = None
 
         return None
+
+    def trace_gen(self):
+        path_gen = self.pwa_model.get_all_path_generator(self.sources, self.targets)
+        for path in path_gen:
+            ptrace = [self.pwa_model.node_p(qi) for qi in path]
+            mtrace = [self.pwa_model.edge_m((qi, qj)) for qi, qj in U.pairwise(path)]
+            pwa_trace = PWATRACE(partitions=ptrace, models=mtrace)
+            x_array = azp.feasible(self.num_dims, self.prop, pwa_trace)
+            if x_array is not None:
+                concrete_trace = ConcreteTrace(x_array, pwa_trace)
+                print('Model Found')
+                yield concrete_trace, pwa_trace
+        return
 
     def compute_next_trace(self):
         try:
@@ -83,7 +95,7 @@ class BMC(BMCSpec):
             pwa_trace = PWATRACE(partitions=ptrace, models=mtrace)
             x_array = azp.feasible(self.num_dims, self.prop, pwa_trace)
             if x_array is not None:
-                self.trace = Trace(x_array, pwa_trace)
+                self.trace = ConcreteTrace(x_array, pwa_trace)
                 print('Model Found')
                 #ret_val = azp.overapprox_x0(self.num_dims, self.prop, pwa_trace)
                 #self.pwa_trace, self.X0 = pwa_trace, ret_val
@@ -163,7 +175,7 @@ class QGraph(graph_class(gopts.graph_lib)):
         self.final = set()
 
 
-class Trace(TraceSimple):
+class ConcreteTrace(TraceSimple):
     """Simple Trace: provides minimal functionality"""
 
     def __init__(self, x_array, pwa_trace):

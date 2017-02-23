@@ -120,7 +120,7 @@ class TopLevelAbs:
         print('refine:', self.refinement_factor)
         print('deltaT:', self.delta_t)
         print('TH:', self.T)
-        print('num traces:', self.N)
+        print('num segments:', self.N)
         print('=' * 50)
 
         logger.debug('new abstraction created')

@@ -3,14 +3,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import collections
-
 import glpk
+
+import linprog.spec as spec
 
 #from IPython import embed
 
-# Tuple contains lp results. It follows the scipy convention
-OPTRES = collections.namedtuple('optres', ('fun', 'x', 'status', 'success'))
 
 EPS = 1e-5
 
@@ -75,4 +73,4 @@ def linprog(obj, A_ub, b_ub, exact=False):
     x = [col.value for col in lp.cols]
     #print(A_ub.shape, b_ub.shape)
     #print('x len = ', len(x), lp.status)
-    return OPTRES(lp.obj.value, x, lp.status, lp.status == 'opt')
+    return spec.OPTRES(lp.obj.value, x, lp.status, lp.status == 'opt')

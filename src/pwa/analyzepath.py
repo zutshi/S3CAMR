@@ -14,6 +14,7 @@ from globalopts import opts as gopts
 import constraints as cons
 
 import settings
+import linprog.linprog as linprog
 
 from IPython import embed
 
@@ -285,7 +286,7 @@ def truncate(*args):
     return (trunc_array(X) for X in args)
 
 
-def feasible(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
+def pwatrace2lincons(pwa_trace, num_dims, prop):
     C, d = part_constraints(pwa_trace.partitions)
     A, b = dyn_constraints(pwa_trace.models)
     pA, pb = prop_constraints(num_dims, prop, len(pwa_trace.partitions))
@@ -297,37 +298,42 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
 
     A_ub = np.vstack((C, A, pA))
     b_ub = np.hstack((d, b, pb))
+    return A_ub, b_ub
 
-    num_opt_vars = A.shape[1]
 
+def lpsoln2x(x, trace_len):
+    '''converts solution of lp: a vector to a concrete trace: numpy
+    array'''
+    x = np.array(x)
+    assert(x.ndim == 1)
+    num_vars = len(x)//trace_len
+    return np.reshape(x, (trace_len, num_vars))
+
+
+#@memoize
+def lpfun(solver):
+    return linprog.factory(solver)
+
+
+def feasible(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
+    A_ub, b_ub = pwatrace2lincons(pwa_trace, num_dims, prop)
+
+    num_opt_vars = A_ub.shape[1]
     #nvars = num_dims.x + num_dims.pi
 
     A_ub, b_ub = truncate(A_ub, b_ub)
-    lp_fun = generic_lp(solver, A_ub, b_ub)
     obj = np.zeros(num_opt_vars)
-    res = lp_fun(obj)
 
-    if res.success:
-        return reshape_x(np.array(res.x), len(pwa_trace))
-    else:
-        if settings.debug:
-            print('LP failed')
-        return None
+    res = lpfun(solver)(obj, A_ub, b_ub)
+
+    return lpsoln2x(res.x, len(pwa_trace)) if res.success else None
 
 
+#TODO: ugly function
 def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
-    C, d = part_constraints(pwa_trace.partitions)
-    A, b = dyn_constraints(pwa_trace.models)
-    pA, pb = prop_constraints(num_dims, prop, len(pwa_trace.partitions))
+    A_ub, b_ub = pwatrace2lincons(pwa_trace, num_dims, prop)
 
-    # num vars are the same
-    assert(C.shape[1] == A.shape[1])
-    assert(C.shape[1] == pA.shape[1])
-
-    A_ub = np.vstack((C, A, pA))
-    b_ub = np.hstack((d, b, pb))
-
-    num_opt_vars = A.shape[1]
+    num_opt_vars = A_ub.shape[1]
 
     nvars = num_dims.x + num_dims.pi
 
@@ -346,9 +352,7 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
 
     A_ub, b_ub = truncate(A_ub, b_ub)
 
-    lp_fun = generic_lp(solver, A_ub, b_ub)
-    res = solve_mult_lp(lp_fun, directions_ext)
-    #res = lp_fun(solver, A_ub, b_ub, directions_ext)
+    res = solve_mult_lp(lpfun(solver), directions_ext, A_ub, b_ub)
 
     l = len(res)
     assert(l % 2 == 0)
@@ -394,50 +398,14 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
     return ret_val
 
 
-def generic_lp(solver, A_ub, b_ub):
-    if solver == 'glpk':
-        from linprog import pyglpklp
-        #res = [pyglpklp.linprog(obj, A_ub, b_ub) for obj in directions_ext]
-        lp_fun = ft.partial(pyglpklp.linprog, A_ub=A_ub, b_ub=b_ub)
-
-    elif solver == 'gurobi':
-        from linprog import pygurobi
-        #res = [pygurobi.linprog(obj, A_ub, b_ub) for obj in directions_ext]
-        lp_fun = ft.partial(pygurobi.linprog, A_ub=A_ub, b_ub=b_ub)
-
-    elif solver == 'scipy':
-        import scipy.optimize as spopt
-        disp_opt = True if settings.debug else False
-        # columns of A_ub
-        num_opt_vars = A_ub.shape[1]
-        bounds = [(-np.inf, np.inf)] * num_opt_vars
-#         res = [
-#                spopt.linprog(obj, A_ub=A_ub, b_ub=b_ub,
-#                              bounds=bounds, method='simplex',
-#                              options={'disp': disp_opt})
-#                for obj in directions_ext]
-        lp_fun = ft.partial(spopt.linprog, A_ub=A_ub, b_ub=b_ub,
-                            bounds=bounds, method='simplex',
-                            options={'disp': disp_opt})
-    else:
-        raise NotImplementedError('solver selected: {}'.format(solver))
-
-    return lp_fun
-
-
-# TODO: make this part of generic_lp transformation
-def reshape_x(x, trace_len):
-    assert(x.ndim == 1)
-    num_vars = len(x)//trace_len
-    return np.reshape(x, (trace_len, num_vars))
-
-
 # raise an exception as soon as the first lp fails...better than
 # solving all directions when the problem in infeasible
-def solve_mult_lp(lp_fun, directions_ext):
+def solve_mult_lp(lp_fun, directions_ext, A_ub, b_ub):
     res = []
     for obj in directions_ext:
-        ret_val = lp_fun(obj)
+        # A_ub and b_ub do not change in the for loop...can do a warm
+        # restart? or some kind of caching?
+        ret_val = lp_fun(obj, A_ub, b_ub)
         if not ret_val.success:
             raise LpFaliure('lp solver failed')
         else:

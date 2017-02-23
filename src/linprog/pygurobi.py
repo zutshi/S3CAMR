@@ -1,17 +1,11 @@
-
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import collections
-
 import gurobipy as GB
 #from IPython import embed
-
-# Tuple contains lp results. It follows the scipy convention
-OPTRES = collections.namedtuple('optres', ('fun', 'x', 'status', 'success'))
-
+import linprog.spec as spec
 
 # TODO: make it handle multiple objectives?
 # Specifially if just changing an obj offers a warm restart? It will
@@ -85,10 +79,10 @@ def linprog(obj, A_ub, b_ub):
 
         # TODO:double check
         x = [v.x for v in Vars]
-        res = OPTRES(model.objVal, x, model.status, model.status == GB.GRB.Status.OPTIMAL)
+        res = spec.OPTRES(model.objVal, x, model.status, model.status == GB.GRB.Status.OPTIMAL)
     else:
         # TODO: Make dummy_obj = None?
         dummy_obj = 0
-        res = OPTRES(dummy_obj, None, model.status, model.status == GB.GRB.Status.OPTIMAL)
+        res = spec.OPTRES(dummy_obj, None, model.status, model.status == GB.GRB.Status.OPTIMAL)
 
     return res
