@@ -3,8 +3,6 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
-import functools as ft
-
 import numpy as np
 import scipy.linalg as linalg
 import sympy as sym
@@ -310,6 +308,7 @@ def lpsoln2x(x, trace_len):
     return np.reshape(x, (trace_len, num_vars))
 
 
+#TODO: getting lpsolver every time a linprog is executed!
 #@memoize
 def lpfun(solver):
     return linprog.factory(solver)

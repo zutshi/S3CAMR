@@ -37,7 +37,6 @@ from IPython import embed
 
 from globalopts import opts as gopts
 
-TESTCODE = False
 
 #np.set_printoptions(suppress=True, precision=2)
 
@@ -364,73 +363,10 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
     # flush all plots: must block
     gopts.plotting.show(block=True)
 
-#     if TESTCODE:
-
-
-#         bmc = lala(pwa_sys_prop.pwa_model, depth,
-#                    pwa_sys_prop.init_partitions,
-#                    pwa_sys_prop.final_partitions,
-#                    sys.sys_name, 'dft', AA, sys, prop, sp)
-#         list(bmc.print_all_CE(0))
-
-#         qgraph_ref_gen = bmc.print_all_CE(1)
-#         qgraphs = list(qgraph_ref_gen)
-
-#         for qgraph_ref in qgraphs:
-#             U.pause('qgraph refined, checking it')
-#             pwa_sys_prop, depth = get_pwa_system(sys, prop, sp, qgraph_ref)
-#             bmc =\
-#                 lala(pwa_sys_prop.pwa_model, depth,
-#                      pwa_sys_prop.init_partitions,
-#                      pwa_sys_prop.final_partitions,
-#                      sys.sys_name, 'dft', AA, sys, prop, sp)
-#             qqgraph_ref_gen = bmc.print_all_CE(2)
-#             qqgraphs = list(qqgraph_ref_gen)
-#             if not qqgraphs:
-#                 U.pause('refinement fails: NO CE!')
-
-
-# #         bmc = lala(pwa_sys_prop.pwa_model, depth,
-# #                    pwa_sys_prop.init_partitions,
-# #                    pwa_sys_prop.final_partitions,
-# #                    sys.sys_name, 'dft', AA, sys, prop, sp)
-# #         list(bmc.print_all_CE(0))
-#         exit()
-
     check4CE(pwa_sys_prop.pwa_model, depth,
              pwa_sys_prop.init_partitions,
              pwa_sys_prop.final_partitions,
              sys.sys_name, 'dft', AA, sys, prop, sp)
-
-
-def lala(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
-
-    # Extend both init set and final set to include inputs if any
-    dummy_cons = top2ic(AA.num_dims.pi) # T <=> [-inf, inf]
-    safety_prop = IntervalCons.concatenate(sp.final_cons, dummy_cons)
-    init_cons = (sp.init_cons if AA.num_dims.pi == 0
-                 else IntervalCons.concatenate(
-                     sp.init_cons,
-                     sp.pi_ref.i_cons))
-
-    xs = ['x'+str(i) for i in range(AA.num_dims.x)]
-    ws = ['w'+str(i) for i in range(AA.num_dims.pi)]
-    # Order is important
-    vs = xs + ws
-
-    bmc = BMC.factory(
-            gopts.bmc_engine,
-            sys,
-            prop,
-            vs,
-            pwa_model, init_cons, safety_prop,
-            init_partitions,
-            prop_partitions,
-            gopts.construct_path,
-            '{}_{}'.format(sys_name, model_type),
-            model_type)
-
-    return bmc
 
 
 def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
@@ -461,39 +397,82 @@ def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model
             '{}_{}'.format(sys_name, model_type),
             model_type)
 
-    status = bmc.check(depth)
-    if status == InvarStatus.Safe:
-        print("The system has been determined to be 'Safe'")
-        exit()
-    elif status == InvarStatus.Unsafe:
-        #bmc_trace = bmc.get_last_trace()
-        #print(bmc_trace)
-        #print(bmc_trace.to_array())
-        bmc_trace = bmc.get_trace()
-        pwa_trace = bmc.get_pwa_trace()
-        #xw_array = bmc_trace.to_array()
-        #pwa_trace = bmc.get_last_traces()
-        while bmc_trace is not None:
-            #pwa_trace = bmc.get_last_pwa_trace()
-            if settings.debug:
-                print(bmc_trace)
-                print(pwa_trace)
-            print('Unsafe behavior found...trying to concretize...')
-            #verify_bmc_trace(AA, sys, prop, sp, bmc.trace, xs, ws)
-            #xw_array = bmc_trace.to_array()
-            verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace)
-            bmc.gen_new_disc_trace()
-            #bmc_trace = bmc.get_last_trace()
-            #xw_array, pwa_trace = bmc.get_last_traces()
-            bmc_trace = bmc.get_trace()
-            pwa_trace = bmc.get_pwa_trace()
-            #U.pause()
+    traces = bmc.trace_generator(depth)
+    num_traces = 0
+    for bmc_trace, pwa_trace in traces:
+        num_traces += 1
+        print('Unsafe behavior found...trying to concretize...')
+        if settings.debug:
+            print(bmc_trace)
+            print(pwa_trace)
+        verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace)
 
-    elif status == InvarStatus.Unknown:
-        print('Unknown...exiting')
-        exit()
-    else:
-        raise err.Fatal('Internal')
+    if num_traces == 0:
+        print("The system has been determined to be 'Safe'")
+    exit()
+
+
+# def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
+
+#     # TODO: Why?
+#     # Extend both init set and final set to include inputs if any
+#     dummy_cons = top2ic(AA.num_dims.pi) # T <=> [-inf, inf]
+#     final_cons2 = IntervalCons.concatenate(sp.final_cons, dummy_cons)
+#     init_cons = (sp.init_cons if AA.num_dims.pi == 0
+#                  else IntervalCons.concatenate(
+#                      sp.init_cons,
+#                      sp.pi_ref.i_cons))
+
+#     xs = ['x'+str(i) for i in range(AA.num_dims.x)]
+#     ws = ['w'+str(i) for i in range(AA.num_dims.pi)]
+#     # Order is important
+#     vs = xs + ws
+
+#     bmc = BMC.factory(
+#             gopts.bmc_engine,
+#             sys,
+#             prop,
+#             vs,
+#             pwa_model, init_cons, final_cons2,
+#             init_partitions,
+#             prop_partitions,
+#             gopts.construct_path,
+#             '{}_{}'.format(sys_name, model_type),
+#             model_type)
+
+#     status = bmc.check(depth)
+#     if status == InvarStatus.Safe:
+#         print("The system has been determined to be 'Safe'")
+#         exit()
+#     elif status == InvarStatus.Unsafe:
+#         #bmc_trace = bmc.get_last_trace()
+#         #print(bmc_trace)
+#         #print(bmc_trace.to_array())
+#         bmc_trace = bmc.get_trace()
+#         pwa_trace = bmc.get_pwa_trace()
+#         #xw_array = bmc_trace.to_array()
+#         #pwa_trace = bmc.get_last_traces()
+#         while bmc_trace is not None:
+#             #pwa_trace = bmc.get_last_pwa_trace()
+#             if settings.debug:
+#                 print(bmc_trace)
+#                 print(pwa_trace)
+#             print('Unsafe behavior found...trying to concretize...')
+#             #verify_bmc_trace(AA, sys, prop, sp, bmc.trace, xs, ws)
+#             #xw_array = bmc_trace.to_array()
+#             verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace)
+#             bmc.gen_new_disc_trace()
+#             #bmc_trace = bmc.get_last_trace()
+#             #xw_array, pwa_trace = bmc.get_last_traces()
+#             bmc_trace = bmc.get_trace()
+#             pwa_trace = bmc.get_pwa_trace()
+#             #U.pause()
+
+#     elif status == InvarStatus.Unknown:
+#         print('Unknown...exiting')
+#         exit()
+#     else:
+#         raise err.Fatal('Internal')
 
 
 def verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace):
@@ -1467,3 +1446,67 @@ def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
 #     else:
 #         return [(rm, [q], e_pc)]
 
+
+# def lala(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
+
+#     # Extend both init set and final set to include inputs if any
+#     dummy_cons = top2ic(AA.num_dims.pi) # T <=> [-inf, inf]
+#     safety_prop = IntervalCons.concatenate(sp.final_cons, dummy_cons)
+#     init_cons = (sp.init_cons if AA.num_dims.pi == 0
+#                  else IntervalCons.concatenate(
+#                      sp.init_cons,
+#                      sp.pi_ref.i_cons))
+
+#     xs = ['x'+str(i) for i in range(AA.num_dims.x)]
+#     ws = ['w'+str(i) for i in range(AA.num_dims.pi)]
+#     # Order is important
+#     vs = xs + ws
+
+#     bmc = BMC.factory(
+#             gopts.bmc_engine,
+#             sys,
+#             prop,
+#             vs,
+#             pwa_model, init_cons, safety_prop,
+#             init_partitions,
+#             prop_partitions,
+#             gopts.construct_path,
+#             '{}_{}'.format(sys_name, model_type),
+#             model_type)
+
+#     return bmc
+
+#     if TESTCODE:
+
+
+#         bmc = lala(pwa_sys_prop.pwa_model, depth,
+#                    pwa_sys_prop.init_partitions,
+#                    pwa_sys_prop.final_partitions,
+#                    sys.sys_name, 'dft', AA, sys, prop, sp)
+#         list(bmc.print_all_CE(0))
+
+#         qgraph_ref_gen = bmc.print_all_CE(1)
+#         qgraphs = list(qgraph_ref_gen)
+
+#         for qgraph_ref in qgraphs:
+#             U.pause('qgraph refined, checking it')
+#             pwa_sys_prop, depth = get_pwa_system(sys, prop, sp, qgraph_ref)
+#             bmc =\
+#                 lala(pwa_sys_prop.pwa_model, depth,
+#                      pwa_sys_prop.init_partitions,
+#                      pwa_sys_prop.final_partitions,
+#                      sys.sys_name, 'dft', AA, sys, prop, sp)
+#             qqgraph_ref_gen = bmc.print_all_CE(2)
+#             qqgraphs = list(qqgraph_ref_gen)
+#             if not qqgraphs:
+#                 U.pause('refinement fails: NO CE!')
+
+
+# #         bmc = lala(pwa_sys_prop.pwa_model, depth,
+# #                    pwa_sys_prop.init_partitions,
+# #                    pwa_sys_prop.final_partitions,
+# #                    sys.sys_name, 'dft', AA, sys, prop, sp)
+# #         list(bmc.print_all_CE(0))
+#         exit()
+
+#TESTCODE = False

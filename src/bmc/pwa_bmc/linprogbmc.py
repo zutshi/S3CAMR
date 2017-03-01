@@ -45,7 +45,9 @@ class BMC(BMCSpec):
 
         return None
 
-    def trace_gen(self):
+    def trace_generator(self, depth):
+        # TODO: make the graph search depth bounded?
+        err.warn('ignoring depth')
         path_gen = self.pwa_model.get_all_path_generator(self.sources, self.targets)
         for path in path_gen:
             ptrace = [self.pwa_model.node_p(qi) for qi in path]
@@ -163,9 +165,6 @@ class BMC(BMCSpec):
                     qgraph.add_edge(qik, qjk)
 
         return qgraph
-
-    def trace_generator(self):
-        raise NotImplementedError
 
 
 class QGraph(graph_class(gopts.graph_lib)):

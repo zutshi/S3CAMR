@@ -110,7 +110,13 @@ class BMC(BMCSpec):
 
         return
 
+    def trace_generator(self):
+        for i in range(1):
+            self.check()
+            yield
+
     def check(self, depth):
+        raise NotImplementedError
         yices2_not_found = 'yices2: not found'
 
         self.dump()
@@ -167,10 +173,12 @@ class BMC(BMCSpec):
         return
 
     def get_trace(self):
+        raise NotImplementedError
         """Returns the last trace found or None if no trace exists."""
         return self.trace
 
     def get_last_traces(self):
+        raise NotImplementedError
         # Code works, but should be removed due to change in
         # interfaces
         raise NotImplementedError
@@ -180,6 +188,7 @@ class BMC(BMCSpec):
             return None, None
 
     def get_pwa_trace(self):
+        raise NotImplementedError
         """Converts a bmc trace to a sequence of sub_models in the original pwa.
 
         Parameters
@@ -222,6 +231,7 @@ class BMC(BMCSpec):
         return self.pwa2sal.trace(transitions)
 
     def gen_new_disc_trace(self):
+        raise NotImplementedError
         """makes trace = None, signifying no more traces..."""
         self.trace = None
         return
