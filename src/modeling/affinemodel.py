@@ -57,6 +57,7 @@ class RegressionModel(object):
         self.udet = small_data_set(x)
         if self.udet:
             raise UdetError
+        self.X, self.Y = x, y
 
     @abc.abstractproperty
     def A(self):

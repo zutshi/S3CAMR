@@ -25,6 +25,7 @@ from graphs.graph import factory as graph_factory
 from graphs.graph import class_factory as graph_class
 from pwa import analyzepath as azp
 from . import state
+import modeling.cluster as CLST
 
 import settings
 
@@ -760,7 +761,7 @@ def mdl_1relational(prop, tol, step_sim, qgraph, q, X, Y):
     return ms
 
 
-def mdl(AA, prop, tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
+def mdl_old(AA, prop, tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
     X, Y = XY
     assert(X.shape[1] == q.dim)
     assert(Y_.shape[1] == q.dim)
@@ -828,7 +829,7 @@ def mdl(AA, prop, tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
                     gopts.plotting.plot_abs_states(AA, prop, [qi.a])
 
                 if any(sat):
-                    rm_qseq = mdl(AA, prop, tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k+1, kmin, kmax)
+                    rm_qseq = mdl_old(AA, prop, tol, step_sim, qgraph, qi, (X[sat], Y[sat]), Y__[sat], k+1, kmin, kmax)
                     l = [(rm_, [qi]+qseq_, e_pc_, status_)
                          for rm_, qseq_, e_pc_, status_ in rm_qseq]
                     ms.extend(l)
@@ -929,7 +930,7 @@ def q_affine_models_old(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q)
             return [dummy_sub_model(q)]
 
         try:
-            regression_models = mdl(AA, prop, tol, step_sim, qgraph, q, (X, Y), X, k=0, kmin=KMIN, kmax=KMAX)
+            regression_models = mdl_old(AA, prop, tol, step_sim, qgraph, q, (X, Y), X, k=0, kmin=KMIN, kmax=KMAX)
             # we are done!
             if regression_models:
                 try_again = False
@@ -953,7 +954,7 @@ def q_affine_models_old(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q)
     # try again on failure, and settle with non relational models
     if not regression_models:
         err.warn('No model found for q: {}'.format(q))
-        regression_models = mdl(AA, prop, np.inf, step_sim, qgraph, q, (X, Y), X, k=0, kmin=0, kmax=1)
+        regression_models = mdl_old(AA, prop, np.inf, step_sim, qgraph, q, (X, Y), X, k=0, kmin=0, kmax=1)
         assert(regression_models)
         # No model found, get a non-relational model as the worst case
         pwa_non_relational = True
@@ -1096,7 +1097,11 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
         e = qi.errorQ(include_err, rm)
         dmap = rel.DiscreteAffineMap(A, b, e)
 
-        C, d = qi.ival_constraints.poly()
+        #C, d = qi.ival_constraints.poly()
+        #partition_cluster = CLST.Q(qi)
+        #partition_cluster = CLST.Box(rm.X)
+        C, d = CLST.factory()(q, rm.X)
+
         p = pwa.Partition(C, d, qi)
 
         future_partitions = []
@@ -1114,6 +1119,7 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
         sub_model.status = status
         sub_models.append(sub_model)
     return sub_models
+
 
 def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
     """Build a time continuous pwa model

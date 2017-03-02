@@ -760,6 +760,7 @@ def main():
     LIST_OF_PLOT_LIBS = ['mp', 'pg']
     LIST_OF_BMC = ['sal', 's3camsmt', 'pwa']
     LIST_OF_LP = ['scipy', 'glpk', 'gurobi']
+    LIST_OF_CLUSTERING = ['cell', 'box', 'hull']
 
     DEF_BMC_PREC = 4
     DEF_BMC = 'sal'
@@ -767,6 +768,7 @@ def main():
     DEF_MAX_PATHS = 100
     DEF_GRAPH_LIB = 'nx'
     DEF_VIO_LOG = 'vio.log'
+    DEF_CLUSTERING = 'cell'
 
     parser = argparse.ArgumentParser(
             description='S3CAM',
@@ -881,6 +883,11 @@ def main():
                         default=None,
                         help='output directory')
 
+    parser.add_argument('--clustering', type=str,
+                        default=DEF_CLUSTERING,
+                        choices=LIST_OF_CLUSTERING,
+                        help='clustering method')
+
 #    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     #print(args)
@@ -959,6 +966,7 @@ def main():
     # Default bmc prec
     opts.bmc_prec = args.bmc_prec
     opts.par = args.par
+    opts.clustering = args.clustering
 
     sys, prop = loadsystem.parse(filepath, args.pvt_init_data)
     if args.prop_check:
