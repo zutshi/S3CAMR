@@ -110,13 +110,14 @@ class BMC(BMCSpec):
 
         return
 
-    def trace_generator(self):
+    def trace_generator(self, depth):
         for i in range(1):
-            self.check()
-            yield
+            status = self.check(depth)
+            if status == InvarStatus.Unsafe:
+                yield self.trace, self.get_pwa_trace()
+            return
 
     def check(self, depth):
-        raise NotImplementedError
         yices2_not_found = 'yices2: not found'
 
         self.dump()
@@ -188,7 +189,6 @@ class BMC(BMCSpec):
             return None, None
 
     def get_pwa_trace(self):
-        raise NotImplementedError
         """Converts a bmc trace to a sequence of sub_models in the original pwa.
 
         Parameters
@@ -235,9 +235,6 @@ class BMC(BMCSpec):
         """makes trace = None, signifying no more traces..."""
         self.trace = None
         return
-
-    def trace_generator(self):
-        raise NotImplementedError
 
 
 ################################################
