@@ -7,7 +7,7 @@ from __future__ import unicode_literals
 
 
 from globalopts import opts as gopts
-from pwa.pwagraph import convert_pwarel2pwagraph
+#from pwa.pwagraph import convert_pwarel2pwagraph
 
 
 # def factory(bmc_engine_id,
@@ -55,8 +55,8 @@ def factory(bmc_engine,
         from .sal_bmc import salbmc
         return salbmc.BMC(
              vs,
-             #pwa_model,
-             convert_pwarel2pwagraph(pwa_model),
+             pwa_model,
+             #convert_pwarel2pwagraph(pwa_model),
              init_cons,
              final_cons,
              init_ps,
@@ -90,7 +90,8 @@ def factory(bmc_engine,
              sys,
              prop,
              vs,
-             convert_pwarel2pwagraph(pwa_model),
+             pwa_model,
+             #convert_pwarel2pwagraph(pwa_model),
              init_cons,
              final_cons,
              init_ps,

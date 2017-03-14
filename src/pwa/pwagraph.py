@@ -29,15 +29,15 @@ class PWAGraph(graph_class(gopts.graph_lib)):
         super(self.__class__, self).__init__()
 
     def add_relation(self, p1, p2, m):
-        assert(not self.has_node(p1.pID))
-        assert(not self.has_node(p2.pID))
-        if not self.G.has_node(p1.pID):
-            self.add_node(p1.pID, p=p1)
-        if not self.has_node(p2.pID):
-            self.add_node(p2.pID, p=p2)
+        #assert(not self.has_node(p1.ID))
+        #assert(not self.has_node(p2.ID))
+        if not self.has_node(p1.ID):
+            self.add_node(p1.ID, p=p1)
+        if not self.has_node(p2.ID):
+            self.add_node(p2.ID, p=p2)
         # sm.p -> pi
-        assert(not self.has_edge(p1.pID, p2.pID))
-        self.add_edge(p1.pID, p2.pID, m=m)
+        assert(not self.has_edge(p1.ID, p2.ID))
+        self.add_edge(p1.ID, p2.ID, m=m)
 
     def node_p(self, n):
         return self.node_attrs(n)['p']
@@ -61,20 +61,3 @@ class Partition(modelspec.Partition):
 
 class DiscreteAffineMap(modelspec.DiscreteAffineMap):
     pass # calls super
-
-
-# ignores the constraints on pnexts: p_future
-def convert_pwarel2pwagraph(pwa_rel_model):
-    assert(isinstance(pwa_rel_model, R.PWARelational))
-
-    pwa_graph = PWAGraph()
-
-    for sm in pwa_rel_model:
-        assert(isinstance(sm, R.KPath))
-        assert(len(sm.pnexts) >= 1)
-        #TODO: why more than 1?
-        assert(len(sm.pnexts) == 1)
-        for pi in sm.pnexts:
-            pwa_graph.add_relation(sm.p, pi, sm.m)
-
-    return pwa_graph

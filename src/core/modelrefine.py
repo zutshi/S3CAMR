@@ -26,6 +26,8 @@ from graphs.graph import class_factory as graph_class
 from pwa import analyzepath as azp
 from . import state
 import modeling.cluster as CLST
+import pwa.pwagraph as pwagraph
+import pwa.relational as R
 
 import settings
 
@@ -332,6 +334,23 @@ def get_pwa_system(sys, prop, sp, qgraph):
     return pwa_sys_prop, depth
 
 
+# ignores the constraints on pnexts: p_future
+def convert_pwarel2pwagraph(pwa_rel_model):
+    assert(isinstance(pwa_rel_model, R.PWARelational))
+
+    pwa_graph = pwagraph.PWAGraph()
+
+    for sm in pwa_rel_model:
+        assert(isinstance(sm, R.KPath))
+        assert(len(sm.pnexts) >= 1)
+        #TODO: why more than 1?
+        assert(len(sm.pnexts) == 1)
+        for pi in sm.pnexts:
+            pwa_graph.add_relation(sm.p, pi, sm.m)
+
+    return pwa_graph
+
+
 def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, sys_sim, sys, prop):
 
     # initialize Qxw class
@@ -364,7 +383,9 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
     # flush all plots: must block
     gopts.plotting.show(block=True)
 
-    return check4CE(pwa_sys_prop.pwa_model, depth,
+    pwa_graph = convert_pwarel2pwagraph(pwa_sys_prop.pwa_model)
+
+    return check4CE(pwa_graph, depth,
                     pwa_sys_prop.init_partitions,
                     pwa_sys_prop.final_partitions,
                     sys.sys_name, 'dft', AA, sys, prop, sp)
@@ -544,18 +565,7 @@ def refine_dmt_model_based(AA, error_paths, pi_seq_list, sp, sys_sim, bmc_engine
     ------
     does not handle pi_seq_list yet
     """
-    # Unmantained old code. Update before using
     raise NotImplementedError
-    # traversed_abs_state_set
-    tas = {state for path in error_paths for state in path}
-
-    pwa_models = build_pwa_dt_model(AA, tas, sp, sys_sim)
-
-    bmc = BMC.factory(bmc_engine)
-    prop = sp.final_cons
-
-    bmc.init(AA.num_dims.x, pwa_models, sp.init_cons, prop, 'vdp_dmt', 'dmt')
-    bmc.check()
 
 
 def build_pwa_model(sys, prop, qgraph, sp, model_type):
@@ -589,7 +599,7 @@ def build_pwa_model(sys, prop, qgraph, sp, model_type):
     init_partitions = set()
     final_partitions = set()
 
-    q2pid = collections.defaultdict(set)
+    #q2pid = collections.defaultdict(set)
     # for ever vertex (abs_state) in the graph
     for q in qgraph:
         if settings.debug:
@@ -598,29 +608,30 @@ def build_pwa_model(sys, prop, qgraph, sp, model_type):
             assert(sub_model is not None)
             # sub_model.pnexts[0] = sub_model.p.ID to enforce self loops
             print(U.colorize('{} -> {}, e%:{}, status: {}, e: {}, A:{}, b:{}'.format(
-                sub_model.p.pID,
-                [p.pID for p in sub_model.pnexts],
+                sub_model.p.ID,
+                [p.ID for p in sub_model.pnexts],
                 np.trunc(sub_model.max_error_pc),
                 sub_model_status(sub_model),
                 sub_model.m.error,
                 str(sub_model.m.A).replace('\n', ''),
                 sub_model.m.b)))
             pwa_model.add(sub_model)
-            q2pid[q].add(sub_model.p.pID)
+            #q2pid[q].add(sub_model.p.pID)
             #abs_state_models[abs_state] = sub_model
 
-    for q in qgraph:
         # Even if a state gets split, its recorded
         if q in qgraph.init:
             #init_partitions.add(ModelPartition(*q.poly(), part_id=q))
-            init_partitions.update(q2pid[q])
+            init_partitions.add(ModelPartition(*q.poly(), qi=q))
+            #init_partitions.update(q2pid[q])
         # TODO: If we split a final cell to increase precision for
         # the transition to concrete error_states and break the
         # terminal self-loop, both will get recorded and get
         # weird.
         if q in qgraph.final:
             #final_partitions.add(ModelPartition(*q.poly(), part_id=q))
-            final_partitions.update(q2pid[q])
+            final_partitions.add(ModelPartition(*q.poly(), qi=q))
+            #final_partitions.update(q2pid[q])
 
     pwa_sys_prop = PWASYSPROP(pwa_model, init_partitions, final_partitions)
     return pwa_sys_prop
@@ -661,9 +672,9 @@ def draw_model(sys_name, pwa_model):
             #e_attr = {'label': np.round(sub_model.max_error_pc, 2)}
             error = np.trunc(sub_model.max_error_pc)
             color = 'red' if sub_model.status == KMAX_EXCEEDED else 'black'
-            G.add_edge(sub_model.p.pID, p_.pID, label=error, color=color)
-        G.node_attrs(sub_model.p.pID)['label'] = sub_model.p.pID
-        G.node_attrs(sub_model.p.pID)['tooltip'] = sub_model.p.qID.ival_constraints
+            G.add_edge(sub_model.p.ID, p_.ID, label=error, color=color)
+        G.node_attrs(sub_model.p.ID)['label'] = sub_model.p.ID
+        G.node_attrs(sub_model.p.ID)['tooltip'] = sub_model.p.ID.ival_constraints
 
     G.draw_graphviz(sys_name)
     #G.draw_mplib(sys_name)
@@ -1136,7 +1147,7 @@ class ModelPartition(pwa.Partition):
 
     def __init__(self, C, d, qi):
         super(self.__class__, self).__init__(C, d, qi)
-        self.pID = self.__class__.uid()
+        #self.pID = self.__class__.uid()
 
     @classmethod
     def uid(cls):

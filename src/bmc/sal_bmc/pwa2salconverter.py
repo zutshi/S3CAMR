@@ -219,8 +219,8 @@ class Pwa2Sal(object):
         for idx, relation in enumerate(pwa_graph.relations()):
             p1, p2, m = relation.p1, relation.p2, relation.m
             #assert(len(sub_model.pnexts) == 1)
-            l = getC(p1.pID)
-            lnext = getC(p2.pID)
+            l = getC(p1.ID)
+            lnext = getC(p2.ID)
 
             t = self.sal_transition(idx, p1, p2, m, vs, l, lnext)
             sal2pwa_map[t.name] = PWA_TRANS(p1, p2, m, l, lnext)

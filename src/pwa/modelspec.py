@@ -74,14 +74,14 @@ class Partition(object):
         self.d = d
         #TODO: change all qID to ID. Modified for now to catch any
         # errors resulting due to old code using ID in the wrong way
-        self.qID = part_id
+        self.ID = part_id
         return
 
     def __hash__(self):
-        return hash(self.qID)
+        return hash(self.ID)
 
     def __eq__(self, p):
-        return self.qID == p.qID if isinstance(p, self.__class__) else False
+        return self.ID == p.ID if isinstance(p, self.__class__) else False
 
     def __repr__(self):
         s = '({},{})'.format(self.C, self.d)
