@@ -59,14 +59,14 @@ def sal_run_cmd(sal_path, depth, sal_file, prop_name, opts=SalOpts()):
 
 
 class BMC(BMCSpec):
-    def __init__(self, vs, pwa_model, init_cons, final_cons,
+    def __init__(self, vs, pwa_graph, init_cons, final_cons,
                  init_ps, final_ps, fname_constructor, module_name, model_type):
         """__init__
 
         Parameters
         ----------
         vs : list of variables. Order is important.
-        pwa_model :
+        pwa_graph :
         init_cons :
         final_cons :
         module_name :
@@ -92,15 +92,15 @@ class BMC(BMCSpec):
         if model_type == 'dft':
             self.pwa2sal = pwa2sal.Pwa2Sal(
                     module_name, init_cons,
-                    final_cons, pwa_model, vs,
+                    final_cons, pwa_graph, vs,
                     init_ps, final_ps)
             self.sal_trans_sys = self.pwa2sal.trans_sys()
 
         elif model_type == 'dmt':
             raise NotImplementedError
-            dts = pwa_model.keys()
+            dts = pwa_graph.keys()
             self.sal_trans_sys = BMC.sal_module_dmt(
-                    dts, vs, pwa_model, init_cons, final_cons, module_name)
+                    dts, vs, pwa_graph, init_cons, final_cons, module_name)
         elif model_type == 'ct':
             raise NotImplementedError
         elif model_type == 'rel':

@@ -72,14 +72,16 @@ class Partition(object):
         '''
         self.C = C
         self.d = d
-        self.ID = part_id
+        #TODO: change all qID to ID. Modified for now to catch any
+        # errors resulting due to old code using ID in the wrong way
+        self.qID = part_id
         return
 
     def __hash__(self):
-        return hash(self.ID)
+        return hash(self.qID)
 
     def __eq__(self, p):
-        return self.ID == p.ID if isinstance(p, self.__class__) else False
+        return self.qID == p.qID if isinstance(p, self.__class__) else False
 
     def __repr__(self):
         s = '({},{})'.format(self.C, self.d)
@@ -118,7 +120,7 @@ class PartitionedDiscreteAffineModel(SubModelSpec):
         '''
         self.p = p
         self.m = m
-        self.ID = p.ID
+        #self.ID = ID
         return
 
     def sat(self, x):
@@ -127,6 +129,12 @@ class PartitionedDiscreteAffineModel(SubModelSpec):
     def predict(self, x):
         m = self.m
         return np.dot(m.A, x) + m.b
+
+#     def __hash__(self):
+#         return hash(self.ID)
+
+#     def __eq__(self, p):
+#         return self.ID == p.ID if isinstance(p, self.__class__) else False
 
     def __repr__(self):
         s = '({},{})'.format(self.p, self.m)

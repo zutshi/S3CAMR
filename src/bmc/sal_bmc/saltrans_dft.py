@@ -138,7 +138,7 @@ class SALTransSys(object):
             v=v, l=Expr2Str.float2str(iv.l[i]), h=Expr2Str.float2str(iv.h[i])) for i, v in enumerate(self.vs)]
         init_cons_str = ';'.join(s)
 
-        init_cells = [self.partid2Cid[p.ID] for p in self.init_ps]
+        init_cells = [self.partid2Cid[pID] for pID in self.init_ps]
         init_cells_str = '\n\tcell IN {' + ', '.join(init_cells) + '}'
 
         return init_cons_str + ';' + init_cells_str
@@ -171,7 +171,7 @@ class SALTransSys(object):
         state_cons = ' AND '.join(it.chain(
                                 *self.final_cons.linexpr_str(self.vs_)))
 
-        final_cells = (self.partid2Cid[p.ID] for p in self.final_ps)
+        final_cells = (self.partid2Cid[pID] for pID in self.final_ps)
         cell_cons = ' OR '.join("cell' = {}".format(c) for c in final_cells)
 
         prop_str = state_cons + ' AND ' + '({})'.format(cell_cons)

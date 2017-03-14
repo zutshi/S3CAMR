@@ -364,10 +364,10 @@ def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, s
     # flush all plots: must block
     gopts.plotting.show(block=True)
 
-    check4CE(pwa_sys_prop.pwa_model, depth,
-             pwa_sys_prop.init_partitions,
-             pwa_sys_prop.final_partitions,
-             sys.sys_name, 'dft', AA, sys, prop, sp)
+    return check4CE(pwa_sys_prop.pwa_model, depth,
+                    pwa_sys_prop.init_partitions,
+                    pwa_sys_prop.final_partitions,
+                    sys.sys_name, 'dft', AA, sys, prop, sp)
 
 
 def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
@@ -407,10 +407,13 @@ def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model
             print(bmc_trace)
             print(pwa_trace)
         verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace)
+        result = True
 
     if num_traces == 0:
         print("The system has been determined to be 'Safe'")
-    exit()
+        result = False
+
+    return result
 
 
 # def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model_type, AA, sys, prop, sp):
@@ -586,6 +589,7 @@ def build_pwa_model(sys, prop, qgraph, sp, model_type):
     init_partitions = set()
     final_partitions = set()
 
+    q2pid = collections.defaultdict(set)
     # for ever vertex (abs_state) in the graph
     for q in qgraph:
         if settings.debug:
@@ -594,24 +598,29 @@ def build_pwa_model(sys, prop, qgraph, sp, model_type):
             assert(sub_model is not None)
             # sub_model.pnexts[0] = sub_model.p.ID to enforce self loops
             print(U.colorize('{} -> {}, e%:{}, status: {}, e: {}, A:{}, b:{}'.format(
-                sub_model.p.ID,
-                [p.ID for p in sub_model.pnexts],
+                sub_model.p.pID,
+                [p.pID for p in sub_model.pnexts],
                 np.trunc(sub_model.max_error_pc),
                 sub_model_status(sub_model),
                 sub_model.m.error,
                 str(sub_model.m.A).replace('\n', ''),
                 sub_model.m.b)))
             pwa_model.add(sub_model)
+            q2pid[q].add(sub_model.p.pID)
             #abs_state_models[abs_state] = sub_model
+
+    for q in qgraph:
         # Even if a state gets split, its recorded
         if q in qgraph.init:
-            init_partitions.add(pwa.Partition(*q.poly(), part_id=q))
+            #init_partitions.add(ModelPartition(*q.poly(), part_id=q))
+            init_partitions.update(q2pid[q])
         # TODO: If we split a final cell to increase precision for
         # the transition to concrete error_states and break the
         # terminal self-loop, both will get recorded and get
         # weird.
         if q in qgraph.final:
-            final_partitions.add(pwa.Partition(*q.poly(), part_id=q))
+            #final_partitions.add(ModelPartition(*q.poly(), part_id=q))
+            final_partitions.update(q2pid[q])
 
     pwa_sys_prop = PWASYSPROP(pwa_model, init_partitions, final_partitions)
     return pwa_sys_prop
@@ -652,9 +661,9 @@ def draw_model(sys_name, pwa_model):
             #e_attr = {'label': np.round(sub_model.max_error_pc, 2)}
             error = np.trunc(sub_model.max_error_pc)
             color = 'red' if sub_model.status == KMAX_EXCEEDED else 'black'
-            G.add_edge(sub_model.p.ID, p_.ID, label=error, color=color)
-        G.node_attrs(sub_model.p.ID)['label'] = sub_model.p.ID
-        G.node_attrs(sub_model.p.ID)['tooltip'] = sub_model.p.ID.ival_constraints
+            G.add_edge(sub_model.p.pID, p_.pID, label=error, color=color)
+        G.node_attrs(sub_model.p.pID)['label'] = sub_model.p.pID
+        G.node_attrs(sub_model.p.pID)['tooltip'] = sub_model.p.qID.ival_constraints
 
     G.draw_graphviz(sys_name)
     #G.draw_mplib(sys_name)
@@ -879,7 +888,7 @@ def dummy_sub_model(q):
     dmap = rel.DiscreteAffineMap(A, b, e)
 
     C, d = q.ival_constraints.poly()
-    p = pwa.Partition(C, d, q)
+    p = ModelPartition(C, d, q)
 
     future_partitions = []
     # self loop
@@ -1102,7 +1111,7 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
         #partition_cluster = CLST.Box(rm.X)
         C, d = CLST.factory()(q, rm.X)
 
-        p = pwa.Partition(C, d, qi)
+        p = ModelPartition(C, d, qi)
 
         future_partitions = []
 
@@ -1112,13 +1121,28 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
         # used to model this transition.
         # Add the immediate next reachable state
         C, d = qj.ival_constraints.poly()
-        pnexts.append(pwa.Partition(C, d, qj))
+        pnexts.append(ModelPartition(C, d, qj))
 
         sub_model = rel.KPath(dmap, p, pnexts, future_partitions)
         sub_model.max_error_pc = e_pc
         sub_model.status = status
         sub_models.append(sub_model)
     return sub_models
+
+
+class ModelPartition(pwa.Partition):
+    """Partition: attaches additional information to pwa partition"""
+    uid_ = 0
+
+    def __init__(self, C, d, qi):
+        super(self.__class__, self).__init__(C, d, qi)
+        self.pID = self.__class__.uid()
+
+    @classmethod
+    def uid(cls):
+        """Generates a unique id for a partition"""
+        cls.uid_ += 1
+        return cls.uid_
 
 
 def build_pwa_ct_model(AA, abs_states, sp, sys_sim):

@@ -175,11 +175,11 @@ def reset_cell_true():
 
 class Pwa2Sal(object):
 
-    def __init__(self, module_name, init_cons, final_cons, pwa_model, vs, init_ps, final_ps):
+    def __init__(self, module_name, init_cons, final_cons, pwa_graph, vs, init_ps, final_ps):
         self.module_name = module_name
         self.init_cons = init_cons
         self.final_cons = final_cons
-        self.pwa_model = pwa_model
+        self.pwa_graph = pwa_graph
         self.vs = vs
         self.init_ps = init_ps
         self.final_ps = final_ps
@@ -187,7 +187,7 @@ class Pwa2Sal(object):
         self.sal2pwa_map = None
 
     def convert_transitions(self):
-        pwa_model, vs = self.pwa_model, self.vs
+        pwa_graph, vs = self.pwa_graph, self.vs
         sal2pwa_map = collections.OrderedDict()
 
         #TODO:
@@ -200,21 +200,30 @@ class Pwa2Sal(object):
         # never been added and get_C will throw an exception.
         def getC(pid):
             """Gets the bmc Cid corresponding to a pwa partition id"""
-            #return self.partid2Cid.setdefault(loc, 'C' + str(next(self.id_ctr)))
             if pid not in partid2Cid:
                 partid2Cid[pid] = 'C' + str(next(id_ctr))
             return partid2Cid[pid]
 
         transitions = []
-        for idx, sub_model in enumerate(pwa_model):
-            p = sub_model.p
-            pnext = sub_model.pnexts[0]
-            assert(len(sub_model.pnexts) == 1)
-            l = getC(p.ID)
-            lnext = getC(pnext.ID)
+#         for idx, sub_model in enumerate(pwa_model):
+#             p = sub_model.p
+#             pnext = sub_model.pnexts[0]
+#             assert(len(sub_model.pnexts) == 1)
+#             l = getC(p.ID)
+#             lnext = getC(pnext.ID)
 
-            t = self.sal_transition(idx, p, pnext, sub_model.m, vs, l, lnext)
-            sal2pwa_map[t.name] = PWA_TRANS(p, pnext, sub_model.m, l, lnext)
+#             t = self.sal_transition(idx, p, pnext, sub_model.m, vs, l, lnext)
+#             sal2pwa_map[t.name] = PWA_TRANS(p, pnext, sub_model.m, l, lnext)
+#             transitions.append(t)
+
+        for idx, relation in enumerate(pwa_graph.relations()):
+            p1, p2, m = relation.p1, relation.p2, relation.m
+            #assert(len(sub_model.pnexts) == 1)
+            l = getC(p1.pID)
+            lnext = getC(p2.pID)
+
+            t = self.sal_transition(idx, p1, p2, m, vs, l, lnext)
+            sal2pwa_map[t.name] = PWA_TRANS(p1, p2, m, l, lnext)
             transitions.append(t)
 
         logger.debug('================ bmc - pwa conversion dict ==================')
