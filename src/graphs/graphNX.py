@@ -78,19 +78,12 @@ class GraphNX(object):
 
         # unused maxVert
 
-        self.maxVertices = 0
+        #self.maxVertices = 0
 
         self.ctr = 0
 
         # create a Di-graph if not created already
-
-        if G is None:
-
-            self.G = nx.DiGraph()
-            self.Type = 'test_no'
-        else:
-            self.G = G
-            self.Type = Type
+        self.G = nx.DiGraph() if G is None else G
 
     def num_nodes(self):
         return self.G.number_of_nodes()
@@ -113,7 +106,7 @@ class GraphNX(object):
         return self.G.edges(node)
 
     def all_edges(self):
-        """Get edges of a node
+        """Get all edges
         """
         return self.G.edges()
 
@@ -187,8 +180,8 @@ class GraphNX(object):
         dummy_super_source_node = 'source'
         dummy_super_target_node = 'sink'
 
-        for s in sources:
-            H.add_edge(dummy_super_source_node, s)
+        #for s in sources:
+        #    H.add_edge(dummy_super_source_node, s)
         for t in targets:
             H.add_edge(t, dummy_super_target_node)
 
@@ -196,7 +189,8 @@ class GraphNX(object):
 
     def subgraph_source2target(self, sources, targets):
         H, S, T = self.multiple2single_st(sources, targets)
-        G = H.subgraph(nx.descendants(H, S) & nx.ancestors(H, T))
+        #G = H.subgraph(nx.descendants(H, S) & nx.ancestors(H, T))
+        G = H.subgraph(nx.ancestors(H, T))
         return self.__class__(G)
 
     # ###################### KSP 1 ##################################################

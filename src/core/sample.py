@@ -18,6 +18,34 @@ from utils import print
 logger = logging.getLogger(__name__)
 
 
+
+def sample_init_UR(sys, prop, num_samples):
+    num_segments = int(np.ceil(prop.T / sys.delta_t))
+    init_cons = prop.init_cons
+    # eliminate by removing u and removing dummu pvt...use real pvt
+    num_dims = sys.num_dims
+    dummy_pvt = np.zeros((num_samples, num_dims.pvt))
+
+    x_array = init_cons.sample_UR(num_samples)
+
+    if prop.pi is not None:
+        pi_lb = prop.pi.l
+        pi_ub = prop.pi.h
+        pi_array = pi_lb + (pi_ub - pi_lb) * np.random.random((num_samples, num_segments, num_dims.pi))
+    else:
+        pi_array = np.empty((num_samples, num_segments, num_dims.pi))
+    #pi_array = np.zeros((num_samples, num_dims.pi))
+
+    p_array = dummy_pvt
+    d_array = np.tile(np.array(prop.initial_discrete_state), (num_samples, 1))
+    t_array = np.zeros((num_samples, 1))
+
+    init_conrete_states = state.StateArray(t=t_array, x=x_array, d=d_array, pvt=p_array, pi=pi_array)
+    return init_conrete_states
+
+
+
+
 class Sampler(object):
 
     def __init__(self, num_dims):

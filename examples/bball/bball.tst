@@ -63,12 +63,12 @@ T = 40.0
 # Abstraction params: coarse
 #grid_eps = [50, 20, 20, 20]
 #
-delta_t = 5.0
-num_samples = 100
+# delta_t = 5.0
+# num_samples = 100
 
 # Abstraction params: coarse
 #grid_eps = [50.1, 10.1, 10.1, 10.1]
-grid_eps = [25.1, 2.1, 25.1, 2.1]
+# grid_eps = [25.1, 2.1, 25.1, 2.1]
 #grid_eps = [0.001]*4
 #delta_t = 5.0
 #num_samples = 20
@@ -81,10 +81,24 @@ grid_eps = [25.1, 2.1, 25.1, 2.1]
 
 # 0.5, 1, 2, 5, 10
 #grid_eps = [2]*4
-grid_eps = [0.5]*4
-delta_t = 5.0 
-num_samples = 20
+# grid_eps = [0.5]*4
+# delta_t = 5.0 
+# num_samples = 20
 
+#grid_eps = [1.0]*4
+#delta_t = 20.0 
+#num_samples = 10
+
+
+# takes a long time: for seed 0 returned safe after checking all paths
+# using bmc: pwa
+# grid_eps = [0.5]*4
+# delta_t = 10.0 
+# num_samples = 50
+
+grid_eps = [0.4]*4
+delta_t = 10.0 
+num_samples = 10
 
 
 MAX_ITER = 4

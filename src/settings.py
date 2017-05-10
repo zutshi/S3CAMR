@@ -18,3 +18,4 @@ BLOCK = False
 #         plt.show(block=BLOCK)
 #     else:
 #         plt.close()
+MEMLEAK_TEST = False

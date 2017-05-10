@@ -5,6 +5,7 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+
 #import matplotlib
 # Force GTK3 backend. By default GTK2 gets loaded and conflicts with
 # graph-tool
@@ -44,6 +45,14 @@ from utils import print
 import settings
 
 from IPython import embed
+
+#from guppy import hpy
+#from pkgcore.config import load_config
+
+#from pympler import tracker
+#from pympler import refbrowser
+
+
 
 #matplotlib.use('GTK3Agg')
 
@@ -207,10 +216,8 @@ def create_abstraction(sys, prop):
         prop.ROI,
         T,
         num_dims,
-        controller_sym_path_obj,
         sys.min_smt_sample_dist,
         plant_abstraction_type,
-        controller_abstraction_type,
         globalopts.opts.graph_lib,
         )
     return current_abs, sampler
@@ -460,9 +467,21 @@ def falsify_using_model(
         plt.set_range((-2.5, 2.5), (-8, 8))
     plt.show(block=True)
 
-    print('dumping abstraction')
-    fp.write_data(globalopts.opts.construct_path('{}_graph.dump'.format(sys.sys_name)),
-                  dill.dumps(current_abs))
+# switch of abstraction dump: memory leak?
+#     print('dumping abstraction')
+#     fp.write_data(globalopts.opts.construct_path('{}_graph.dump'.format(sys.sys_name)),
+#                   dill.dumps(current_abs))
+
+    if settings.MEMLEAK_TEST:
+        import objgraph
+        from core.PACell import PlantAbstractState as PS
+#         objgraph.show_backrefs(
+#                 PS.instance_store[0], max_depth=10, too_many=10,
+#                 highlight=None, filename='objgraph2.png',
+#                 extra_info=None, refcounts=False, shortnames=False)
+#                 #extra_ignore=[id(locals())])
+        objgraph.show_growth(shortnames=False)
+        U.pause()
 
     if not final_state_set:
         print('did not find any abstract counter example!', file=SYS.stderr)
@@ -475,14 +494,11 @@ def falsify_using_model(
         print('analyzing graph...')
         # creates a new pi_ref, ci_ref
         (error_paths,
-         ci_seq_list,
          pi_seq_list) = current_abs.get_error_paths_not_normalized(
                  initial_state_set,
                  final_state_set,
                  pi_ref,
-                 ci_ref,
                  pi,
-                 ci,
                  globalopts.opts.max_paths)
         errors = (error_paths, pi_seq_list)
     else:
@@ -519,47 +535,7 @@ def falsify_using_model(
     else:
         assert(False)
 
-    exit()
-
-
-    print('begin random testing!')
-
-    print(len(promising_initial_states), len(ci_seq_list), len(pi_seq_list))
-
-    (valid_promising_initial_state_list,
-     pi_seq_list, ci_seq_list) = SS.filter_invalid_abs_states(promising_initial_states,
-                                                              pi_seq_list,
-                                                              ci_seq_list,
-                                                              current_abs,
-                                                              init_cons)
-
-    print(len(valid_promising_initial_state_list), len(ci_seq_list), len(pi_seq_list))
-
-    if valid_promising_initial_state_list == []:
-        print('no valid sample found for random testing. STOP', file=SYS.stderr)
-        return False
-
-    res = RT.random_test(
-        current_abs,
-        system_params,
-        valid_promising_initial_state_list,
-        ci_seq_list,
-        pi_seq_list,
-        initial_discrete_state,
-        initial_controller_state,
-        sample_ci
-        )
-
-    if res:
-        print('Concretized', file=SYS.stderr)
-        fp.append_data(globalopts.opts.op_fname,
-                       '{0} Concrete Traces({2}) for: {1} {0}\n'.
-                       format('='*20, globalopts.opts.sys_path, len(res)))
-        embed()
-        fp.append_data(globalopts.opts.op_fname, '{}\n'.format(res))
-        return True
-
-    #print('Failed: MAX iterations {} exceeded'.format(MAX_ITER), file=SYS.stderr)
+    return
 
 
 # returns a True when its done
@@ -751,12 +727,23 @@ def run_secam(sys, prop):
 
 
 def main():
+    #U.pause()
+
+    #c = load_config()
+#     hp = hpy()
+#     hp.setrelheap()
+#     h_before = hp.heap()
+    # critical section here
+
+    #tr = tracker.SummaryTracker()
+    #ib = refbrowser.InteractiveBrowser(root)
+
     logger.info('execution begins')
     LIST_OF_SYEMX_ENGINES = ['klee', 'pathcrawler']
     LIST_OF_CONTROLLER_REPRS = ['smt2', 'trace']
     LIST_OF_TRACE_STRUCTS = ['list', 'tree']
     LIST_OF_REFINEMENTS = ['init', 'trace', 'model-dft', 'model-dmt', 'model-dct']
-    LIST_OF_GRAPH_LIBS = ['nx', 'gt', 'g']
+    LIST_OF_GRAPH_LIBS = ['nxlm', 'nx', 'gt', 'g']
     LIST_OF_PLOT_LIBS = ['mp', 'pg']
     LIST_OF_BMC = ['sal', 's3camsmt', 'pwa']
     LIST_OF_LP = ['scipy', 'glpk', 'gurobi']
@@ -989,7 +976,16 @@ def main():
     globalopts.opts = opts
 
     run_secam(sys, prop)
+
+    #embed()
     # ##!!##logger.debug('execution ends')
+    #tr.print_diff()
+    #ib.main()
+#     h_after = hp.heap()
+#     leftover = h_after - h_before
+#     print(leftover)
+#     embed()
+    #import pdb; pdb.set_trace()
 
 #######################################################################
 # GLobals: is there a better way to do this?

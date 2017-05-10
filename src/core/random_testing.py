@@ -369,7 +369,7 @@ def random_test(
     d0_array = d_array
 
     for i, trace in enumerate(trace_list):
-        trace.append(s_array[i], 0, x_array[i], 0, 0, t_array[i], d_array[i])
+        trace.append(x_array[i], 0, t_array[i], d_array[i])
 
     # sanity check
 
@@ -446,10 +446,7 @@ def random_test(
                                         x_array,
                                         d_array,
                                         p_array,
-                                        s_array_,
-                                        u_array,
                                         pi_array,
-                                        ci_array,
                                         )
 
         # print(concrete_states)
@@ -466,7 +463,7 @@ def random_test(
 
         for kdx, rchd_state in enumerate(rchd_concrete_state_array.iterable()):
             trace = trace_list[kdx]
-            trace.append(rchd_state.s, rchd_state.u, rchd_state.x, rchd_state.ci, rchd_state.pi, rchd_state.t, rchd_state.d)
+            trace.append(rchd_state.x, rchd_state.pi, rchd_state.t, rchd_state.d)
 
         if property_violated_flag:
             print(U.decorate('concretized!'))
@@ -490,7 +487,6 @@ def random_test(
         t_array += A.delta_t
         concrete_states = rchd_concrete_state_array
         x_array = concrete_states.cont_states
-        s_array = concrete_states.controller_states
         d_array = concrete_states.discrete_states
         p_array = concrete_states.pvt_states
 

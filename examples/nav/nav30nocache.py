@@ -63,7 +63,7 @@ NUM_MODES = MAP.size
 NAV_SQ_DIM = MAP.shape[0]
 
 
-#@memodict
+@memodict
 def modeToij(mode):
     i = int(np.ceil((mode+1)/float(NAV_SQ_DIM)))
     j = ((mode) % NAV_SQ_DIM) + 1
@@ -92,7 +92,7 @@ class Pos():
         return '({}, {})'.format(self.x, self.y)
 
 
-#@memodict
+@memodict
 class Bounds():
     def __init__(self, mode):
         i, j = modeToij(mode)
@@ -108,7 +108,7 @@ class Bounds():
         return 'x=[{}, {}], y=[{}, {}]'.format(self.l, self.r, self.b, self.a)
 
 
-#@memodict
+@memodict
 def get_dyn(mode):
     i, j = modeToij(mode)
     if debug:
@@ -172,7 +172,7 @@ def get_guard_vals(X, mode):
             below_ness(pos, bounds)]
 
 
-#@memodict
+@memodict
 def right(mode):
 #     if (mode+1) % NAV_SQ_DIM == 0:
 #         if debug:
@@ -182,7 +182,7 @@ def right(mode):
     return mode + 1
 
 
-#@memodict
+@memodict
 def left(mode):
 #     if mode % NAV_SQ_DIM == 0:
 #         if debug:
@@ -192,7 +192,7 @@ def left(mode):
     return mode - 1
 
 
-#@memodict
+@memodict
 def above(mode):
     mode_ = mode - NAV_SQ_DIM
 #     if mode_ < 0:
@@ -203,7 +203,7 @@ def above(mode):
     return mode_
 
 
-#@memodict
+@memodict
 def below(mode):
     mode_ = mode + NAV_SQ_DIM
 #     if mode_ > NUM_MODES-1:
@@ -260,7 +260,7 @@ class SIM(object):
     def __init__(self, _, pvt_init_data):
         self.model = create_model()
 
-    #@U.memoize2disk(U.memoize_hash_method)
+    @U.memoize2disk(U.memoize_hash_method)
     def sim(self, TT, X0, D, P, I, property_checker):
 
         m0 = x2mode(X0)
@@ -309,7 +309,7 @@ def sw2mode(sw):
     return modes[0]
 
 
-#@memodict
+@memodict
 def mode2sw(mode):
     sw = [False]*NUM_MODES
     sw[mode] = True

@@ -1,8 +1,6 @@
 # REFERENCE:
 # EMSOFT paper
 
-raise NotIimplementedError('Do not run this test. Instead, run the tests created for each property.')
-
 inf = float('inf')
 plant_pvt_init_data = None
 
@@ -55,9 +53,15 @@ T = 35.0
 # delta_t = 5.0
 # num_samples = 2
 
+# # works but not everytime
 grid_eps = [0.1]*4
-delta_t = 5.0
+delta_t = 10.0
 num_samples = 2
+
+
+#grid_eps = [0.21]*4
+#delta_t = 10.0
+#num_samples = 10
 
 
 # Gets the right x0 from linprog: but the interval is big enough to

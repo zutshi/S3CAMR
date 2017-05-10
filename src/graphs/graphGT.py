@@ -292,6 +292,42 @@ class GraphGT(object):
 
         return path_gen()
 
+    def multiple2single_st(self, sources, targets):
+    # Below code is copied from graphNX.py
+        # Create a shallow copy of the graph
+        H = nx.DiGraph(self.G)
+
+        # All modifications are now done on this shallow copy H
+
+        # Define super source and sink nodes
+        # A Super source node has a directed edge to each source node in the
+        # source_list
+        # Similarily, a Super sink node has a directed edge from each sink node
+        # in the sink_list
+
+        dummy_super_source_node = 'source'
+        dummy_super_target_node = 'sink'
+
+        for s in sources:
+            H.add_edge(dummy_super_source_node, s)
+        for t in targets:
+            H.add_edge(t, dummy_super_target_node)
+
+        return H, dummy_super_source_node, dummy_super_target_node
+
+    def subgraph_source2target(self, sources, targets):
+    # Below code is copied from graphNX.py
+#         H, S, T = self.multiple2single_st(sources, targets)
+
+#         subgraph_vertices = nx.descendants(H, S) & nx.(H, T)
+#         def vertex_filter(v):
+#             return v in subgraph_vertices
+
+        G = gt.GraphView(H, vfilt=vertex_filter, directed=True)
+
+
+        G = H.subgraph(nx.descendants(H, S) & nx.ancestors(H, T))
+        return self.__class__(G)
 
     # ###################### KSP 1 ##################################################
     # https://gist.github.com/guilhermemm/d4623c574d4bccb6bf0c

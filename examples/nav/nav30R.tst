@@ -1,8 +1,6 @@
 # REFERENCE:
 # EMSOFT paper
 
-raise NotIimplementedError('Do not run this test. Instead, run the tests created for each property.')
-
 inf = float('inf')
 plant_pvt_init_data = None
 
@@ -30,13 +28,13 @@ R = [[1., 6., -inf, -inf],
 S = [[22., 11., -inf, -inf],
      [23., 12., inf, inf]]
 
-error_set = S
+error_set = R
 
 # P, Q, R
-#T = 20.0
+T = 20.0
 
 # S
-T = 35.0
+#T = 35.0
 
 # Abstraction params: P, Q, R, S
 #grid_eps = [0.2, 0.2, 0.4, 0.4]
@@ -55,10 +53,13 @@ T = 35.0
 # delta_t = 5.0
 # num_samples = 2
 
-grid_eps = [0.1]*4
-delta_t = 5.0
-num_samples = 2
+# grid_eps = [0.1]*4
+# delta_t = 5.0
+# num_samples = 2
 
+grid_eps = [0.2]*4
+delta_t = 5.0
+num_samples = 10
 
 # Gets the right x0 from linprog: but the interval is big enough to
 # concretize succesfully
@@ -116,10 +117,4 @@ initial_private_state = []
 # S
 # x0=[  4.14327461  21.51742883   0.8471542    0.9884877 ] -> x=[ 22.44414369  11.999        0.22792075  -0.86384343], t=30.1382177243
 # x0=[  4.50024758  21.82478644   0.97146715   0.6993149 ] -> x=[ 22.4524101   11.999        0.22748131  -0.86401213], t=30.1798284278
-
-# R
-# random_testing.py:62::x0=[  4.00016738  21.69066716  -0.73087554  -0.5708336 ] -> x=[ 1.14161854  6.999       0.21690255 -0.88975963], t=17.3354007675
-# random_testing.py:62::x0=[  4.0486398   21.18421083  -0.31169147  -0.92112214] -> x=[ 1.16761391  6.999       0.22853109 -0.88741714], t=16.1150375174
-# random_testing.py:62::x0=[  4.65965605  21.19273923  -0.90129258  -0.58789132] -> x=[ 1.17786732  6.999       0.2356895  -0.88866338], t=16.4221797659
-# random_testing.py:62::x0=[  4.51301209  21.67417795  -0.89205661  -0.60742149] -> x=[ 1.18638306  6.999       0.2419798  -0.88942524], t=17.0332007719
 

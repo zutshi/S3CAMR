@@ -26,6 +26,8 @@ from graphs import graph as g
 from . import state as st
 from . import cellmanager as CM
 
+import settings
+
 logger = logging.getLogger(__name__)
 
 
@@ -54,10 +56,8 @@ class TopLevelAbs:
         ROI,
         T,
         num_dims,
-        controller_sym_path_obj,
         min_smt_sample_dist,
         plant_abstraction_type,
-        controller_abstraction_type,
         graph_lib,
         plant_abs=None,
         controller_abs=None,
@@ -300,11 +300,11 @@ class TopLevelAbs:
 
         return (path_list, pi_seq_list)
 
-    def get_initial_states_from_error_paths(self, *args):
+    def get_initial_states_from_error_paths(self, initial_state_set, final_state_set, pi_ref, _, pi_cons, __, max_paths):
         '''extracts the initial state from the error paths'''
-        path_list, pi_seq_list = self.get_error_paths(*args)
+        path_list, pi_seq_list = self.get_error_paths_not_normalized(initial_state_set, final_state_set, pi_ref, pi_cons, max_paths)
         init_list = [path[0] for path in path_list]
-        return init_list, pi_seq_list
+        return init_list, pi_seq_list, pi_seq_list
 
     def get_abs_state_from_concrete_state(self, concrete_state):
 
@@ -370,10 +370,27 @@ def sample_abs_state(abs_state,
     return state
 
 
-class AbstractState(object):
+global abs_store
+abs_store = {}
+
+
+def AbstractState(ps):
+    global abs_store
+
+    new_as = AbstractState_(ps)
+    if new_as not in abs_store:
+        abs_store[new_as] = new_as
+    return abs_store[new_as]
+
+
+class AbstractState_(object):
+    if settings.MEMLEAK_TEST:
+        instance_ctr = 0
 
     def __init__(self, plant_state):
         self.plant_state = plant_state
+        if settings.MEMLEAK_TEST:
+            self.__class__.instance_ctr += 1
         return
 
     # rename/shorten name hack
@@ -383,7 +400,7 @@ class AbstractState(object):
         return self.plant_state
 
     def __eq__(self, x):
-        if isinstance(x, AbstractState):
+        if isinstance(x, self.__class__):
             return self.ps == x.ps
         else:
             return False

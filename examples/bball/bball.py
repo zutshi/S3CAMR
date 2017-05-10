@@ -10,11 +10,13 @@ from assimulo.problem import Explicit_Problem
 from assimulo.solvers.sundials import CVode
 from assimulo.solvers import LSODAR
 from assimulo.solvers import RungeKutta34
+from assimulo.solvers import RungeKutta4
+from assimulo.solvers import Dopri5
 import pylab as plt
 
 import utils as U
 
-PLT = True
+PLT = False
 
 
 class SIM(object):
@@ -22,8 +24,8 @@ class SIM(object):
     def __init__(self, _, pvt_init_data):
         self.model = create_model()
 
-    @U.memoize2disk(U.memoize_hash_method)
-    def sim(self, TT, X0, D, P, U, I, property_checker):
+    #@U.memoize2disk(U.memoize_hash_method)
+    def sim(self, TT, X0, D, P, I, property_checker):
         tol = 1e-2
         if ((abs(X0[1]) <= tol and abs(X0[3]) <= tol) or X0[1] < 0):
             X0[1] = 0
@@ -89,7 +91,8 @@ def create_model():
                 X = solver.y
                 if X[3] < 0: # if the ball is falling (vy < 0)
                     # bounce!
-                    X[1] = 1e-5
+                    #X[1] = 1e-5 # used with CVode
+                    X[1] = 1e-3 # gives better results with Dopri
                     X[3] = -0.75*X[3]
 
             #solver.sw[0] = not solver.sw[0] #Change event function
@@ -107,14 +110,23 @@ def create_model():
     mod.name = 'Bouncing Ball in X-Y'   #Sets the name of the problem
 
     #Create an Assimulo solver (CVode)
-    sim = CVode(mod)
+    
+    # leaks memory!!
+    #sim = CVode(mod)
+
+    # hands and possibly leaks memory
     #sim = LSODAR(mod)
+
     #sim = RungeKutta34(mod)
+    sim = Dopri5(mod)
+
     #sim.options['verbosity'] = 20 #LOUD
     sim.verbosity = 40 #WHISPER
-    #sim.display_progress = True
+    #sim.display_progress = False
     #sim.options['minh'] = 1e-4
     #sim.options['rtol'] = 1e-3
+    # What is time_limit?
+    sim.time_limit = 1
 
 #     #Specifies options
 #     sim.discr = 'Adams'     #Sets the discretization method

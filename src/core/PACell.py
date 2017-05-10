@@ -6,14 +6,19 @@ from __future__ import print_function
 from __future__ import unicode_literals
 
 import logging
+import itertools as it
+
 import numpy as np
 
 import err
+import utils as u
 
 # import matplotlib.pyplot as plt
 #TAG:Z3_IND
 
 from . import cellmanager as CM
+
+import settings
 
 logger = logging.getLogger(__name__)
 
@@ -317,7 +322,27 @@ def compute_concrete_plant_output(
 
 # Abs state is an object  (cell_id, n, d, p)
 
-class PlantAbstractState(object):
+
+#TODO: global is being used...slow, and can not parallelize! Replace
+# using memoization
+global store
+store = {}
+
+
+def PlantAbstractState(cell_id, n, d, pvt):
+    global store
+
+    new_ps = PlantAbstractState_(cell_id, n, d, pvt)
+    if new_ps not in store:
+        store[new_ps] = new_ps
+    return store[new_ps]
+
+
+class PlantAbstractState_(object):
+    if settings.MEMLEAK_TEST:
+        #instance_store = []
+        instance_ctr = 0
+#     instance_set = set()
 
     def __init__(
             self,
@@ -333,13 +358,18 @@ class PlantAbstractState(object):
         self.n = n
         self.d = d
         self.pvt = pvt
+
+        if settings.MEMLEAK_TEST:
+            #self.__class__.instance_store.append(self)
+            self.__class__.instance_ctr += 1
+#         self.__class__.instance_set.add(self)
         return
 
     def __eq__(self, x):
 
         # return hash((self.cell_id, self.n))
         # print('plant_eq_invoked')
-        return self.cell_id == x.cell_id
+        return (self.cell_id == x.cell_id) and (self.n == x.n)
 
     def __hash__(self):
 
@@ -348,7 +378,8 @@ class PlantAbstractState(object):
 
         # return hash((self.cell_id, self.n))
 
-        return hash(self.cell_id)
+        #return hash(self.cell_id)
+        return hash(tuple(it.chain(self.cell_id, (self.n,))))
 
     def __repr__(self):
         return 'cell={}, n={}, d={}'.format(self.cell_id, self.n, self.d)

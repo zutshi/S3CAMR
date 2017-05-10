@@ -599,12 +599,17 @@ def build_pwa_model(sys, prop, qgraph, sp, model_type):
     init_partitions = set()
     final_partitions = set()
 
+    init_not_added = set()
+    final_not_added = set()
+
     #q2pid = collections.defaultdict(set)
     # for ever vertex (abs_state) in the graph
     for q in qgraph:
         if settings.debug:
             print('modeling: {}'.format(q))
+        sentinel = 0
         for sub_model in q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
+            sentinel = 1
             assert(sub_model is not None)
             # sub_model.pnexts[0] = sub_model.p.ID to enforce self loops
             print(U.colorize('{} -> {}, e%:{}, status: {}, e: {}, A:{}, b:{}'.format(
@@ -619,19 +624,33 @@ def build_pwa_model(sys, prop, qgraph, sp, model_type):
             #q2pid[q].add(sub_model.p.pID)
             #abs_state_models[abs_state] = sub_model
 
-        # Even if a state gets split, its recorded
-        if q in qgraph.init:
-            #init_partitions.add(ModelPartition(*q.poly(), part_id=q))
-            init_partitions.add(ModelPartition(*q.poly(), qi=q))
-            #init_partitions.update(q2pid[q])
-        # TODO: If we split a final cell to increase precision for
-        # the transition to concrete error_states and break the
-        # terminal self-loop, both will get recorded and get
-        # weird.
-        if q in qgraph.final:
-            #final_partitions.add(ModelPartition(*q.poly(), part_id=q))
-            final_partitions.add(ModelPartition(*q.poly(), qi=q))
-            #final_partitions.update(q2pid[q])
+        # If the loop never ran, no submodel was found. Do not add q
+        # to init/final states
+        if sentinel == 1:
+            # Even if a state gets split, its recorded
+            if q in qgraph.init:
+                #init_partitions.add(ModelPartition(*q.poly(), part_id=q))
+                init_partitions.add(ModelPartition(*q.poly(), qi=q))
+                #init_partitions.update(q2pid[q])
+            # TODO: If we split a final cell to increase precision for
+            # the transition to concrete error_states and break the
+            # terminal self-loop, both will get recorded and get
+            # weird.
+            if q in qgraph.final:
+                #final_partitions.add(ModelPartition(*q.poly(), part_id=q))
+                final_partitions.add(ModelPartition(*q.poly(), qi=q))
+                #final_partitions.update(q2pid[q])
+        else:
+            if q in qgraph.init:
+                init_not_added.add(q)
+            if q in qgraph.final:
+                final_not_added.add(q)
+
+    #TODO: REMOVE, added only because bball gives an eeror. Exact
+    #cause of error is not confirmed. It happens mostly because none of
+    #the final states have a self loop.
+    for q in qgraph.final:
+        final_partitions.add(ModelPartition(*q.poly(), qi=q))
 
     pwa_sys_prop = PWASYSPROP(pwa_model, init_partitions, final_partitions)
     return pwa_sys_prop
@@ -676,7 +695,8 @@ def draw_model(sys_name, pwa_model):
         G.node_attrs(sub_model.p.ID)['label'] = sub_model.p.ID
         G.node_attrs(sub_model.p.ID)['tooltip'] = sub_model.p.ID.ival_constraints
 
-    G.draw_graphviz(sys_name)
+    if settings.debug:
+        G.draw_graphviz(sys_name)
     #G.draw_mplib(sys_name)
 
 
@@ -759,6 +779,9 @@ def mdl_1relational(prop, tol, step_sim, qgraph, q, X, Y):
             ms.extend(l)
         else:
             if(qi == q):
+                #TODO: problems with final states empty
+                #ms.append((rm_, (q, qi), e_pc_, status_))
+
                 # no self loop observed
                 if settings.debug:
                     print('no self loop found')
@@ -978,8 +1001,6 @@ def q_affine_models_old(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q)
         assert(regression_models)
         # No model found, get a non-relational model as the worst case
         pwa_non_relational = True
-        #import IPython
-        #IPython.embed()
 
 #     # TODO: fix this messy handling...?
 #     if not regression_models:

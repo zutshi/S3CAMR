@@ -32,6 +32,9 @@ def class_factory(graph_lib):
     if graph_lib == 'nx':
         from .graphNX import GraphNX
         return GraphNX
+    elif graph_lib == 'nxlm':
+        from .graphNXlowmem import GraphNXLM
+        return GraphNXLM
     elif graph_lib == 'gt':
         from .graphGT import GraphGT
         return GraphGT

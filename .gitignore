@@ -37,3 +37,4 @@ set_src.sh
 *.prof
 vault
 cache
+emsoft_results

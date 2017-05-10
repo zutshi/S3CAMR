@@ -9,11 +9,17 @@ import logging
 import Queue
 import numpy as np
 
+
 from . import abstraction as AA
 from . import sample as SaMpLe
 
 from utils import print
 #from utils import print
+import utils as U
+
+import settings
+if settings.MEMLEAK_TEST:
+    import objgraph
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +133,13 @@ def discover(A, system_params, initial_state_set, budget=None):
     for init_state in initial_state_set:
         Q.put(init_state)
 
+
+    if settings.MEMLEAK_TEST:
+        objgraph.show_growth(shortnames=False)
+        U.pause()
+
     while not Q.empty():
+        #objgraph.show_growth(shortnames=False)
         abs_state = Q.get(False)
 
         # ##!!##logger.debug('{} = Q.get()'.format(abs_state))
@@ -183,6 +195,26 @@ def discover(A, system_params, initial_state_set, budget=None):
 
     # ##!!##logger.debug('Abstraction discovery done')
     # ##!!##logger.debug('Printing Abstraction\n {}'.format(str(A)))
+
+    if settings.MEMLEAK_TEST:
+        objgraph.show_growth(shortnames=False)
+        from core.PACell import PlantAbstractState_ as PS
+#         print('PlantAbstractState.instance_ctr = ', PS.instance_ctr)
+#         print('PlantAbstractState.list_size = ', len(PS.instance_store))
+#         print('PlantAbstractState.set_size = ', len(PS.instance_set))
+
+#         objgraph.show_backrefs(
+#                 PS.instance_store[0], max_depth=10, too_many=5,
+#                 highlight=None, filename='objgraph1.png',
+#                 extra_info=None, refcounts=False, shortnames=False)
+        from core.abstraction import AbstractState_ as AS
+        print('num instances of plant states:', PS.instance_ctr)
+        print('num instances of abstract states:', AS.instance_ctr)
+        print('memory leaks below...')
+        objgraph.get_leaking_objects()
+        print('='*20)
+        U.pause()
+
     return final_state_set
 
 # Same as discover_old, but accumulates all abstract states from the Q before
@@ -327,12 +359,12 @@ def refine_trace_based(A, error_paths, system_params):
 
     RA = AA.abstraction_factory(
         param_dict,
+        A.ROI,
         A.T,
         A.num_dims,
-        A.controller_sym_path_obj,
         A.min_smt_sample_dist,
         A.plant_abstraction_type,
-        A.controller_abstraction_type
+        A.graph_lib
         )
 
     # split the traversed states
@@ -380,11 +412,9 @@ def refine_init_based(A, promising_initial_abs_states,
         A.ROI,
         A.T,
         A.num_dims,
-        A.controller_sym_path_obj,
         #A.ci_grid_eps/2,
         A.min_smt_sample_dist,
         A.plant_abstraction_type,
-        A.controller_abstraction_type,
         A.graph_lib
         )
 

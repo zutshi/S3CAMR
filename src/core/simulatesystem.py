@@ -33,9 +33,9 @@ def step_sim(psim, delta_t, t0, x0, d0, pvt0, pi):
     # ignore pvf
     concrete_states_, _ = psim.simulate(concrete_states, delta_t)
 
-    (t, x, s, d, pvt, u, _, _) = get_individual_states(concrete_states_)
+    (t, x, d, pvt, _) = get_individual_states(concrete_states_)
 
-    return (t[0], x[0], s[0], d[0], pvt[0], u[0])
+    return (t[0], x[0], d[0], pvt[0])
 
 
 # exactly the same as simulate, but does not use closures
