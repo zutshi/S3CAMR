@@ -7,17 +7,23 @@
 # Test system loading and simulation using external_interface.py
 ###############################################################################
 
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+import external_interface as exifc
+import traces
+
+import numpy as np
+import time
+
 import matplotlib
 # Force GTK3 backend. By default GTK2 gets loaded and conflicts with
 # graph-tool
 matplotlib.use('GTK3Agg')
 #global plt
 import matplotlib.pyplot as plt
-import numpy as np
-import time
-
-import external_interface as exifc
-import traces
 
 
 # TODO: test all examples using the examplel isting
@@ -40,11 +46,11 @@ def main():
 
         trace_list = []
         tic = time.time()
-        for i in xrange(NUM_SIMS):
+        for i in range(NUM_SIMS):
             trace = one_shot_sim(x0[i], 0.0, prop.T, w0)
             trace_list.append(trace)
         toc = time.time()
-        print 'time taken for simulations: {}s'.format(toc-tic)
+        print('time taken for simulations: {}s'.format(toc-tic))
         traces.plot_trace_list(trace_list, plt)
 
 if __name__ == '__main__':

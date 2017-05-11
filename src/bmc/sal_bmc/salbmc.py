@@ -1,14 +1,20 @@
-import os
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
 
-import saltrans as slt_dft
-import saltrans_rel as slt_rel
-import saltrans_dmt as slt_dmt
-from ..bmc_spec import BMCSpec, InvarStatus
-import sal_op_parser
+import os
+import logging
+
+from bmc.bmc_spec import BMCSpec, InvarStatus
+from . import sal_op_parser
+from . import pwa2salconverter as pwa2sal
 
 import fileops as fops
 import utils as U
 import err
+
+logger = logging.getLogger(__name__)
 
 SAL_PATH = 'SAL_PATH'
 SAL_INF_BMC = '''/bin/sal-inf-bmc'''
@@ -18,90 +24,98 @@ class SALBMCError(Exception):
     pass
 
 
+class SalOpts():
+    def __init__(self):
+        self.yices = 2
+        self.verbosity = 3
+        self.iterative = False
+        self.preserve_tmp_files = True
+
+
 # Must separate the arguements. i.e., -v 3 should be given as ['-v', '3']
 # This can be avoided by using shell=True, but that is a security risk
-def sal_run_cmd(sal_path, depth, module_name, prop_name, yices=2, verbosity=3, iterative=False):
+def sal_run_cmd(sal_path, depth, sal_file, prop_name, opts=SalOpts()):
     cmd = [
         sal_path,
-        '-v', str(verbosity),
+        '-v', str(opts.verbosity),
         '-d', str(depth),
-        '{}.sal'.format(module_name),
+        #'{}.sal'.format(module_name),
+        sal_file,
         prop_name
     ]
 
-    if yices == 2:
+    if opts.yices == 2:
         cmd.extend(['-s', 'yices2'])
 
-    if iterative:
+    if opts.preserve_tmp_files:
+        cmd.append('--preserve-tmp-files')
+
+    if opts.iterative:
         cmd.append('-it')
 
-    print ' '.join(cmd)
+    print(' '.join(cmd))
 
     return cmd
 
 
 class BMC(BMCSpec):
-    def __init__(self, nd, pwa_model, init_state, safety_prop,
-                 module_name, model_type):
+    def __init__(self, vs, pwa_graph, init_cons, final_cons,
+                 init_ps, final_ps, fname_constructor, module_name, model_type):
+        """__init__
+
+        Parameters
+        ----------
+        vs : list of variables. Order is important.
+        pwa_graph :
+        init_cons :
+        final_cons :
+        module_name :
+        model_type :
+
+        Returns
+        -------
+
+        Notes
+        ------
+        """
+
+        self.prop_name = 'safety'
+        self.fname_constructor = fname_constructor
+        self.module_name = module_name
+        fname = module_name + '.sal'
+        self.sal_file = fname_constructor(fname)
+        self.trace = None
+        self.vs = vs
+        self.init_ps = init_ps
+        self.final_ps = final_ps
+
         if model_type == 'dft':
-            self.sal_trans_sys = BMC.sal_module_dft(
-                    nd, pwa_model, init_state, safety_prop, module_name)
+            self.pwa2sal = pwa2sal.Pwa2Sal(
+                    module_name, init_cons,
+                    final_cons, pwa_graph, vs,
+                    init_ps, final_ps)
+            self.sal_trans_sys = self.pwa2sal.trans_sys()
+
         elif model_type == 'dmt':
-            dts = pwa_model.keys()
+            raise NotImplementedError
+            dts = pwa_graph.keys()
             self.sal_trans_sys = BMC.sal_module_dmt(
-                    dts, nd, pwa_model, init_state, safety_prop, module_name)
+                    dts, vs, pwa_graph, init_cons, final_cons, module_name)
         elif model_type == 'ct':
             raise NotImplementedError
         elif model_type == 'rel':
-            self.sal_trans_sys = BMC.sal_module_rel(
-                    nd, pwa_model, init_state, safety_prop, module_name)
+            raise NotImplementedError
         else:
             raise SALBMCError('unknown model type')
 
-        self.prop_name = 'safety'
-        self.module_name = module_name
-        self.trace = None
         return
 
-    @staticmethod
-    def sal_module_rel(nd, pwa_model, init_set, safety_prop, module_name):
-        sal_trans_sys = slt_rel.SALTransSysRel(module_name, nd, init_set, safety_prop)
-
-        sal_trans_sys.add_locations(pwa_model.relation_ids)
-        for idx, sub_model in enumerate(pwa_model):
-            l1 = sal_trans_sys.get_loc_id(sub_model.p1.pid)
-            l2 = sal_trans_sys.get_loc_id(sub_model.p2.pid)
-            g = slt_rel.Guard(l1, sub_model.p1.C, sub_model.p1.d)
-            r = slt_rel.Reset(l2, sub_model.m.A, sub_model.m.b, sub_model.m.error)
-            t = slt_rel.Transition('T_{}'.format(idx), g, r)
-            sal_trans_sys.add_transition(t)
-        return sal_trans_sys
-
-    @staticmethod
-    def sal_module_dmt(dts, nd, pwa_models, init_set, safety_prop, module_name):
-        sal_trans_sys = slt_dmt.SALTransSysDMT(dts, module_name, nd, init_set, safety_prop)
-        for dt, pwa_model in pwa_models.iteritems():
-            # replace decimal point with _ else SAL will throw an
-            # error due to incorrect identifier
-            dt_str = str(dt).replace('.', '_')
-            for idx, sub_model in enumerate(pwa_model):
-                g = slt_dmt.Guard(sub_model.p.C, sub_model.p.d)
-                r = slt_dmt.Reset(sub_model.m.A, sub_model.m.b)
-                t = slt_dmt.Transition(
-                        dt, dts, 'C_{}_{}'.format(idx, dt_str), g, r)
-                sal_trans_sys.add_transition(t)
-        return sal_trans_sys
-
-    @staticmethod
-    def sal_module_dft(nd, pwa_model, init_set, safety_prop, module_name):
-        sal_trans_sys = slt_dft.SALTransSys(module_name, nd, init_set, safety_prop)
-
-        for idx, sub_model in enumerate(pwa_model):
-            g = slt_dft.Guard(sub_model.p.C, sub_model.p.d)
-            r = slt_dft.Reset(sub_model.m.A, sub_model.m.b, sub_model.m.error)
-            t = slt_dft.Transition('C_{}'.format(idx), g, r)
-            sal_trans_sys.add_transition(t)
-        return sal_trans_sys
+    def trace_generator(self, depth):
+        for i in range(1):
+            status = self.check(depth)
+            if status == InvarStatus.Unsafe:
+                yield self.trace, self.get_pwa_trace()
+            return
 
     def check(self, depth):
         yices2_not_found = 'yices2: not found'
@@ -116,50 +130,128 @@ class BMC(BMCSpec):
             #raise KeyError
 
         sal_path = fops.sanitize_path(sal_path_)
-        verbosity = 3
 
         sal_cmd = sal_run_cmd(
                     sal_path,
                     depth,
-                    self.module_name,
+                    self.sal_file,
                     self.prop_name,
-                    yices=2,
-                    verbosity=verbosity)
+                    )
 
         try:
             sal_op = U.strict_call_get_op(sal_cmd)
         except U.CallError as e:
             if yices2_not_found in e.message:
-                print 'SAL can not find yices2. Trying with yices...'
+                print('SAL can not find yices2. Trying with yices...')
+                opts = SalOpts()
+                opts.yices = 1
                 sal_cmd = sal_run_cmd(
                             sal_path,
                             depth,
-                            self.module_name,
+                            self.sal_file,
                             self.prop_name,
-                            yices=1,
-                            verbosity=verbosity)
+                            opts)
                 sal_op = U.strict_call_get_op(sal_cmd)
             else:
                 raise err.Fatal('unknown SAL error!')
 
-        print sal_op
-        self.trace = sal_op_parser.parse_trace(sal_op)
+        print(sal_op)
+        self.trace = sal_op_parser.parse_trace(sal_op, self.vs)
         if self.trace is None:
-            print 'BMC failed to find a CE'
+            print('BMC failed to find a CE')
             return InvarStatus.Unknown
         else:
-            print '#'*40
-            print '# Cleaned up trace'
-            print '#'*40
-            print self.trace
-            print '#'*40
+            #self.trace.set_vars(self.vs)
+            print('#'*40)
+            print('# Cleaned up trace')
+            print('#'*40)
+            print(self.trace)
+            print('#'*40)
             return InvarStatus.Unsafe
 
     def dump(self):
-        sal_file = self.module_name + '.sal'
-        fops.write_data(sal_file, str(self.sal_trans_sys))
+        fops.write_data(self.sal_file, str(self.sal_trans_sys))
         return
 
-    def get_last_trace(self):
+    def get_trace(self):
+        raise NotImplementedError
         """Returns the last trace found or None if no trace exists."""
         return self.trace
+
+    def get_last_traces(self):
+        raise NotImplementedError
+        # Code works, but should be removed due to change in
+        # interfaces
+        raise NotImplementedError
+        if self.trace is not None:
+            return self.trace.to_array(), self.get_last_pwa_trace()
+        else:
+            return None, None
+
+    def get_pwa_trace(self):
+        """Converts a bmc trace to a sequence of sub_models in the original pwa.
+
+        Parameters
+        ----------
+
+        Returns
+        -------
+        pwa_trace = [sub_model_0, sub_model_1, ... ,sub_model_n]
+        pwa_trace =
+            models = [m01, m12, ... , m(n-1)n]
+            partitions = [p0, p1, p2, ..., pn]
+
+        Notes
+        ------
+        For now, pwa_trace is only a list of sub_models, as relational
+        modeling is being done with KMIN = 1. Hence, there is no
+        ambiguity.
+        """
+    #         # each step, but the last, corresponds to a transition
+    #         for step in steps[:-1]:
+    #             part_id = self.sal2pwa_map[step.assignments['cell']]
+    #             sub_model = self.sal2pwa_map[step.tid]
+
+    #             # Assumption of trace building is that each submodel only
+    #             # has 1 unique next location. If this violated, we need to
+    #             # add cell ids/part ids to resolve the ambiguity.
+    #             assert(len(sub_model.pnexts) == 1)
+
+    #             assert(sub_model.p.ID == part_id)
+    #             # this is still untested, so in case assert is off...
+    #             assert(sub_model.p.ID == part_id)
+    #                 #err.warn('gone case')
+
+    #             #pwa_trace.extend((part_id, sub_model))
+    #             pwa_trace.append(sub_model)
+        if self.trace is None:
+            return None
+        steps = self.trace
+        transitions = [step.tid for step in steps[:-1]]
+        return self.pwa2sal.trace(transitions)
+
+    def gen_new_disc_trace(self):
+        raise NotImplementedError
+        """makes trace = None, signifying no more traces..."""
+        self.trace = None
+        return
+
+
+################################################
+# ############# CEMETERY #######################
+################################################
+
+#     @staticmethod
+#     def sal_module_dmt(dts, vs, pwa_models, init_set, final_cons, module_name):
+#         sal_trans_sys = slt_dmt.SALTransSysDMT(dts, module_name, vs, init_set, final_cons)
+#         for dt, pwa_model in pwa_models.iteritems():
+#             # replace decimal point with _ else SAL will throw an
+#             # error due to incorrect identifier
+#             dt_str = str(dt).replace('.', '_')
+#             for idx, sub_model in enumerate(pwa_model):
+#                 g = slt_dmt.Guard(sub_model.p.C, sub_model.p.d)
+#                 r = slt_dmt.Reset(sub_model.m.A, sub_model.m.b)
+#                 t = slt_dmt.Transition(
+#                         dt, dts, 'C_{}_{}'.format(idx, dt_str), g, r)
+#                 sal_trans_sys.add_transition(t)
+#         return sal_trans_sys

@@ -27,7 +27,7 @@ class SIM(object):
                 #nsteps=nsteps
                 )  # (1)
 
-    def sim(self, TT, X0, D, P, U, I, property_checker):
+    def sim(self, TT, X0, D, P, U, property_checker):
         num_dim_x = len(X0)
         plot_data = ([np.empty(0, dtype=float), np.empty((0, num_dim_x), dtype=float)]
                      if PLOT else None)

@@ -1,3 +1,8 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 '''parses yices output'''
 
 import pyparsing as pp
@@ -6,6 +11,10 @@ from fractions import Fraction as FR
 
 import fileops as fops
 import err
+
+import functools
+
+import bmc.sal_bmc.trace as bmc_trace
 
 # global tokens
 SEMI = pp.Literal(";").suppress()
@@ -25,6 +34,13 @@ def Rational(s):
     return str(f)
 
 
+def Float(s):
+    return ''.join(s)
+
+
+def SignedInteger(s):
+    return ''.join(s)
+
 integer = pp.Word(pp.nums)
 signed_integer = pp.Optional(PLUS | MINUS) + integer
 alpha = pp.alphas
@@ -33,26 +49,54 @@ ident = pp.Word(pp.alphanums+"_")
 rational = signed_integer + pp.Literal('/') + integer
 
 rational.setParseAction(Rational)
-#signed_integer.setParseAction(SignedInteger)
+signed_integer.setParseAction(SignedInteger)
+floats = signed_integer + pp.Literal('.') + integer
+floats.setParseAction(Float)
 
 value = rational | signed_integer | ident
 
 
-def Assignment(s):
-    return ' '.join(s)
+class Assignment(object):
+    def __init__(self, s):
+        self.s = ' '.join(s)
+        self.lhs = s[0]
+        try:
+            self.rhs = float(s[2])
+        except ValueError:
+            self.rhs = s[2]
+
+    def __str__(self):
+        return self.s
 
 
-def Step(s):
-    #step_num = s[0]
-    s = '({})'.format(', '.join(s[1:]))
-    return s
+class Step(object):
+    def __init__(self, s):
+        self.s = s
+        self.num = s[0]
+        assignments = s[1:-1]
+        self.assignments = {a.lhs: a.rhs for a in assignments}
+        # transition id string
+        self.tid = s[-1]
+
+    def __str__(self):
+        return '({})'.format(', '.join(str(i) for i in self.s[1:]))
+
+
+def Trace(vs, s):
+    trace_with_NOP = s[:-1]
+    exec_time = s[-1]
+
+    # remove NOPs
+    trace = [step for step in trace_with_NOP if step.tid != 'NOP']
+
+    return bmc_trace.Trace(trace, vs)
 
 
 def extract_label(s):
     return s[1]
 
 
-def parse_ce(trace_data):
+def parse_ce(trace_data, vs):
     # lexer rules
     SEP = pp.Keyword('------------------------').suppress()
     STEP = pp.Keyword('Step').suppress()
@@ -62,7 +106,8 @@ def parse_ce(trace_data):
             pp.Keyword('========================')).suppress()
     # ignore the version information before the HDR_
     HDR = pp.SkipTo(HDR_, True).suppress()
-    FOOTER = pp.Keyword('total execution time:')
+    FOOTER = pp.Keyword('total execution time:') + floats + pp.Keyword('secs')
+    FOOTER.setParseAction(''.join)
     EOF = pp.StringEnd()
     LABEL = pp.Keyword('label')
 
@@ -79,25 +124,30 @@ def parse_ce(trace_data):
     ti = SEP + pp.SkipTo(label, False) + label + pp.SkipTo(SEP, True)
     ti.setParseAction(extract_label)
     #step = step_hdr + sva + bapc + pp.OneOrMore(assignment) + pp.Optional(ti)
-    step = step_hdr + sva + pp.OneOrMore(assignment) + pp.Optional(ti)
+    step = step_hdr + sva + pp.OneOrMore(assignment) + pp.Optional(ti, default='')
     step.setParseAction(Step)
 
     #step.setParseAction(Step)
-    trace = HDR + pp.OneOrMore(step) + pp.Optional(FOOTER) + pp.SkipTo(EOF, True)
+    trace = (HDR + pp.OneOrMore(step) +
+             pp.Optional(FOOTER, default='')
+             )
+#                 ) +
+#             pp.SkipTo(EOF, True))
+    trace.setParseAction(functools.partial(Trace, vs))
 
     parsed = trace.parseString(trace_data, parseAll=True)
-    return parsed
+    return parsed[0]
 
 
-#TODO: make a class for parsed_trace
-def cleanup_parsed_trace(parsed_trace):
-    return '\n'.join(parsed_trace)
-
-
-def parse_trace(trace_data):
+def parse_trace(trace_data, vs):
     """pre_process
     Quick check if SAL has failed to find any counter example.
     """
+
+    #TODO: quick fix
+    import re
+    trace_data = re.sub('trace.*\n', '', trace_data)
+
     yices_failed = 'The context is unsat. No model.'
     sal_failed = 'no counterexample between depths:'
 
@@ -106,7 +156,7 @@ def parse_trace(trace_data):
     elif yices_failed in trace_data or sal_failed in trace_data:
         raise err.Fatal('unexpected trace data')
     else:
-        return cleanup_parsed_trace(parse_ce(trace_data))
+        return parse_ce(trace_data, vs)
 
 
 def main():
@@ -117,9 +167,11 @@ def main():
     parsed_trace = parse_trace(fops.get_data(args.trace_file))
 
     if parsed_trace is None:
-        print 'No CE found!'
+        print('No CE found!')
     else:
-        print parsed_trace
+        #print(parsed_trace)
+        for ass in parsed_trace:
+            print(ass)
 
 if __name__ == '__main__':
     main()

@@ -1,9 +1,14 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
 
 '''
 Creates a SAL transition system
 '''
 
-import saltrans
+from . import saltrans
 
 
 class SALTransSysDMT(saltrans.SALTransSys):

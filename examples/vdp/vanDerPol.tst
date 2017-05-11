@@ -32,21 +32,24 @@ error_set = [[-1, -6.5], [-0.7, -5.6]]
 #num_samples = 10
 
 
-# param 5: works for S3CAM
-# grid_eps = [0.1, 0.1]
-# delta_t = 0.1
-# num_samples = 3
-
-
 # # Must have prop check ON
 # grid_eps = [.21, .21]
 # num_samples = 10
 # delta_t = 0.5
 
+
+# Gets a CE but its very in-accurate
 # python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft --seed 0 -pmp --prop-check --incl-error --max-model-error 10000
 grid_eps = [.51, .51]
-num_samples = 20
+#grid_eps = [.51/2, .51/2]
+num_samples = 100
 delta_t = 0.5
+
+# Gets a reproducible CE
+# python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft --seed 0 -pmp --prop-check --incl-error --max-model-error 10000
+# grid_eps = [.011, .011]
+# num_samples = 2
+# delta_t = 0.5
 
 
 
@@ -62,6 +65,26 @@ delta_t = 0.5
 # num_samples = 3
 # delta_t = 0.4
 
+
+##########################
+## For plotting thesis
+
+# grid_eps = [.2, .2]
+# num_samples = 2
+# delta_t = 0.1
+
+
+# param 5: works for S3CAM
+# grid_eps = [0.11, 0.11]
+# delta_t = 0.1
+# num_samples = 3
+
+##########################
+## Works for scamr!
+
+# grid_eps = [.011, .011]
+# num_samples = 2
+# delta_t = 0.5
 
 
 initial_discrete_state = []

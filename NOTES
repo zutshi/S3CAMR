@@ -1,0 +1,3 @@
+7bba689310fafbe9838343973526087f75c11652
+    python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model-dft --seed 0 --max-model-error 10 --prop-check --bmc-engine sal --incl-error -pmp --plots x0-x1
+    van der pol - examine regression quality

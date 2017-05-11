@@ -1,3 +1,7 @@
+tmp
+*.dot
+*.eps
+*.png
 *.pyc
 *.pyo
 *.tstc
@@ -5,6 +9,7 @@
 *.so
 *.pickled
 .*.swp
+.*.swo
 tags
 log_matlab
 slprj
@@ -30,3 +35,6 @@ trials
 set_src.sh
 *sal_bug*
 *.prof
+vault
+cache
+emsoft_results
