@@ -66,10 +66,6 @@ def factory(bmc_engine,
              model_type,
              *args)
     elif bmc_engine == 's3camsmt':
-<<<<<<< HEAD
-        from S3CAMSMT.s3camsmt.bmc.bmc_pwa import import BMC_PWA
-        return BMC_PWA(*args)
-=======
         from S3CAMSMT.s3camsmt.bmc.bmc_pwa import BMC_PWA
         if model_type == 'rel':
             raise NotImplementedError
@@ -104,7 +100,6 @@ def factory(bmc_engine,
              sys_name,
              model_type,
              *args)
->>>>>>> develop
     else:
         raise NotImplementedError('Req. bmc engine: {}'.format(bmc_engine))
 
