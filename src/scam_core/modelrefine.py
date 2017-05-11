@@ -115,8 +115,6 @@ def check4CE(pwa_model, error_paths, sys_name, model_type, AA, sp, bmc_engine='s
         raise err.Fatal('Internal')
 
     print('exiting')
-    print(sal_bmc.get_last_trace())
-    #sal_bmc.get_last_trace().last_trace.print_to_stream(sys.stderr)
     exit()
 
 
