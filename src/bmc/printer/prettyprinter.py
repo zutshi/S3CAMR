@@ -3,7 +3,12 @@ from __future__ import division
 from __future__ import print_function
 from __future__ import unicode_literals
 
+import blessings
+
 import fileops as fops
+
+TERM = blessings.Terminal()
+
 
 def pretty_print(sys, prop, vs, pwa_model, init_cons, final_cons,
                  init_ps, final_ps, fname_constructor, sys_name,
@@ -57,8 +62,10 @@ def pretty_print(sys, prop, vs, pwa_model, init_cons, final_cons,
 
     s += pretty_print_pwa_model(pwa_model)
 
-    fops.write_data(fname_constructor('pretty_print_bmc_args'), '\n'.join(s))
+    fname = fname_constructor('pretty_print_bmc_args')
+    fops.write_data(fname, '\n'.join(s))
 
+    print(TERM.green('pretty printing output: {}'.format(fname)))
     print('exiting...')
     exit(0)
     return
