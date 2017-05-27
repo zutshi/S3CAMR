@@ -117,21 +117,17 @@ Explanation: Run optimized scamr (no debug prints, no assertion checks) `-O`. Fa
 
 Navigate to the source directory `./src` before running the below examples.
 
-    time ./scamr.py -f ../examples/vdp/vanDerPol_s3camr.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
-    
-    time ./scamr.py -f ../examples/brusselator/brusselator.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
-    
-    time ./scamr.py -f ../examples/lorenz/lorenz.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
-    
-    time ./scamr.py -f ../examples/nav/nav30P.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
-    
-    time ./scamr.py -f ../examples/nav/nav30Q.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
-    
-    time ./scamr.py -f ../examples/nav/nav30R.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
-    
-    time ./scamr.py -f ../examples/nav/nav30S.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
-    
-    time ./scamr.py -f ../examples/bball/bball.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
+    time ./scamr.py -f <test-file> -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
+
+Where the <test-file> is one of the below
+* `../examples/vdp/vanDerPol_s3camr.tst`
+* `../examples/brusselator/brusselator.tst`
+* `../examples/lorenz/lorenz.tst`
+* `../examples/nav/nav30P.tst`
+* `../examples/nav/nav30Q.tst`
+* `../examples/nav/nav30R.tst`
+* `../examples/nav/nav30S.tst`
+* `../examples/bball/bball.tst`
 
 10 runs were generated using
     ```
