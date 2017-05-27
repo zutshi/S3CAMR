@@ -748,7 +748,7 @@ def main():
     LIST_OF_REFINEMENTS = ['init', 'trace', 'model-dft', 'model-dmt', 'model-dct']
     LIST_OF_GRAPH_LIBS = ['nxlm', 'nx', 'gt', 'g']
     LIST_OF_PLOT_LIBS = ['mp', 'pg']
-    LIST_OF_BMC = ['sal', 's3camsmt', 'pwa']
+    LIST_OF_BMC = ['sal', 's3camsmt', 'pwa', 'pretty-printer']
     LIST_OF_LP = ['scipy', 'glpk', 'gurobi']
     LIST_OF_CLUSTERING = ['cell', 'box', 'hull']
 
@@ -965,8 +965,7 @@ def main():
         opts.property_checker = properties.PropertyCheckerNeverDetects()
 
     opts.construct_path = setup_dir(sys, args.output)
-    print('Output dir: {}'.format(opts.construct_path('')))
-
+    print('\nOutput dir: {}\n'.format(opts.construct_path('')))
 
     # What a hack!
     opts.regression_sim_samples = sys.plant_config_dict['num_samples']

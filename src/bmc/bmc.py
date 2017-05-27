@@ -100,6 +100,23 @@ def factory(bmc_engine,
              sys_name,
              model_type,
              *args)
+
+    elif bmc_engine == 'pretty-printer':
+        from .printer import prettyprinter
+
+        return prettyprinter.pretty_print(
+             sys,
+             prop,
+             vs,
+             pwa_model,
+             init_cons,
+             final_cons,
+             init_ps,
+             final_ps,
+             fname_constructor,
+             sys_name,
+             model_type,
+             *args)
     else:
         raise NotImplementedError('Req. bmc engine: {}'.format(bmc_engine))
 
