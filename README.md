@@ -119,7 +119,7 @@ Navigate to the source directory `./src` before running the below examples.
 
     time ./scamr.py -f <test-file> -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
 
-Where the <test-file> is one of the below
+Where the `<test-file>` is one of the below
 * `../examples/vdp/vanDerPol_s3camr.tst`
 * `../examples/brusselator/brusselator.tst`
 * `../examples/lorenz/lorenz.tst`
