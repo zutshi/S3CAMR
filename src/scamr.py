@@ -646,11 +646,14 @@ def refine_init(
         globalopts.opts.plotting.show()
 
         if res:
+            op_fname = globalopts.opts.construct_path('violations.log')
             print('Concretized', file=SYS.stderr)
-            fp.append_data(globalopts.opts.op_fname,
+            #fp.append_data(globalopts.opts.op_fname,
+            fp.append_data(op_fname,
                            '{0} Concrete Traces({2}) for: {1} {0}\n'.
                            format('='*20, globalopts.opts.sys_path, len(res)))
-            fp.append_data(globalopts.opts.op_fname, '{}\n'.format(res))
+            traces_string = '\n'.join(str(trace) for trace in res)
+            fp.append_data(op_fname, traces_string)
             return True
 
         (current_abs, init_cons_list) = SS.refine_init_based(
@@ -962,6 +965,7 @@ def main():
         opts.property_checker = properties.PropertyCheckerNeverDetects()
 
     opts.construct_path = setup_dir(sys, args.output)
+    print('Output dir: {}'.format(opts.construct_path('')))
 
 
     # What a hack!

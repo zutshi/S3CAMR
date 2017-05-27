@@ -27,7 +27,7 @@ class SIM(object):
                 #nsteps=nsteps
                 )  # (1)
 
-    def sim(self, TT, X0, D, P, U, I, property_checker):
+    def sim(self, TT, X0, D, P, I, property_checker):
         num_dim_x = len(X0)
         plot_data = ([np.empty(0, dtype=float), np.empty((0, num_dim_x), dtype=float)]
                      if PLOT else None)
@@ -40,7 +40,7 @@ class SIM(object):
         solver.set_solout(solout_fun(property_checker, plot_data))  # (2)
 
         solver.set_initial_value(X0, t=0.0)
-        solver.set_f_params(U)
+        #solver.set_f_params(U)
         X_ = self.solver.integrate(T)
 
         property_violated_flag = property_checker.check(Tf, X_)
@@ -78,7 +78,7 @@ def solout_fun(property_checker, plot_data):
     return solout
 
 
-def dyn(t, X, u):
+def dyn(t, X):
     # Params
     a = 1.0
     b = 2.5

@@ -61,31 +61,17 @@ delta_t = 0.5
 # delta_t = 0.4
 # num_samples = 2
 
-# Works for s3cam (comes from HyCU)
+# comes from HyCU
 # grid_eps = [0.1, 0.1]
 # num_samples = 3
 # delta_t = 0.4
 
 
 ##########################
-## For plotting thesis
-
-# grid_eps = [.2, .2]
-# num_samples = 2
-# delta_t = 0.1
-
-
 # # param 5: works for S3CAM
 # grid_eps = [0.11, 0.11]
 # delta_t = 0.1
 # num_samples = 3
-
-##########################
-## Works for scamr!
-
-# grid_eps = [.011, .011]
-# num_samples = 2
-# delta_t = 0.5
 
 
 initial_discrete_state = []

@@ -113,6 +113,48 @@ S3CAMR is random in nature. It's output can be made reproducible by using the sa
 
 Explanation: Run optimized scamr (no debug prints, no assertion checks) `-O`. Falsify Van der Pol example using scatter-and-simulate algorithm `-cn`, but use a discrete fixed time model for refinement `--refine model-dft`. The model must not have L2-norm error of more than 10 `--max-model-error 10`, if it does, split cells till the condition is satisfied. Include any error `--incl-error` as x' = Ax +-error in the BMC encoding. Plot the results using the default library. Determinize the pseudorandom generator by fixing the seed `--seed 0`.
 
+## Generate Benchmark Results
+
+Navigate to the source directory `./src` before running the below examples.
+
+    ```
+    time ./scamr.py -f ../examples/vdp/vanDerPol_s3camr.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
+    ```
+
+    ```
+    time ./scamr.py -f ../examples/brusselator/brusselator.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
+    ```
+
+    ```
+    time ./scamr.py -f ../examples/lorenz/lorenz.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
+    ```
+
+    ```
+    time ./scamr.py -f ../examples/nav/nav30P.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
+    ```
+
+    ```
+    time ./scamr.py -f ../examples/nav/nav30Q.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
+    ```
+
+    ```
+    time ./scamr.py -f ../examples/nav/nav30R.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
+    ```
+
+    ```
+    time ./scamr.py -f ../examples/nav/nav30S.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
+    ```
+
+    ```
+    time ./scamr.py -f ../examples/bball/bball.tst -cn  --refine model-dft --prop-check --incl-error --max-model-error 10 --max-paths 0 --bmc-engine pwa --clustering cell
+    ```
+
+
+10 runs were generated using
+    ```
+    for i in $(seq 1 10); do { <> ; } done > output_log  2>&1
+    ```
+
 ##Common Issues
 
 - PyGObject related issues
