@@ -1,4 +1,4 @@
-#S3CAMR
+# S3CAMR
 Simulate and Scatter + Relationalization
 
 S3CAMR is an improvement to S3CAM where refinement is carried symbolically.
@@ -6,10 +6,10 @@ Instead of using iterative refinement, we first build a piece-wise affine (PWA)
 model. This discrete model is then queried for violation, which if found is
 checked in the original continuous model.
 
-##Current Status: [Partial Implementation]
+## Current Status: [Partial Implementation]
 - SAL + YICES are required as they are the only working BMC engine.
 
-##Installation
+## Installation
 Clone the repository and install the dependencies.
 
 Python modules available on PyPI (Python Package Index) can be installed using the Makefile
@@ -18,7 +18,7 @@ Python modules available on PyPI (Python Package Index) can be installed using t
 
 External Dependencies can be installed as required. Refer to the below section.
 
-##Dependencies
+## Dependencies
 
 - py_utils
     Clone the below repo and add it to the Python Path environment variable: PYTHONPATH
@@ -55,13 +55,13 @@ External Dependencies can be installed as required. Refer to the below section.
         https://github.com/cuplv/S3CAMSMT.git
         ```
 
-##Usage
+## Usage
 
 **Print List of Options**
     
     python ./scamr.py --help
 
-####Example runs
+#### Example runs
 
 Navigate to the source directory `./src` before running the below examples.
 
@@ -130,11 +130,10 @@ Where the <test-file> is one of the below
 * `../examples/bball/bball.tst`
 
 10 runs were generated using
-    ```
-    for i in $(seq 1 10); do { <> ; } done > output_log  2>&1
-    ```
-
-##Common Issues
+`for i in $(seq 1 10); do { <> ; } done > output_log  2>&1`
+    
+    
+## Common Issues
 
 - PyGObject related issues
 
