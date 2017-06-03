@@ -72,3 +72,4 @@ class Relation(modelspec.PartitionedDiscreteAffineModel):
 Partition = modelspec.Partition
 
 DiscreteAffineMap = modelspec.DiscreteAffineMap
+DiscretePolyMap = modelspec.DiscretePolyMap

@@ -8,6 +8,7 @@ import abc
 import six
 
 from sklearn import linear_model as skl_lm
+from sklearn.preprocessing import PolynomialFeatures
 import numpy as np
 
 #from IPython import embed
@@ -18,19 +19,20 @@ import err
 from utils import print_function
 import utils as U
 
+from globalopts import opts as gopts
 import settings
 
 logger = logging.getLogger(__name__)
 
 
-# TODO: UNUSED
-def factory(model_type):
-    if model_type == 'approx':
-        return RegressionModel()
-    elif model_type == 'sound':
-        return FlowStarModel()
+def Model(*args, **kwargs):
+    if gopts.model_type == 'affine':
+        return OLS(*args, **kwargs)
+    elif gopts.model_type == 'poly':
+        return Poly(*args, **kwargs)
     else:
         raise NotImplementedError
+    return
 
 
 def small_data_set(x):
@@ -61,21 +63,21 @@ class RegressionModel(object):
 
     @abc.abstractproperty
     def A(self):
-        return
+        raise NotImplementedError
 
     @abc.abstractproperty
     def b(self):
-        return
+        raise NotImplementedError
 
     @abc.abstractproperty
     def fit_error(self):
         """ return fit_error """
-        return
+        raise NotImplementedError
 
     @abc.abstractmethod
     def predict(self, X):
         """ return Y """
-        return
+        raise NotImplementedError
 
 #     def error_pc_old_wrong_useless(self, X, Y):
 #         err.warn_severe('DEPRCATED. Use error_rel_scaled_pc')
@@ -104,9 +106,13 @@ class RegressionModel(object):
         and the next states Y are assumed to be close by.
         """
         '''computes relative error% along each dimension'''
+#         Y_ = self.predict(X)
+#         yrange = np.max(Y, axis=0) - np.min(Y, axis=0)
+#         return (abs((Y - Y_)/yrange))*100
+
+        # Usual relative error computation
         Y_ = self.predict(X)
-        yrange = np.max(Y, axis=0) - np.min(Y, axis=0)
-        return (abs((Y - Y_)/yrange))*100
+        return (abs((Y - Y_)/Y))*100
 
     def max_error_pc(self, X, Y):
         """Maximum error %
@@ -291,10 +297,10 @@ class FlowStarModel(object):
 
 
 class OLS(RegressionModel):
-    def __init__(self, x, y):
+    def __init__(self, x, y, fit_intercept=True):
         super(self.__class__, self).__init__(x, y)
         # Copy must be on...arrays are getting reused!
-        self.model = skl_lm.LinearRegression(copy_X=True, fit_intercept=True, n_jobs=1, normalize=True)
+        self.model = skl_lm.LinearRegression(copy_X=True, fit_intercept=fit_intercept, n_jobs=1, normalize=True)
         self.model.fit(x, y)
         self.fit_error_ = self.error(x, y)
 
@@ -439,3 +445,34 @@ class KLinReg():
     @property
     def b(self):
         return self.intercept
+
+
+class Poly(RegressionModel):
+    def __init__(self, x, y, degree=3):
+        super(self.__class__, self).__init__(x, y)
+        self.poly_ = PolynomialFeatures(degree=degree, include_bias=True)
+        x_poly = self.poly_.fit_transform(x)
+
+        self.ols = OLS(x_poly, y, fit_intercept=False)
+        self.coeffs = self.ols.A
+
+    @property
+    def poly(self):
+        return self
+
+    def predict(self, X):
+        return self.ols.predict(self.poly_.transform(X))
+
+    @property
+    def fit_error(self):
+        return self.ols.fit_error_
+
+    @property
+    def A(self):
+        #return self.ols.model.coef_
+        raise NotImplementedError
+
+    @property
+    def b(self):
+        #return self.ols.model.intercept_
+        raise NotImplementedError

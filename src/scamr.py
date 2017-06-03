@@ -751,6 +751,7 @@ def main():
     LIST_OF_BMC = ['sal', 's3camsmt', 'pwa', 'pretty-printer']
     LIST_OF_LP = ['scipy', 'glpk', 'gurobi']
     LIST_OF_CLUSTERING = ['cell', 'box', 'hull']
+    LIST_OF_MODELS = ['affine', 'poly']
 
     DEF_BMC_PREC = 4
     DEF_BMC = 'sal'
@@ -759,6 +760,7 @@ def main():
     DEF_GRAPH_LIB = 'nx'
     DEF_VIO_LOG = 'vio.log'
     DEF_CLUSTERING = 'cell'
+    DEF_MODEL = 'affine'
 
     parser = argparse.ArgumentParser(
             description='S3CAM',
@@ -878,6 +880,11 @@ def main():
                         choices=LIST_OF_CLUSTERING,
                         help='clustering method')
 
+    parser.add_argument('--model-type', type=str,
+                        default=DEF_MODEL,
+                        choices=LIST_OF_MODELS,
+                        help='type of model')
+
 #    argcomplete.autocomplete(parser)
     args = parser.parse_args()
     #print(args)
@@ -957,6 +964,7 @@ def main():
     opts.bmc_prec = args.bmc_prec
     opts.par = args.par
     opts.clustering = args.clustering
+    opts.model_type = args.model_type
 
     sys, prop = loadsystem.parse(filepath, args.pvt_init_data)
     if args.prop_check:

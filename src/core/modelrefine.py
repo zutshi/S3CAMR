@@ -618,8 +618,10 @@ def build_pwa_model(sys, prop, qgraph, sp, model_type):
                 np.trunc(sub_model.max_error_pc),
                 sub_model_status(sub_model),
                 sub_model.m.error,
-                str(sub_model.m.A).replace('\n', ''),
-                sub_model.m.b)))
+                #str(sub_model.m.A).replace('\n', ''),
+                #sub_model.m.b
+                None,
+                None)))
             pwa_model.add(sub_model)
             #q2pid[q].add(sub_model.p.pID)
             #abs_state_models[abs_state] = sub_model
@@ -744,7 +746,7 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
 
 def model(tol, X, Y):
     try:
-        rm = AFM.OLS(X, Y)
+        rm = AFM.Model(X, Y)
     except AFM.UdetError:
         return []
     e_pc = rm.max_error_pc(X, Y)
@@ -813,7 +815,7 @@ def mdl_old(AA, prop, tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
     #print(U.colorize('# samples = {}'.format(X.shape[0])))
 
     if k >= kmin:
-        rm = AFM.OLS(X, Y)
+        rm = AFM.Model(X, Y)
         e_pc = rm.max_error_pc(X, Y)
         if settings.debug:
             err.imp('error%: {}'.format(e_pc))
@@ -919,7 +921,7 @@ def dummy_sub_model(q):
     A, b = np.eye(q.dim), np.zeros(q.dim)
     # no error
     e = zero2ic(q.dim)
-    dmap = rel.DiscreteAffineMap(A, b, e)
+    dmap = rel.DiscreteAffineMap((A, b), e)
 
     C, d = q.ival_constraints.poly()
     p = ModelPartition(C, d, q)
@@ -1019,7 +1021,7 @@ def q_affine_models_old(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q)
     for rm, q_seq, e_pc, status in regression_models:
         A, b = q.modelQ(rm)
         e = q.errorQ(include_err, rm)
-        dmap = rel.DiscreteAffineMap(A, b, e)
+        dmap = rel.DiscreteAffineMap((A, b), e)
 
         C, d = q.ival_constraints.poly()
         p = pwa.Partition(C, d, q)
@@ -1134,9 +1136,11 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
 
     sub_models = []
     for rm, (qi, qj), e_pc, status in regression_models:
-        A, b = qi.modelQ(rm)
         e = qi.errorQ(include_err, rm)
-        dmap = rel.DiscreteAffineMap(A, b, e)
+        if gopts.model_type == 'poly':
+            dmap = rel.DiscretePolyMap(qi.modelQ(rm), e)
+        else:
+            dmap = rel.DiscreteAffineMap(qi.modelQ(rm), e)
 
         #C, d = qi.ival_constraints.poly()
         #partition_cluster = CLST.Q(qi)

@@ -92,11 +92,36 @@ class Partition(object):
         return s
 
 
+class DiscretePolyMap(object):
+    def __init__(self, poly, e):
+        '''
+        x' = P(x) +- error
+        '''
+        #TODO: fix by removing b below
+        self.poly = poly
+        self.A = poly.coeffs
+        self.b = 0
+        assert(isinstance(e, cons.IntervalCons))
+        self.error = e
+        return
+
+    def __repr__(self):
+        s = '({},{},{})'.format(self.poly, self.error)
+        return s
+
+    def __str__(self):
+        s = 'Mi - >(\n{},\n{} + [{}, {}])'.format(
+                self.poly, self.error.l, self.error.h)
+        return s
+
+
 class DiscreteAffineMap(object):
-    def __init__(self, A, b, e):
+    def __init__(self, (A, b), e):
         '''
         x' = Ax + b +- error
         '''
+        #TODO: fix by removing b below....later, make everything
+        #polynomial
         self.A = A
         self.b = b
         assert(isinstance(e, cons.IntervalCons))

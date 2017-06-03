@@ -45,6 +45,11 @@ grid_eps = [.51, .51]
 num_samples = 100
 delta_t = 0.5
 
+grid_eps = [1, 1]
+num_samples = 20
+delta_t = 0.5
+
+
 # Gets a reproducible CE
 # python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft --seed 0 -pmp --prop-check --incl-error --max-model-error 10000
 # grid_eps = [.011, .011]

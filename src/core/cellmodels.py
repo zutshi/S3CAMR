@@ -9,6 +9,8 @@ import six
 
 import numpy as np
 
+from globalopts import opts as gopts
+
 import constraints as cons
 #import err
 from utils import print
@@ -297,8 +299,11 @@ class Qx(Q):
         return self.ival_constraints.sat(X)
 
     def modelQ(self, rm):
-        A, b = rm.A, rm.b
-        return A, b
+        if gopts.model_type == 'affine':
+            A, b = rm.A, rm.b
+            return A, b
+        else:
+            return rm.poly
 
     def errorQ(self, include_err, rm):
         e = (rm.fit_error if include_err
