@@ -748,7 +748,7 @@ def main():
     LIST_OF_REFINEMENTS = ['init', 'trace', 'model-dft', 'model-dmt', 'model-dct']
     LIST_OF_GRAPH_LIBS = ['nxlm', 'nx', 'gt', 'g']
     LIST_OF_PLOT_LIBS = ['mp', 'pg']
-    LIST_OF_BMC = ['sal', 's3camsmt', 'pwa', 'pretty-printer']
+    LIST_OF_BMC = ['sal', 's3camsmt', 'pwa', 'pretty-printer', 'pysmtbmc']
     LIST_OF_LP = ['scipy', 'glpk', 'gurobi']
     LIST_OF_CLUSTERING = ['cell', 'box', 'hull']
 
