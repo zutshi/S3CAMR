@@ -448,7 +448,7 @@ class KLinReg():
 
 
 class Poly(RegressionModel):
-    def __init__(self, x, y, degree=3):
+    def __init__(self, x, y, degree=2):
         super(self.__class__, self).__init__(x, y)
         self.poly_ = PolynomialFeatures(degree=degree, include_bias=True)
         x_poly = self.poly_.fit_transform(x)

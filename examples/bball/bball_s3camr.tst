@@ -105,7 +105,7 @@ T = 40.0
 # Used for HyCU (matlabprot)
 grid_eps = [1]*4
 delta_t = 10.0 
-num_samples = 5
+num_samples = 50
 
 
 MAX_ITER = 4
