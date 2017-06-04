@@ -1,4 +1,5 @@
-"""Helper functions, to understand where to put them.
+"""Helper functions to encode formulas (in practice, handle the copy
+of variables at different times and their substitution into formulas)
 
 TODO: memoization needs to be aware of the prefix
 """

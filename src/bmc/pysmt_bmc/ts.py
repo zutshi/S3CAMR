@@ -34,6 +34,7 @@ class TransitionSystem:
         self.var_types = {}
         self.init = TRUE_PYSMT()
         self.trans = TRUE_PYSMT()
+        self.final = FALSE_PYSMT()
 
     def add_var(self, var):
         self.state_vars.add(var)
