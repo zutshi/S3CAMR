@@ -11,7 +11,7 @@ from pysmt.shortcuts import GE, LE
 from pysmt.shortcuts import Plus, Times
 from pysmt.shortcuts import get_env
 
-from bmc.pysmt_bmc.helpers import Helper
+from helpers import Helper
 
 class TransitionSystem:
     """ Symbolic transition system.

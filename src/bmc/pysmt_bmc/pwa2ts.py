@@ -1,8 +1,13 @@
 """ Translates a PWA in a symbolic TS """
 
-from bmc.pysmt_bmc.ts import TransitionSystem
-from bmc.pysmt_bmc.counter_enc import CounterEnc
-from bmc.pysmt_bmc.helpers import Helper
+# from bmc.pysmt_bmc.ts import TransitionSystem
+# from bmc.pysmt_bmc.counter_enc import CounterEnc
+# from bmc.pysmt_bmc.helpers import Helper
+
+from ts import TransitionSystem
+from counter_enc import CounterEnc
+from helpers import Helper
+
 
 import constraints
 import pwa
