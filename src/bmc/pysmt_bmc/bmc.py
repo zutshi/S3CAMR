@@ -17,7 +17,7 @@ class BMC:
         self.helper = helper
         self.ts = ts
         self.all_vars = set(self.ts.state_vars)
-        self.all_vars.update(self.ts.input_vars)
+        # self.all_vars.update(self.ts.input_vars)
         self.error = error
 
     def find_bug(self, k, incremental=False):
@@ -176,13 +176,16 @@ class BMC:
             return None
 
     def _trace_add_step(self, cex, model, i, steps):
-        """Extract the trace from the satisfying assignment."""
+        """Extract the trace from the satisfying assignment.
 
-        vars_to_use = [self.ts.state_vars, self.ts.input_vars]
+        Cex is a list of maps, one for each state traversed by the bmc encoding
+        """
+
+#        vars_to_use = [self.ts.state_vars, self.ts.input_vars]
+        vars_to_use = [self.ts.state_vars]
         cex = []
 
         if (len(cex) < i):
-#            assert i == 0
             cex_i = {}
             cex.append(cex_i)
         else:
@@ -207,7 +210,8 @@ class BMC:
     def _build_trace(self, model, steps):
         """Extract the trace from the satisfying assignment."""
 
-        vars_to_use = [self.ts.state_vars, self.ts.input_vars]
+#        vars_to_use = [self.ts.state_vars, self.ts.input_vars]
+        vars_to_use = [self.ts.state_vars]
         cex = []
 
         for i in range(steps + 1):

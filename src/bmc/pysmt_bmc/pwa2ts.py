@@ -64,14 +64,19 @@ class PWA2TS(object):
         self._loc_enc = None # Object used to encode the location with a counter
         self.val2loc = None # map from value to locations (as represented in the graph)
         self.loc2val = None # map from location (as rep. in graph) to the encoding value
+        self.val2edge = None # map from value to transition
+        self.edge2val = None # map from transition to value
         self.pysmtvars = None # List of pysmt variables (same position as self.vs)
-
-        self.pysmt2pwa_map = {}
+        self.pysmtvars2index = {} # map from variables in the ts to the index used in vs
 
     def _get_loc_var_name(self):
         """ Returns the variable used to represent the locations """
         return "loc"
 
+    def _get_edge_var_name(self):
+        """ Returns the variable used to represent the edge """
+        return "edge"
+ 
     def _convert(self):
         """ Create the transition system that encodes the input PWA.
 
@@ -86,7 +91,10 @@ class PWA2TS(object):
         self._loc_enc = CounterEnc(self.pysmt_env)
         self.val2loc = {}
         self.loc2val = {}
+        self.val2edge = {}
+        self.edge2val = {}
         self.pysmtvars = []
+        self.pysmtvars2index = {}
 
         # 1. Creates the boolean encoding for the location variables
         self._loc_enc.add_var(self._get_loc_var_name(),
@@ -103,20 +111,23 @@ class PWA2TS(object):
             self.loc2val[loc] = loc_id
 
         # 2. Add the continuous variables
+        index = -1
         for var_name in self.vs:
+            index += 1
             pysmt_var = Symbol(var_name, REAL)
             self.pysmtvars.append(pysmt_var)
+            self.pysmtvars2index[pysmt_var] = index
             self._ts.add_var(pysmt_var)
             self._ts.var_types[pysmt_var] = REAL
 
         # 3. Initial states
-        self.init = self._convert_IntervalCons(self.init_cons)
+        self._ts.init = self._convert_IntervalCons(self.init_cons)
         init_loc_smt = self._get_mod_part_set_enc(self.init_ps)
-        self.init = And(self.init, init_loc_smt)
+        self._ts.init = And(self._ts.init, init_loc_smt)
 
         # 4. Final states
         final_smt = self._convert_IntervalCons(self.final_cons)
-        final_loc_smt = self._get_mod_part_set_enc(self.final_ps)
+        final_loc_smt = self._get_mod_part_set_enc(self.final_ps)    
         final_smt = And(final_smt, final_loc_smt)
 
         # 5. Location invariants
@@ -135,8 +146,19 @@ class PWA2TS(object):
         #   loc & loc' & loc_partition & loc_partition'
         #   edge_relation
         # }
+        self._loc_enc.add_var(self._get_edge_var_name(),
+                              len(self.pwa_graph.all_edges()) - 1) 
+        for v in self._loc_enc.get_counter_var(self._get_edge_var_name()):
+            self._ts.add_var(v)
+            self._ts.var_types[v] = BOOL
+
         affine_trans_rel_smt = FALSE()
+        edge_id = -1
         for edge in self.pwa_graph.all_edges():
+            edge_id += 1
+            self.val2edge[edge_id] = edge
+            self.edge2val[edge] = edge_id
+            
             # Unpack the objects
             assert isinstance(edge, tuple) and len(edge) == 2
             src_part = self.pwa_graph.node_p(edge[0])
@@ -149,20 +171,28 @@ class PWA2TS(object):
             # create the encoding
             src_loc_smt = self._get_loc_enc(edge[0])
             dst_loc_smt = self._ts.helper.get_next_formula(self._ts.state_vars,
-                                                           self._get_loc_enc(edge[0]))
+                                                           self._get_loc_enc(edge[1]))
 
             rel_enc = self._get_relation_enc(edge_rel)
             src_part_smt = self._convert_partition(src_part)
             dst_part_smt = self._convert_partition(dst_part)
             dst_part_smt = self._ts.helper.get_next_formula(self._ts.state_vars,
                                                             dst_part_smt)
-
+            edge_trans = And(src_loc_smt, dst_loc_smt,
+                             src_part_smt, dst_part_smt,
+                             rel_enc)
+            edge_trans = And(self._get_edge_enc(edge),
+                             edge_trans)
             affine_trans_rel_smt = Or(affine_trans_rel_smt,
-                                      And(src_loc_smt, dst_loc_smt,
-                                          src_part_smt, dst_part_smt,
-                                          rel_enc))
-        self.trans = And(loc_invars, affine_trans_rel_smt)
-        self.final = final_smt
+                                      edge_trans)
+        self._ts.trans = And(loc_invars, affine_trans_rel_smt)        
+        self._ts.final = final_smt
+        
+        # print self._ts.trans.serialize()
+        # print self._ts.init.serialize()
+        # print self._ts.final.serialize()
+        # self._print_dot()
+
 
     def _get_relation_enc(self, edge_rel):
         """ Encode x' = Ax + b +- error
@@ -223,16 +253,22 @@ class PWA2TS(object):
         loc = mod_part.ID
         assert isinstance(loc, Qx)
         loc_enc = self._get_loc_enc(loc)
-        # DEBUG
-        # part_enc = self._convert_partition(mod_part)
-        # mod_part_enc = And(part_enc, loc_enc)
-        mod_part_enc = loc_enc
+        part_enc = self._convert_partition(mod_part)
+        mod_part_enc = And(part_enc, loc_enc)
         return mod_part_enc        
 
     def _get_loc_enc(self, loc):
+        """ Loc is a node in the pwa graph """
         loc_id = self.loc2val[loc]
         loc_enc = self._loc_enc.eq_val(self._get_loc_var_name(), loc_id)
         return loc_enc
+
+    def _get_edge_enc(self, edge):
+        """ Loc is a node in the pwa graph """
+        edge_id = self.edge2val[edge]
+        edge_enc = self._loc_enc.eq_val(self._get_edge_var_name(), edge_id)
+        return edge_enc
+
 
     def _convert_IntervalCons(self, interval_cons):
         """ Convert a box constraint """
@@ -268,6 +304,13 @@ class PWA2TS(object):
         enc = And(enc_list)
         return enc
 
+
+    def get_index(self, var):
+        if var in self.pysmtvars2index:
+            return self.pysmtvars2index[var]
+        else:
+            return -1
+        
     def get_ts(self):
         """ Return the transition system """
 
@@ -278,6 +321,9 @@ class PWA2TS(object):
 
     
     def to_real(self, n):
+        # num_str = str(n)
+        # return Real(Fraction(num_str))
+
         # TODO: use limit_denominator to approx the fraction
         # [SM] Warning: we need to consider the precision issue here.
         def is_numpy_int(n):
@@ -296,4 +342,60 @@ class PWA2TS(object):
         else:
             # Let pysmt do the magic        
             return Real(frac_val)
+
+    def to_float(self, real):
+        return float(Fraction(str(real)))
+
+
+    def _print_dot(self):
+        locs = set()
+        locs_string = {}
+        is_initial = set()
+        is_final = set()
+
+        edges = []
+
+        for loc in self.pwa_graph.nodes():
+            loc_id = self.loc2val[loc]
+            assert loc_id not in locs
+            locs.add(loc_id)
+            locs_string[loc_id] = str(loc)
+            
+        for mp in self.init_ps:
+            loc_id = self.loc2val[mp.ID]
+            assert loc_id in locs
+            is_initial.add(loc_id)
+            
+        for mp in self.final_ps:
+            loc_id = self.loc2val[mp.ID]
+            assert loc_id in locs
+            is_final.add(loc_id)
+
+        for edge in self.pwa_graph.all_edges():
+            src_loc_id = self.loc2val[edge[0]]
+            dst_loc_id = self.loc2val[edge[1]]
+            assert src_loc_id in locs
+            assert dst_loc_id in locs
+
+            edges.append((src_loc_id, dst_loc_id))
+
+        with open("app.dot", "w") as f:
+            f.write("digraph{\n")
+
+            for loc_id in locs:
+                if loc_id in is_initial:
+                    shape = "rectangle"
+                elif loc_id in is_final:
+                    shape = "doublecircle"
+                else:
+                    shape = "circle"
+                f.write("node [shape=%s,label=\"%s\"] %d;\n" % (shape,
+                                                              locs_string[loc_id],
+                                                              loc_id))
+
+            for (src_loc_id, dst_loc_id) in edges:
+                f.write("%d -> %d;\n" % (src_loc_id, dst_loc_id))
+
+            f.write("}")
+            f.close()
 
