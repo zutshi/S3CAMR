@@ -1,0 +1,50 @@
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
+from __future__ import unicode_literals
+
+from IPython import embed
+
+import z3
+
+import err
+
+
+from polynomial.poly import Poly
+import nonlinprog.spec as spec
+
+
+def nonlinprog(obj, cons, nvars):
+
+    err.warn('ignoring objective, will check only feasibilit for now.')
+    return polyprog(obj, cons, nvars)
+
+
+def polyprog(obj, cons, nvars):
+    if obj != 0:
+        raise NotImplementedError
+
+    solver = z3.Solver()
+    # Objective and constraints should be polynomials
+    assert(isinstance(obj, Poly))
+    for c in cons:
+        assert(isinstance(c, Poly))
+
+    smt_vars = z3.Reals(','.join('x{}'.format(v) for v in nvars))
+
+    for c in cons:
+        solver.add(poly2z3(c, smt_vars))
+
+    solver.check()
+    embed()
+
+    return None
+
+
+def poly2z3(poly, smt_vars):
+    z3_expr = 0
+    for powers, coeff in poly.as_dict():
+        for v, p in zip(smt_vars, powers):
+            z3_expr += v**p
+        z3_expr *= coeff
+    return z3_expr

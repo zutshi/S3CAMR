@@ -314,7 +314,7 @@ def lpfun(solver):
     return linprog.factory(solver)
 
 
-def feasible(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
+def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     A_ub, b_ub = pwatrace2lincons(pwa_trace, num_dims, prop)
 
     num_opt_vars = A_ub.shape[1]
@@ -329,7 +329,7 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
 
 
 #TODO: ugly function
-def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.lp_engine):
+def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     A_ub, b_ub = pwatrace2lincons(pwa_trace, num_dims, prop)
 
     num_opt_vars = A_ub.shape[1]

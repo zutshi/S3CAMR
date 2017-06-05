@@ -99,14 +99,12 @@ class DiscretePolyMap(object):
         '''
         #TODO: fix by removing b below
         self.poly = poly
-        self.A = poly.coeffs
-        self.b = 0
         assert(isinstance(e, cons.IntervalCons))
         self.error = e
         return
 
     def __repr__(self):
-        s = '({},{},{})'.format(self.poly, self.error)
+        s = '({},{})'.format(self.poly, self.error)
         return s
 
     def __str__(self):

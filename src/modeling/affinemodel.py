@@ -19,6 +19,7 @@ import err
 from utils import print_function
 import utils as U
 
+from polynomial.poly import power_array2Poly
 from globalopts import opts as gopts
 import settings
 
@@ -455,10 +456,11 @@ class Poly(RegressionModel):
 
         self.ols = OLS(x_poly, y, fit_intercept=False)
         self.coeffs = self.ols.A
+        self.poly_rep = [power_array2Poly(self.poly_.powers_, coeff) for coeff in self.coeffs]
 
     @property
     def poly(self):
-        return self
+        return self.poly_rep
 
     def predict(self, X):
         return self.ols.predict(self.poly_.transform(X))

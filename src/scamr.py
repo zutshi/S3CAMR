@@ -748,14 +748,14 @@ def main():
     LIST_OF_REFINEMENTS = ['init', 'trace', 'model-dft', 'model-dmt', 'model-dct']
     LIST_OF_GRAPH_LIBS = ['nxlm', 'nx', 'gt', 'g']
     LIST_OF_PLOT_LIBS = ['mp', 'pg']
-    LIST_OF_BMC = ['sal', 's3camsmt', 'pwa', 'pretty-printer']
-    LIST_OF_LP = ['scipy', 'glpk', 'gurobi']
+    LIST_OF_BMC = ['sal', 's3camsmt', 'pretty-printer', 'dfs-lp', 'dfs-z3', 'dfs-pysmt']
+    LIST_OF_OPT_ENGINE = ['scipy', 'glpk', 'gurobi', 'z3']
     LIST_OF_CLUSTERING = ['cell', 'box', 'hull']
     LIST_OF_MODELS = ['affine', 'poly']
 
     DEF_BMC_PREC = 4
     DEF_BMC = 'sal'
-    DEF_LP = 'glpk'
+    DEF_OPT = 'glpk'
     DEF_MAX_PATHS = 100
     DEF_GRAPH_LIB = 'nx'
     DEF_VIO_LOG = 'vio.log'
@@ -850,10 +850,10 @@ def main():
                         default=DEF_BMC,
                         help='Choose the bmc engine')
 
-    parser.add_argument('--lp-engine', type=str,
-                        choices=LIST_OF_LP,
-                        default=DEF_LP,
-                        help='Choose the LP engine')
+    parser.add_argument('--opt-engine', type=str,
+                        choices=LIST_OF_OPT_ENGINE,
+                        default=DEF_OPT,
+                        help='Choose an optmization engine')
 
     # TODO: fix this hack
     parser.add_argument('--enable-regression-plots', action='store_true',
@@ -959,7 +959,7 @@ def main():
     #opts.plots = args.plots
     opts.model_err = args.incl_error
     opts.bmc_engine = args.bmc_engine
-    opts.lp_engine = args.lp_engine
+    opts.opt_engine = args.opt_engine
     # Default bmc prec
     opts.bmc_prec = args.bmc_prec
     opts.par = args.par
