@@ -116,20 +116,33 @@ class BMC(BMCSpec):
             assert c_val in self.converter.val2loc
             loc = self.converter.val2loc[c_val]
 
-            edge_val = self.converter._loc_enc.get_counter_value(self.converter._get_edge_var_name(),
-                                                                 cex_at_i,
-                                                                 True)
-            assert edge_val in self.converter.val2edge
-            edge = self.converter.val2edge[edge_val]
-            models.append(self.converter.pwa_graph.edge_m(edge))
-            partitions.append(self.converter.pwa_graph.node_p(edge[0]))        
+            # Do not process the last state (trans is an input!)
+            if (step_number + 1 < len(res_cex)):
+                edge_val = self.converter._loc_enc.get_counter_value(self.converter._get_edge_var_name(),
+                                                                     cex_at_i,
+                                                                     True)
+                assert edge_val in self.converter.val2edge
+                edge = self.converter.val2edge[edge_val]
+                models.append(self.converter.pwa_graph.edge_m(edge))
+                partitions.append(self.converter.pwa_graph.node_p(edge[0]))        
 
-            # append the last location/cell/partition id        
-            if (step_number + 1 == len(res_cex)):
-                partitions.append(self.converter.pwa_graph.node_p(edge[1]))            
+                # Second last state - last transition - add last partition
+                if (step_number + 2 == len(res_cex)):
+                    partitions.append(self.converter.pwa_graph.node_p(edge[1]))            
+
+
 
         self.pwa_trace = PWATRACE(partitions, models)
         self.trace = BmcTrace(all_steps, self.converter.vs)
+
+        # # DEBUG
+        # print(self.trace)
+        # print("PWA TRACE - partitions")
+        # for p in self.pwa_trace.partitions:
+        #     print(p.ID)
+        # print("PWA TRACE - models")
+        # for p in self.pwa_trace.models:
+        #     print(p)
 
     def gen_new_disc_trace(self):
         raise NotImplementedError
