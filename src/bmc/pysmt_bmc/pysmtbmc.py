@@ -15,9 +15,10 @@ from bmc.sal_bmc.pwa2salconverter import PWATRACE
 
 class BMC(BMCSpec):
     def __init__(self, vs, pwa_graph, init_cons, final_cons, init_ps, final_ps,
-                 fname_constructor, module_name, model_type):
+                 fname_constructor, module_name, model_type, smt_engine):
         assert model_type == "dft"
 
+        self.smt_engine = smt_engine
         if model_type != "dft":
             raise Exception('unknown model type')
 
@@ -36,7 +37,7 @@ class BMC(BMCSpec):
     def check(self, depth):
         ts = self.converter.get_ts()
 
-        bmc = BMCImpl(ts.helper, ts, ts.final, )    
+        bmc = BMCImpl(ts.helper, ts, ts.final,self.smt_engine)    
 
         res_cex = bmc.find_bug(depth, False)
 

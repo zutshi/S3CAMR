@@ -114,7 +114,8 @@ class PWA2TS(object):
         index = -1
         for var_name in self.vs:
             index += 1
-            pysmt_var = Symbol(var_name, REAL)
+            str_var_name = str(var_name)
+            pysmt_var = Symbol(str_var_name, REAL)
             self.pysmtvars.append(pysmt_var)
             self.pysmtvars2index[pysmt_var] = index
             self._ts.add_var(pysmt_var)

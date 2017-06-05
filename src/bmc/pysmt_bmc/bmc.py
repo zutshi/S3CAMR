@@ -1,7 +1,7 @@
 from cbverifier.encoding.encoder import TransitionSystem
 
 import logging
-from pysmt.logics import QF_BOOL
+from pysmt.logics import QF_BOOL, QF_LRA
 from pysmt.shortcuts import Solver
 from pysmt.shortcuts import is_sat, is_valid
 from pysmt.shortcuts import Symbol, TRUE, FALSE
@@ -13,12 +13,13 @@ class BMC:
     Implementation of Bounded Model Checking
     """
 
-    def __init__(self, helper, ts, error):
+    def __init__(self, helper, ts, error, solver_name='z3'):
         self.helper = helper
         self.ts = ts
         self.all_vars = set(self.ts.state_vars)
         # self.all_vars.update(self.ts.input_vars)
         self.error = error
+        self.solver_name = solver_name
 
     def find_bug(self, k, incremental=False):
         """Explore the system up to k steps.
@@ -33,7 +34,8 @@ class BMC:
             return self.find_bug_inc(k, None)
 
     def _get_solver(self):
-        solver = Solver(name='z3', logic=QF_BOOL)
+        solver = Solver(name=self.solver_name, logic=QF_LRA)
+        # solver = Solver(name='z3', logic=QF_BOOL)
         return solver
 
     def find_bug_non_inc(self, k, trace_enc=None):
