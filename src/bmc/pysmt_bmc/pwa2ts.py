@@ -199,7 +199,6 @@ class PWA2TS(object):
         as 
         Ax + b - error <= x' /\ x' <= Ax + b + error
         """
-
         assert len(self.pysmtvars) == len(edge_rel.A)
         assert len(self.pysmtvars) == len(edge_rel.b)
         assert len(self.pysmtvars) == len(edge_rel.error.l)
@@ -345,7 +344,6 @@ class PWA2TS(object):
 
     def to_float(self, real):
         return float(Fraction(str(real)))
-
 
     def _print_dot(self):
         locs = set()

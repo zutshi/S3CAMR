@@ -11,6 +11,7 @@ from bmc.sal_bmc.trace import Trace as BmcTrace
 from bmc.sal_bmc.sal_op_parser import Step, Assignment
 from bmc.pysmt_bmc.pwa2ts import PWA2TS
 from bmc.pysmt_bmc.bmc import BMC as BMCImpl
+from bmc.sal_bmc.pwa2salconverter import PWATRACE
 
 class BMC(BMCSpec):
     def __init__(self, vs, pwa_graph, init_cons, final_cons, init_ps, final_ps,
@@ -79,11 +80,13 @@ class BMC(BMCSpec):
         return self.pwa_trace
 
 
-    def _build_trace(self, ts, res_cex):        
+    def _build_trace(self, ts, res_cex):
         self.trace = None
-        self.pwa_trace = []
+        self.pwa_trace = None
 
         all_steps = []
+        partitions = []
+        models = []
 
         step_number = -1
         for cex_at_i in res_cex:
@@ -112,8 +115,20 @@ class BMC(BMCSpec):
                                                               True)
             assert c_val in self.converter.val2loc
             loc = self.converter.val2loc[c_val]
-            self.pwa_trace.append(loc)
 
+            edge_val = self.converter._loc_enc.get_counter_value(self.converter._get_edge_var_name(),
+                                                                 cex_at_i,
+                                                                 True)
+            assert edge_val in self.converter.val2edge
+            edge = self.converter.val2edge[edge_val]
+            models.append(self.converter.pwa_graph.edge_m(edge))
+            partitions.append(self.converter.pwa_graph.node_p(edge[0]))        
+
+            # append the last location/cell/partition id        
+            if (step_number + 1 == len(res_cex)):
+                partitions.append(self.converter.pwa_graph.node_p(edge[1]))            
+
+        self.pwa_trace = PWATRACE(partitions, models)
         self.trace = BmcTrace(all_steps, self.converter.vs)
 
     def gen_new_disc_trace(self):
