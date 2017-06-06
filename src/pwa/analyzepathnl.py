@@ -81,13 +81,14 @@ def dyn_constraints(models, vars_grouped_by_states):
 
     for m, (Vars, next_vars) in zip(models, U.pairwise(vars_grouped_by_states)):
         for p, el, eh, x, x_ in zip(m.poly, m.error.l, m.error.h, Vars, next_vars):
+            p.truncate_coeffs(gopts.bmc_prec)
             #assert(len(p.vars) == ndimx)
             old2new_var_map = {v: v_ for v, v_ in zip(p.vars, Vars)}
-            poly = p.subs_vars(old2new_var_map)
+            tpoly = p.subs_vars(old2new_var_map)
             # xi' <= p(x) + ehi
-            cons_ub = x_ - (poly.as_expr() + eh)
+            cons_ub = x_ - (tpoly.as_expr() + eh)
             # xi' >= p(x) + eli
-            cons_lb = poly.as_expr() + el - x_
+            cons_lb = tpoly.as_expr() + el - x_
             dyn_cons.append(cons_ub <= 0)
             dyn_cons.append(cons_lb <= 0)
 
@@ -152,7 +153,6 @@ def param_constraints(num_dims, prop, num_partitions):
 
 
 def truncate(*args):
-    raise NotImplementedError
     assert(isinstance(gopts.bmc_prec, int))
     prec = gopts.bmc_prec
 
@@ -178,6 +178,8 @@ def pwatrace2cons(pwa_trace, num_dims, prop):
 
     P, q = param_constraints(num_dims, prop, len(pwa_trace.partitions))
 
+    C, d = truncate(C, d)
+    P, q = truncate(P, q)
     part_cons_ = np.dot(C, all_vars) - d
     part_cons = (c <= 0 for c in part_cons_)
 

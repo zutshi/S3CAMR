@@ -39,7 +39,6 @@ def polyprog(obj, cons, Vars):
 
     res = solver.check()
     if res == z3.sat:
-        raise RuntimeError
         #TODa
         model = solver.model
     elif res == z3.unsat:

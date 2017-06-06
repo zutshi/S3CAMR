@@ -39,5 +39,17 @@ class Poly(object):
     def as_dict(self):
         return self.poly.as_dict()
 
+    # TODO: fix this, should not be taking a truncate function. Move
+    # the truncate() into a utils file or so
+    def truncate_coeffs(self, prec):
+        poly = self.poly
+        d = poly.as_dict()
+        for powers, coeff in d.iteritems():
+            d[powers] = float('{n:0.{p}f}'.format(n=coeff, p=prec))
+        print(poly)
+        self.poly = sym.Poly.from_dict(d, poly.free_symbols)
+        print(self.poly)
+        return
+
     def subs_vars(self, old2new_var_map):
         return self.poly.subs(old2new_var_map)
