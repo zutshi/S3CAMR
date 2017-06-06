@@ -39,5 +39,5 @@ class Poly(object):
     def as_dict(self):
         return self.poly.as_dict()
 
-    def subs(self, old2new_map):
-        return self.poly.subs(old2new_map)
+    def subs_vars(self, old2new_var_map):
+        return self.poly.subs(old2new_var_map)

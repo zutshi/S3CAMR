@@ -6,11 +6,10 @@ from __future__ import unicode_literals
 import numpy as np
 import scipy.linalg as linalg
 import sympy as sym
+import itertools as it
 
 from globalopts import opts as gopts
 import nonlinprog.z3opt as z3opt
-
-import constraints as cons
 
 import settings
 import linprog.linprog as linprog
@@ -18,13 +17,14 @@ import linprog.linprog as linprog
 from IPython import embed
 
 import err
+import utils as U
 
 
 class SolverFaliure(Exception):
     pass
 
 
-def part_constraints(partition_trace, vars_grouped_by_model, next_vars_grouped_by_model):
+def part_constraints(partition_trace):
     """constraints due to partitions of the pwa model
 
     Parameters
@@ -38,27 +38,32 @@ def part_constraints(partition_trace, vars_grouped_by_model, next_vars_grouped_b
     Notes
     ------
     """
-    C, d = [], []
+    C_, d_ = [], []
     # for each sub_model
     for p in partition_trace:
-        C.append(p.C)
-        d.append(p.d)
+        C_.append(p.C)
+        d_.append(p.d)
 
-    A = linalg.block_diag(*C)
-    b = np.hstack(d)
+    C = linalg.block_diag(*C_)
+    d = np.hstack(d_)
 
-    assert(A.shape[0] == b.shape[0])
+    assert(C.shape[0] == d.shape[0])
 
-    part_cons = np.dot(A, next_var) + b
-    return 
+    return C, d
 
 
-def dyn_constraints(models, vars_grouped_by_model, next_vars_grouped_by_model):
+
+def dyn_constraints(models, vars_grouped_by_states):
     """constraints due to dynamics of the pwa model
 
     Parameters
     ----------
-    pwa_trace : pwa trace form the bmc module
+    models : list of pwa models
+    vars_grouped_by_states: variables for state vectors grouped
+    together. e.g. for a 2dim/state vector (x1,x2):
+
+        k=0 (init)     k=1       k=2
+        [(v0, v1),  (v2, v3), (v4, v5), ...]
 
     Returns
     -------
@@ -74,23 +79,22 @@ def dyn_constraints(models, vars_grouped_by_model, next_vars_grouped_by_model):
 
     dyn_cons = []
 
-    for m, Vars, next_vars in zip(models, vars_grouped_by_model, next_vars_grouped_by_model):
+    for m, (Vars, next_vars) in zip(models, U.pairwise(vars_grouped_by_states)):
         for p, el, eh, x, x_ in zip(m.poly, m.error.l, m.error.h, Vars, next_vars):
-            assert(len(p.vars) == ndimx)
+            #assert(len(p.vars) == ndimx)
             old2new_var_map = {v: v_ for v, v_ in zip(p.vars, Vars)}
-            poly = p.subs(old2new_var_map)
+            poly = p.subs_vars(old2new_var_map)
             # xi' <= p(x) + eli
-            cons_ub = x_ - (poly + el)
+            cons_ub = x_ - (poly.as_expr() + el)
             # xi' >= p(x) + ehi
-            cons_lb = poly + eh - x_
-            dyn_cons.append(cons_ub)
-            dyn_cons.append(cons_lb)
+            cons_lb = poly.as_expr() + eh - x_
+            dyn_cons.append(cons_ub <= 0)
+            dyn_cons.append(cons_lb <= 0)
 
     return dyn_cons
 
 
-def prop_constraints(num_dims, prop, num_partitions):
-    raise NotImplementedError
+def param_constraints(num_dims, prop, num_partitions):
     """constraints due to the initial set, final set and ci/pi
 
     Parameters
@@ -160,27 +164,30 @@ def truncate(*args):
 
 
 def pwatrace2cons(pwa_trace, num_dims, prop):
+
     # find the dim(x) using any submodel's b vector
-    m = models[0]
+    m = pwa_trace.models[0]
     ndimx = m.error.l.size
 
-    nvars = len(models) * ndimx
+    nvars = (len(pwa_trace.models)+1) * ndimx
     all_vars = sym.var(','.join(('x{}'.format(i) for i in range(nvars))))
-    all_next_vars = sym.var(','.join(('x{}_'.format(i) for i in range(nvars))))
+    vars_grouped_by_state = zip(*[all_vars[i::ndimx] for i in range(ndimx)])
 
-    vars_grouped_by_model = zip(*[all_vars[i::ndimx] for i in range(ndimx)])
-    next_vars_grouped_by_model = zip(*[all_next_vars[i::ndimx] for i in range(ndimx)])
+    C, d = part_constraints(pwa_trace.partitions)
+    dyn_cons = dyn_constraints(pwa_trace.models, vars_grouped_by_state)
 
-    part_cons = part_constraints(pwa_trace.partitions, vars_grouped_by_model, next_vars_grouped_by_model)
-    dyn_cons = dyn_constraints(pwa_trace.models, vars_grouped_by_model, next_vars_grouped_by_model)
+    P, q = param_constraints(num_dims, prop, len(pwa_trace.partitions))
 
-    print(dyn_cons)
-    exit()
+    part_cons_ = np.dot(C, all_vars) - d
+    part_cons = (c <= 0 for c in part_cons_)
 
-    prop_cons = prop_constraints(num_dims, prop, len(pwa_trace.partitions))
+    param_cons_ = np.dot(P, all_vars) - q
+    param_cons = (c <= 0 for c in param_cons_)
 
-    all_cons = part_cons + dyn_cons + prop_cons
-    return all_cons
+    all_cons = it.chain(part_cons, dyn_cons, param_cons)
+    #all_cons = (part_cons.tolist() + dyn_cons + param_cons.tolist())
+
+    return all_cons, all_vars
 
 
 def lpsoln2x(x, trace_len):
@@ -193,26 +200,17 @@ def lpsoln2x(x, trace_len):
     return np.reshape(x, (trace_len, num_vars))
 
 
-#TODO: getting lpsolver every time a linprog is executed!
-#@memoize
-def lpfun(solver):
-    raise NotImplementedError
-    return linprog.factory(solver)
-
-
 def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
-    cons = pwatrace2cons(pwa_trace, num_dims, prop)
+    cons, Vars = pwatrace2cons(pwa_trace, num_dims, prop)
 
-    num_opt_vars = A_ub.shape[1]
     #nvars = num_dims.x + num_dims.pi
 
-    A_ub, b_ub = truncate(A_ub, b_ub)
+    #A_ub, b_ub = truncate(A_ub, b_ub)
     obj = 0
 
-    res = z3opt.polyprog(obj, cons, nvars)
+    res, varval_map = z3opt.polyprog(obj, cons, Vars)
 
-    raise NotImplementedError
-    #return lpsoln2x(res.x, len(pwa_trace)) if res.success else None
+    return lpsoln2x(varval_map, len(pwa_trace)) if res else None
 
 
 def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
