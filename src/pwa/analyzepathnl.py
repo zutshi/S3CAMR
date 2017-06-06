@@ -84,10 +84,10 @@ def dyn_constraints(models, vars_grouped_by_states):
             #assert(len(p.vars) == ndimx)
             old2new_var_map = {v: v_ for v, v_ in zip(p.vars, Vars)}
             poly = p.subs_vars(old2new_var_map)
-            # xi' <= p(x) + eli
-            cons_ub = x_ - (poly.as_expr() + el)
-            # xi' >= p(x) + ehi
-            cons_lb = poly.as_expr() + eh - x_
+            # xi' <= p(x) + ehi
+            cons_ub = x_ - (poly.as_expr() + eh)
+            # xi' >= p(x) + eli
+            cons_lb = poly.as_expr() + el - x_
             dyn_cons.append(cons_ub <= 0)
             dyn_cons.append(cons_lb <= 0)
 

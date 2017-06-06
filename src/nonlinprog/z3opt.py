@@ -47,6 +47,7 @@ def polyprog(obj, cons, Vars):
     else:
         raise RuntimeError(solver.reason_unknown())
 
+    embed()
     return (res == z3.sat), model
 
 
