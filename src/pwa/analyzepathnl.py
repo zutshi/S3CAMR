@@ -192,8 +192,7 @@ def pwatrace2cons(pwa_trace, num_dims, prop):
     return all_cons, all_vars
 
 
-def lpsoln2x(x, trace_len):
-    raise NotImplementedError
+def optsoln2x(x, trace_len):
     '''converts solution of lp: a vector to a concrete trace: numpy
     array'''
     x = np.array(x)
@@ -210,9 +209,14 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     #A_ub, b_ub = truncate(A_ub, b_ub)
     obj = 0
 
-    res, varval_map = z3opt.polyprog(obj, cons, Vars)
+    err.warn_severe('faking output of optimizer')
+    #res, varval_map = z3opt.polyprog(obj, cons)
+    res = True
+    varval_map = {v: 0 for v in Vars}
 
-    return lpsoln2x(varval_map, len(pwa_trace)) if res else None
+    return optsoln2x([varval_map[v] for v in Vars], len(pwa_trace)) if res else None
+
+    #return lpsoln2x(varval_map, len(pwa_trace)) if res else None
 
 
 def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):

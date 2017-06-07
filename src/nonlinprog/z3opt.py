@@ -11,6 +11,7 @@ from sympy2z3.sympy2z3 import sympy2z3
 
 import err
 
+from globalopts import opts as gopts
 
 from polynomial.poly import Poly
 import nonlinprog.spec as spec
@@ -22,15 +23,14 @@ def nonlinprog(obj, cons, nvars):
     return polyprog(obj, cons, nvars)
 
 
-def polyprog(obj, cons, Vars):
+def polyprog(obj, cons):
     if obj != 0:
         raise NotImplementedError
 
-    nvars = len(Vars)
     solver = z3.Solver()
     # Objective and constraints should be polynomials
     # assert(isinstance(obj, Poly))
-    z3_vars, z3_cons = sympy2z3(cons)
+    sym2Z3_varmap, z3_cons = sympy2z3(cons)
     solver.add(z3_cons)
 
     #smt_vars = z3.Reals(','.join('x{}'.format(v) for v in nvars))
@@ -39,16 +39,25 @@ def polyprog(obj, cons, Vars):
 
     res = solver.check()
     if res == z3.sat:
-        #TODa
-        model = solver.model
+        model = solver.model()
+        varval_map = {sv: real2float(model[zv]) for sv, zv in sym2Z3_varmap.iteritems()}
     elif res == z3.unsat:
-        model = None
+        varval_map = None
     else:
         raise RuntimeError(solver.reason_unknown())
 
-    embed()
-    return (res == z3.sat), model
+    return (res == z3.sat), varval_map
 
+
+def real2float(r):
+    assert(r.is_real())
+    assert(isinstance(gopts.bmc_prec, float))
+    # ############### slow!
+    #n = float(r.numerator().as_long())
+    #d = float(r.denominator().as_long())
+    #return n/d
+    # ############### optimized, a magnitude faster
+    return float(r.as_decimal(gopts.bmc_prec).replace('?', ''))
 
 # def poly2z3(poly, smt_vars):
 #     z3_expr = 0

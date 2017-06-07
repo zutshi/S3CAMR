@@ -8,7 +8,7 @@ import collections
 import matplotlib
 # Force GTK3 backend. By default GTK2 gets loaded and conflicts with
 # graph-tool
-matplotlib.use('GTK3Agg')
+#matplotlib.use('GTK3Agg')
 #global plt
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches

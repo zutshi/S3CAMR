@@ -9,6 +9,9 @@ import operator
 import sympy as sym
 import z3
 
+import utils as U
+from utils import print_function
+
 
 def sympy2z3(sympy_exprs):
     """
@@ -28,21 +31,24 @@ def sympy2z3(sympy_exprs):
     assert(isinstance(sympy_exprs, collections.Iterable))
 
     z3_exprs = []
-    z3_vars = {}
+    sym2Z3_varmap = {}
 
     for expr in sympy_exprs:
         assert(isinstance(expr, sym.Expr))
         #print(expr)
         sympy_vars = expr.free_symbols
-        sym2Z3_varmap = {v: z3.Real(str(v)) for v in sympy_vars}
+
+        for v in sympy_vars:
+            U.dict_unique_add(sym2Z3_varmap, v, z3.Real(str(v)))
+        #sym2Z3_varmap = {v: z3.Real(str(v)) for v in sympy_vars}
+
 #         sym2Z3_varmap = {v: z3.Real('x{}'.format(idx))
 #                          for idx, v in enumerate(sympy_vars)}
 
-        z3_vars.update(z3_vars)
         t = Sympy2z3(sym2Z3_varmap)
         z3_expr = t.visit(expr)
         z3_exprs.append(z3_expr)
-    return z3_vars, z3_exprs
+    return sym2Z3_varmap, z3_exprs
 
 
 class Sympy2z3(object):
