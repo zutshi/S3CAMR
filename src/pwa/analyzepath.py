@@ -14,7 +14,7 @@ import constraints as cons
 import settings
 import linprog.linprog as linprog
 
-from IPython import embed
+#from IPython import embed
 
 import err
 

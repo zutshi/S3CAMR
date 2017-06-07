@@ -44,7 +44,7 @@ from utils import print
 
 import settings
 
-from IPython import embed
+#from IPython import embed
 
 #from guppy import hpy
 #from pkgcore.config import load_config
@@ -755,7 +755,7 @@ def main():
 
     DEF_BMC_PREC = 4
     DEF_BMC = 'sal'
-    DEF_SMT_SOLVER = 'z3'
+    DEF_SMT_SOLVER = 'satex'
     DEF_LP = 'glpk'
     DEF_MAX_PATHS = 100
     DEF_GRAPH_LIB = 'nx'

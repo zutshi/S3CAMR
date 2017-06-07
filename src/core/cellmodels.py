@@ -14,7 +14,7 @@ import constraints as cons
 from utils import print
 
 import settings
-from IPython import embed
+#from IPython import embed
 
 from . import cellmanager as CM
 
