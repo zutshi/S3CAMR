@@ -27,6 +27,8 @@ from pysmt.shortcuts import get_env
 from fractions import Fraction
 from numpy import int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32, float64, ndarray, isinf
 
+class ErrorInfinity(Exception):
+    pass
 
 
 class PWA2TS(object):
@@ -404,10 +406,18 @@ class PWA2TS(object):
         assert len(interval_cons.h) == len(self.pysmtvars)
         constraints = []
         for (var, l, h) in zip(self.pysmtvars, interval_cons.l, interval_cons.h):
-            l_val = self.to_real(l)
-            h_val = self.to_real(h)
-            constraints.append([LE(l_val, var)])
-            constraints.append([LE(var, h_val)])
+            try:
+                l_val = self.to_real(l)
+            except ErrorInfinity:
+                pass
+            else:
+                constraints.append([LE(l_val, var)])
+            try:
+                h_val = self.to_real(h)
+            except ErrorInfinity:
+                pass
+            else:
+                constraints.append([LE(var, h_val)])
         return constraints
 
     def _convert_partition(self, partition):
