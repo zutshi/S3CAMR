@@ -23,7 +23,6 @@ from .cellmodels import Qxw, Qx
 from . import cellmanager as CM
 from graphs.graph import factory as graph_factory
 from graphs.graph import class_factory as graph_class
-from pwa import analyzepath as azp
 from . import state
 import modeling.cluster as CLST
 import pwa.pwagraph as pwagraph
@@ -40,6 +39,11 @@ from IPython import embed
 
 from globalopts import opts as gopts
 
+# TODO: Remove this mess
+if gopts.model_type == 'poly':
+    from pwa import analyzepathnl as azp
+else:
+    from pwa import analyzepath as azp
 
 #np.set_printoptions(suppress=True, precision=2)
 
@@ -505,7 +509,9 @@ def verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace):
     x_array, w_array = np.split(xw_array, [AA.num_dims.x], axis=1)
     pi_seq = w_array
     res = verify_bmc_trace(AA, sys, prop, sp, x_array, pi_seq)
-    res = verify_pwa_trace(AA, sys, prop, sp, x_array, pi_seq, pwa_trace)
+    err.warn_severe('fix hack')
+    if gopts.model_type != 'poly':
+        res = verify_pwa_trace(AA, sys, prop, sp, x_array, pi_seq, pwa_trace)
     return res
 
 

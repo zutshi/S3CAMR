@@ -209,10 +209,10 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     #A_ub, b_ub = truncate(A_ub, b_ub)
     obj = 0
 
-    err.warn_severe('faking output of optimizer')
-    #res, varval_map = z3opt.polyprog(obj, cons)
-    res = True
-    varval_map = {v: 0 for v in Vars}
+    #err.warn_severe('faking output of optimizer')
+    #res = True
+    #varval_map = {v: 0 for v in Vars}
+    res, varval_map = z3opt.polyprog(obj, cons)
 
     return optsoln2x([varval_map[v] for v in Vars], len(pwa_trace)) if res else None
 
