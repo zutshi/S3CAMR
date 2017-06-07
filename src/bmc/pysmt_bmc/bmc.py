@@ -1,5 +1,3 @@
-from cbverifier.encoding.encoder import TransitionSystem
-
 import logging
 from pysmt.logics import QF_BOOL, QF_LRA
 from pysmt.shortcuts import Solver
