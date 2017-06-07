@@ -37,8 +37,7 @@ class BMC(BMCSpec):
     def check(self, depth):
         ts = self.converter.get_ts()
 
-        bmc = BMCImpl(ts.helper, ts, ts.final,self.smt_engine)    
-
+        bmc = BMCImpl(ts.helper, ts, ts.final,self.smt_engine)
         res_cex = bmc.find_bug(depth, False)
 
         if res_cex is None:
@@ -111,27 +110,33 @@ class BMC(BMCSpec):
             step = Step(assignment_list)
             all_steps.append(step)
 
-            c_val = self.converter._loc_enc.get_counter_value(self.converter._get_loc_var_name(),
-                                                              cex_at_i,
-                                                              True)
-            assert c_val in self.converter.val2loc
-            loc = self.converter.val2loc[c_val]
+            
+            # c_val = self.converter._loc_enc.get_counter_value(self.converter._get_loc_var_name(),
+            #                                                   cex_at_i,
+            #                                                   True)
+            # assert c_val in self.converter.val2loc
+            # loc = self.converter.val2loc[c_val]
+            loc = self.converter.get_loc(cex_at_i)
 
             # Do not process the last state (trans is an input!)
             if (step_number + 1 < len(res_cex)):
-                edge_val = self.converter._loc_enc.get_counter_value(self.converter._get_edge_var_name(),
-                                                                     cex_at_i,
-                                                                     True)
-                assert edge_val in self.converter.val2edge
-                edge = self.converter.val2edge[edge_val]
+                # edge_val = self.converter._loc_enc.get_counter_value(self.converter._get_edge_var_name(),
+                #                                                      cex_at_i,
+                #                                                      True)
+                # if not edge_val in self.converter.val2edge:
+                #     print(step_number)
+                #     print(self.converter.val2edge)
+                # assert edge_val in self.converter.val2edge
+                # edge = self.converter.val2edge[edge_val]
+
+                edge = self.converter.get_edge(cex_at_i)
+
                 models.append(self.converter.pwa_graph.edge_m(edge))
                 partitions.append(self.converter.pwa_graph.node_p(edge[0]))        
 
                 # Second last state - last transition - add last partition
                 if (step_number + 2 == len(res_cex)):
                     partitions.append(self.converter.pwa_graph.node_p(edge[1]))            
-
-
 
         self.pwa_trace = PWATRACE(partitions, models)
         self.trace = BmcTrace(all_steps, self.converter.vs)
@@ -143,7 +148,7 @@ class BMC(BMCSpec):
         #     print(p.ID)
         # print("PWA TRACE - models")
         # for p in self.pwa_trace.models:
-        #     print(p)
+        #     print("%s:" % (str(p) ))
 
     def gen_new_disc_trace(self):
         raise NotImplementedError

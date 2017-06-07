@@ -35,7 +35,6 @@ class BMC:
 
     def _get_solver(self):
         solver = Solver(name=self.solver_name, logic=QF_LRA)
-        # solver = Solver(name='z3', logic=QF_BOOL)
         return solver
 
     def find_bug_non_inc(self, k, trace_enc=None):
@@ -228,6 +227,11 @@ class BMC:
 
             for vs in vars_to_use:
                 for var in vs:
+                    # WORKAROUND
+                    # Skip input variable for edge
+                    if i == steps and "edge" in str(var):
+                        continue
+
                     assert var is not None
                     var_i = self.helper.get_var_at_time(var, i)
                     assert var_i is not None
