@@ -34,9 +34,9 @@ def nlinprog(obj, cons, Vars):
     """
     cons = list(cons)
     # ignoring objective, will check only feasibilit for now
-    if obj != 0:
-        raise NotImplementedError
-    obj_f = return_zero
+    #if obj != 0:
+    #    raise NotImplementedError
+    #obj_f = return_zero
 
     # incase Vars is an unordered object, freeze the order
     all_vars = tuple(Vars)
@@ -77,7 +77,7 @@ def nlinprog(obj, cons, Vars):
 # scipy.optimize.minimize(fun, x0, args=(), method=None, jac=None, hess=None, hessp=None,
 #                          bounds=None, constraints=(), tol=None, callback=None, options=None)
 
-    res = spopt.minimize(obj_f, x0, method=METHOD, jac=None,
+    res = spopt.minimize(obj, x0, method=METHOD, jac=None,
                          hess=None, hessp=None, bounds=bounds,
                          constraints=cons_f,
                          tol=TOL, callback=None,
@@ -92,9 +92,10 @@ def nlinprog(obj, cons, Vars):
 
 
     print(res.message)
-    varval_map = {var: val for var, val in zip(all_vars, res.x)}
+    #varval_map = {var: val for var, val in zip(all_vars, res.x)}
     #print(varval_map)
-    return res.success, varval_map
+    return spec.OPTRES(res.fun, res.x, res.status, res.success)
+    #return res.success, varval_map
     #return res.fun, res.x, res.status, res.success
 
 
