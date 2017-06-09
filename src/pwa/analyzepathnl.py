@@ -9,7 +9,6 @@ import sympy as sym
 import itertools as it
 
 from globalopts import opts as gopts
-import nonlinprog.z3opt as z3opt
 
 import settings
 import linprog.linprog as linprog
@@ -202,6 +201,8 @@ def optsoln2x(x, trace_len):
 
 
 def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
+    import nonlinprog.z3opt as z3opt
+    import nonlinprog.scipyopt as scipyopt
     cons, Vars = pwatrace2cons(pwa_trace, num_dims, prop)
 
     #nvars = num_dims.x + num_dims.pi
@@ -212,9 +213,13 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     #err.warn_severe('faking output of optimizer')
     #res = True
     #varval_map = {v: 0 for v in Vars}
-    res, varval_map = z3opt.polyprog(obj, cons)
+    # TODO: Make choice of opt engine
+    #res, varval_map = z3opt.nlinprog(obj, cons, Vars)
+    res, varval_map = scipyopt.nlinprog(obj, cons, Vars)
 
-    return optsoln2x([varval_map[v] for v in Vars], len(pwa_trace)) if res else None
+    ret_val = optsoln2x([varval_map[v] for v in Vars], len(pwa_trace)) if res else None
+    print(ret_val)
+    return ret_val
 
     #return lpsoln2x(varval_map, len(pwa_trace)) if res else None
 
