@@ -27,17 +27,28 @@ class BMC(BMCSpec):
         self.trace = None
         self.pwa_trace = None
 
+        # List of cex to be removed from the 
+        # bmc exploration
+        self.cexes_to_remove = []
+
     def trace_generator(self, depth):
-        for i in range(1):
+        has_more_disc_trace = True
+
+        while (has_more_disc_trace):
             status = self.check(depth)
             if status == InvarStatus.Unsafe:
                 yield self.trace, self.get_pwa_trace()
+            else:
+                has_more_disc_trace = False
             return
 
     def check(self, depth):
         ts = self.converter.get_ts()
 
-        bmc = BMCImpl(ts.helper, ts, ts.final,self.smt_engine)
+        # TODO: add cex to avoid
+
+        bmc = BMCImpl(ts.helper, ts, ts.final,self.smt_engine,
+                      self.cexes_to_remove)
         res_cex = bmc.find_bug(depth, False)
 
         if res_cex is None:
@@ -45,7 +56,7 @@ class BMC(BMCSpec):
             return InvarStatus.Unknown
         else:
             self._build_trace(ts, res_cex)
-            return InvarStatus.Unsafe
+            return InvarStatus.Unsafe        
 
     def dump(self):
         raise NotImplementedError
@@ -84,6 +95,7 @@ class BMC(BMCSpec):
         self.trace = None
         self.pwa_trace = None
 
+        cex_to_remove = []
         all_steps = []
         partitions = []
         models = []
@@ -117,6 +129,8 @@ class BMC(BMCSpec):
             # assert c_val in self.converter.val2loc
             # loc = self.converter.val2loc[c_val]
             loc = self.converter.get_loc(cex_at_i)
+            # append a new state to the cex_to_remove
+            cex_to_remove.append(self.converter._get_loc_enc(loc))
 
             # Do not process the last state (trans is an input!)
             if (step_number + 1 < len(res_cex)):
@@ -140,6 +154,8 @@ class BMC(BMCSpec):
 
         self.pwa_trace = PWATRACE(partitions, models)
         self.trace = BmcTrace(all_steps, self.converter.vs)
+
+        self.cexes_to_remove.append(cex_to_remove)
 
         # # DEBUG
         # print(self.trace)

@@ -11,13 +11,15 @@ class BMC:
     Implementation of Bounded Model Checking
     """
 
-    def __init__(self, helper, ts, error, solver_name='z3'):
+    def __init__(self, helper, ts, error, solver_name='z3', cex_to_avoid=[]):
         self.helper = helper
         self.ts = ts
         self.all_vars = set(self.ts.state_vars)
         # self.all_vars.update(self.ts.input_vars)
         self.error = error
         self.solver_name = solver_name
+
+        self.cex_to_avoid = []
 
     def find_bug(self, k, incremental=False):
         """Explore the system up to k steps.
@@ -63,6 +65,13 @@ class BMC:
         logging.debug("Error condition %s" % error_condition)
         solver.add_assertion(Or(error_condition))
 
+        for cex in self.cex_to_avoid:
+            clause = []
+            for i in range(max(k+1,len(cex))):
+                lit_neg = Not(cex[i])
+                enc = self.helper.get_formula_at_i(self.all_vars, lit_neg, i)
+                clause.append(enc)
+            # solver.add_assertion(Or(clause))
 
     def find_bug_inc(self, k, trace_enc=None):
         solver = self._get_solver()
