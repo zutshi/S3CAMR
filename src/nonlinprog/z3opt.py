@@ -17,13 +17,21 @@ from polynomial.poly import Poly
 import nonlinprog.spec as spec
 
 
-def nonlinprog(obj, cons, nvars):
+def nlinprog(obj, cons, Vars):
+    """nlinprog
 
-    err.warn('ignoring objective, will check only feasibilit for now.')
-    return polyprog(obj, cons, nvars)
+    Parameters
+    ----------
+    obj :
+    cons :
 
+    Returns
+    -------
 
-def polyprog(obj, cons):
+    Notes
+    ------
+    """
+    # ignoring objective, will check only feasibilit for now
     if obj != 0:
         raise NotImplementedError
 
