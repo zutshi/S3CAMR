@@ -509,7 +509,7 @@ def verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace):
     x_array, w_array = np.split(xw_array, [AA.num_dims.x], axis=1)
     pi_seq = w_array
     res = verify_bmc_trace(AA, sys, prop, sp, x_array, pi_seq)
-    err.warn_severe('fix hack')
+    err.warn('fix hack')
     if gopts.model_type != 'poly':
         res = verify_pwa_trace(AA, sys, prop, sp, x_array, pi_seq, pwa_trace)
     return res

@@ -204,6 +204,7 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     import nonlinprog.z3opt as z3opt
     import nonlinprog.scipyopt as scipyopt
     cons, Vars = pwatrace2cons(pwa_trace, num_dims, prop)
+    cons = list(cons)
 
     #nvars = num_dims.x + num_dims.pi
 
@@ -219,6 +220,7 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
 
     ret_val = optsoln2x([varval_map[v] for v in Vars], len(pwa_trace)) if res else None
     print(ret_val)
+    #embed()
     return ret_val
 
     #return lpsoln2x(varval_map, len(pwa_trace)) if res else None

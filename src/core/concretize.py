@@ -114,6 +114,8 @@ def traces_violate(sys_sim, sys, prop, x0_samples, pi_seq, x_array_bmc=None):
                 pvt, pi_array)
 
         traces.append(simsys.simulate(sys_sim, sys.delta_t*num_segments, concrete_states[0]))
+#     from IPython import embed
+#     embed()
 
     #from matplotlib import pyplot as plt
     #print(trace)
