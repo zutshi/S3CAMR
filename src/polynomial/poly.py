@@ -5,6 +5,8 @@ from __future__ import unicode_literals
 
 import sympy as sym
 
+from utils import print_function
+
 
 def power_array2Poly(power_array, coeff_array):
     '''
@@ -46,9 +48,9 @@ class Poly(object):
         d = poly.as_dict()
         for powers, coeff in d.iteritems():
             d[powers] = float('{n:0.{p}f}'.format(n=coeff, p=prec))
-        print(poly)
+        #print(poly)
         self.poly = sym.Poly.from_dict(d, poly.free_symbols)
-        print(self.poly)
+        #print(self.poly)
         return
 
     def subs_vars(self, old2new_var_map):
