@@ -11,6 +11,8 @@ import functools as ft
 import nonlinprog.spec as spec
 import settings
 
+from utils import print_function
+
 from IPython import embed
 
 

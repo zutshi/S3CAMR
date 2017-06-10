@@ -8,10 +8,11 @@ import sympy as sym
 import functools as ft
 import atexit
 
+from .pymatopt.optimmatlab import init, deinit, fmincon
+from utils import print
+
 import nonlinprog.spec as spec
 import settings
-
-from .pymatopt.optimmatlab import init, deinit, fmincon
 
 
 init()
@@ -41,17 +42,25 @@ def nlinprog(obj, cons, Vars):
     for c in cons:
         assert(isinstance(c, sym.LessThan))
         assert(c.args[1] == 0)
-        lambdafied.append(sym.lambdify(Vars, -c.args[0], str('numpy')))
+        lambdafied.append(sym.lambdify(Vars, c.args[0], str('numpy')))
+
+    def debugf(f, e, x):
+        y = f(*x)
+        #print(x, ':', e.args[0] <= 0, ':', f(*x))
+        #print(e.args[0] <= 0, ':', f(*x))
+        return y
 
     # Must pass l as an arguement, else late binding will make sure
     # that all functions are the same: the last one
     cons_f = tuple(lambda x, l=l: l(*x) for l in lambdafied)
+    cons_f = tuple(ft.partial(debugf, l, e) for l, e in zip(lambdafied, cons))
 
     x0 = np.zeros(len(Vars))
 
-    res_x, res_f = fmincon(obj, x0, A=[], B=[], C=cons_f)
+    retcode, res_x, res_f = fmincon(obj, x0, A=[], B=[], C=cons_f)
+    print('retcode:', retcode)
 
-    return spec.OPTRES(res_f, res_x, 'OK', True)
+    return spec.OPTRES(res_f, res_x, 'OK', retcode == 0)
 
 
 def example():

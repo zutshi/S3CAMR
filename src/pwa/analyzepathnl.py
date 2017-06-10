@@ -17,6 +17,7 @@ from IPython import embed
 
 import err
 import utils as U
+from utils import print
 from constraints import IntervalCons
 
 
@@ -238,7 +239,7 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     #ret_val = optsoln2x([varval_map[v] for v in Vars], len(pwa_trace)) if res else None
     res = nlpfun(solver)(obj, cons, Vars)
     ret_val = optsoln2x(res.x, len(pwa_trace)) if res.success else None
-    print(cons)
+    #print(cons)
     print(ret_val)
     #embed()
     return ret_val
