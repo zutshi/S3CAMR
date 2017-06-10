@@ -748,8 +748,8 @@ def main():
     LIST_OF_REFINEMENTS = ['init', 'trace', 'model-dft', 'model-dmt', 'model-dct']
     LIST_OF_GRAPH_LIBS = ['nxlm', 'nx', 'gt', 'g']
     LIST_OF_PLOT_LIBS = ['mp', 'pg']
-    LIST_OF_BMC = ['sal', 's3camsmt', 'pretty-printer', 'dfs-lp', 'dfs-z3', 'dfs-pysmt']
-    LIST_OF_OPT_ENGINE = ['scipy', 'glpk', 'gurobi', 'z3']
+    LIST_OF_BMC = ['sal', 's3camsmt', 'pretty-printer', 'pwa']
+    LIST_OF_OPT_ENGINE = ['scipy', 'glpk', 'gurobi', 'z3', 'ipopt', 'pyfmincon']
     LIST_OF_CLUSTERING = ['cell', 'box', 'hull']
     LIST_OF_MODELS = ['affine', 'poly']
 

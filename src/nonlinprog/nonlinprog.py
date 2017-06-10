@@ -11,6 +11,12 @@ def factory(solver_str):
     elif solver_str == 'scipy':
         from nonlinprog.scipyopt import nlinprog
 
+    elif solver_str == 'ipopt':
+        from nonlinprog.ipopt import nlinprog
+
+    elif solver_str == 'pyfmincon':
+        from nonlinprog.pyfmincon import nlinprog
+
     else:
         raise NotImplementedError('solver selected: {}'.format(solver_str))
 

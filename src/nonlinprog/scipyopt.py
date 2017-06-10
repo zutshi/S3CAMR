@@ -14,7 +14,7 @@ import settings
 from IPython import embed
 
 
-METHOD = 'SLSQP' #'COBYLA'
+METHOD = 'COBYLA'#SLSQP' #'COBYLA'
 TOL = None#1e-5
 
 
@@ -33,10 +33,6 @@ def nlinprog(obj, cons, Vars):
     ------
     """
     cons = list(cons)
-    # ignoring objective, will check only feasibilit for now
-    #if obj != 0:
-    #    raise NotImplementedError
-    #obj_f = return_zero
 
     # incase Vars is an unordered object, freeze the order
     all_vars = tuple(Vars)
@@ -45,7 +41,8 @@ def nlinprog(obj, cons, Vars):
 
     def debugf(f, e, x):
         y = f(*x)
-        print(x, ':', -e.args[0] >= 0, ':', f(*x))
+        #print(x, ':', -e.args[0] >= 0, ':', f(*x))
+        print(-e.args[0] >= 0, ':', f(*x))
         return y
 
     # The below constraint encoding assumes all cons
@@ -81,7 +78,7 @@ def nlinprog(obj, cons, Vars):
                          hess=None, hessp=None, bounds=bounds,
                          constraints=cons_f,
                          tol=TOL, callback=None,
-                         options={'disp': True, 'maxiter': 1000})
+                         options={'disp': True, 'maxiter': 10000})
 
 
 #     res_ = spopt.fmin_slsqp(obj_f, x0, ieqcons=cons_f2, bounds=(),
@@ -90,14 +87,9 @@ def nlinprog(obj, cons, Vars):
 
 #     embed()
 
-
     print(res.message)
     #varval_map = {var: val for var, val in zip(all_vars, res.x)}
     #print(varval_map)
     return spec.OPTRES(res.fun, res.x, res.status, res.success)
     #return res.success, varval_map
     #return res.fun, res.x, res.status, res.success
-
-
-def return_zero(x):
-    return 0.0

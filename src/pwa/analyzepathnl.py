@@ -238,6 +238,7 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     #ret_val = optsoln2x([varval_map[v] for v in Vars], len(pwa_trace)) if res else None
     res = nlpfun(solver)(obj, cons, Vars)
     ret_val = optsoln2x(res.x, len(pwa_trace)) if res.success else None
+    print(cons)
     print(ret_val)
     #embed()
     return ret_val
@@ -314,7 +315,7 @@ def solve_mult_opt(nlp_fun, directions_ext, cons, Vars):
         # restart? or some kind of caching?
         ret_val = nlp_fun(obj, cons, Vars)
         if not ret_val.success:
-            raise RuntimeError('lp solver failed')
+            raise RuntimeError('lp solver failed: {}'.format(ret_val.status))
         else:
             res.append(ret_val)
     return res

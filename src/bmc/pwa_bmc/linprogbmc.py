@@ -7,7 +7,6 @@ import logging
 
 from bmc.bmc_spec import BMCSpec, InvarStatus, TraceSimple
 from bmc.sal_bmc.pwa2salconverter import PWATRACE
-import pwa.analyzepath as azp
 from pwa import pwagraph
 from graphs.graph import class_factory as graph_class
 from globalopts import opts as gopts
@@ -16,12 +15,18 @@ from globalopts import opts as gopts
 import utils as U
 import err
 
-from IPython import embed
-
 from blessed import Terminal
 term = Terminal()
 
 logger = logging.getLogger(__name__)
+
+
+if gopts.model_type == 'affine':
+    import pwa.analyzepath as azp
+elif gopts.model_type == 'poly':
+    import pwa.analyzepathnl as azp
+else:
+    raise NotImplementedError
 
 
 class BMC(BMCSpec):

@@ -83,7 +83,7 @@ def factory(bmc_engine,
              model_type,
              gopts.bmc_prec,
              *args)
-    elif bmc_engine == 'dfs-lp':
+    elif bmc_engine == 'pwa':
         from .pwa_bmc import linprogbmc
 
         return linprogbmc.BMC(
@@ -100,26 +100,6 @@ def factory(bmc_engine,
              sys_name,
              model_type,
              *args)
-
-    elif bmc_engine == 'dfs-z3':
-        from .dfs_z3_bmc.bmc import BMC
-
-        return BMC(
-             sys,
-             prop,
-             vs,
-             pwa_model,
-             init_cons,
-             final_cons,
-             init_ps,
-             final_ps,
-             fname_constructor,
-             sys_name,
-             model_type,
-             *args)
-
-    elif bmc_engine == 'dfs-pysmt':
-        raise NotImplementedError
 
     elif bmc_engine == 'pretty-printer':
         from .printer import prettyprinter
