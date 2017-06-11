@@ -125,7 +125,7 @@ def sanity_check_input(sys, prop):
 def setup_dir(sys, dirname):
     # If no output folder is specified, generate one
     if dirname is None:
-        dirname = '{}_{}'.format(sys.sys_name, TIME_STR)
+        dirname = './vault/{}_{}'.format(sys.sys_name, TIME_STR)
     if fp.file_exists(dirname):
         raise err.Fatal('output dir exists! Please provide a new dir name to prevent override.')
 
