@@ -16,11 +16,31 @@ initial_discrete_state = [2]
 # name          X, Isc1,  Isc2,   Gt,     Gp,         Il,  Ip,  I1,     Id,     Gs,  t, uc
 initial_set = [[0, 72.43, 141.15, 162.45, 120*1.9152, 3.2, 5.5, 100.25, 100.25, 120, 0, 50],
                [0, 72.43, 141.15, 162.45, 160*1.9152, 3.2, 5.5, 100.25, 100.25, 160, 0, 90]]
-error_set = [[-inf]*12, [inf]*12]
 
-grid_eps = [0, 72.43, 141.15, 162.45, 120, 3.2, 5.5, 100.25, 100.25, 120, 0, 50]
+
+# prop: hypoglycemia: below 70 mg/dl.
+# name            X,    Isc1, Isc2,  Gt,   Gp,  Il,   Ip,   I1,   Id,   Gs,   t,    uc
+hypoglycemia = [[-inf, -inf, -inf, -inf, -inf, -inf, -inf, -inf, -inf, -inf, -inf, -inf], 
+                 [inf,  inf,  inf,  inf,  inf,  inf,  inf,  inf,  inf,  70,  inf,   inf]
+
+# prop: ketoacidosis: The blood glucose levels should never rise above 300 mg/dl.ketoacidosis.
+# name            X,    Isc1, Isc2,  Gt,   Gp,  Il,   Ip,   I1,   Id,   Gs,   t,    uc
+ketoacidosis = [[-inf, -inf, -inf, -inf, -inf, -inf, -inf, -inf, -inf,  300, -inf, -inf], 
+                 [inf,  inf,  inf,  inf,  inf,  inf,  inf,  inf,  inf,  inf,  inf,   inf]
+
+
+# The blood glucose should be in the euglycemic range [70; 180] mg/dl during \wakeup" t 2 [600; 720]
+# name            X,    Isc1, Isc2,  Gt,   Gp,  Il,   Ip,   I1,   Id,   Gs,   t,    uc
+euglycemic1 =    [[-inf, -inf, -inf, -inf, -inf, -inf, -inf, -inf, -inf, 180, 600, -inf], 
+                 [inf,  inf,  inf,  inf,  inf,  inf,  inf,  inf,  inf,   inf,  720,   inf]
+euglycemic2 =    [[-inf, -inf, -inf, -inf, -inf, -inf, -inf, -inf, -inf, -inf, 600, -inf], 
+                 [inf,  inf,  inf,  inf,  inf,  inf,  inf,  inf,  inf,   70,  720,   inf]
+
+# name      X, Isc1, Isc2, Gt, Gp, Il, Ip, I1, Id, Gs, t, uc
+grid_eps = [1, 1,    1,    1,  1,  1,  1,  1,  1,  1,  1, 1]
 num_samples = 2
 
+error_set = ketoacidosis
 
 MAX_ITER = inf
 
