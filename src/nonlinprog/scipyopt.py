@@ -16,7 +16,8 @@ from utils import print_function
 from IPython import embed
 
 
-METHOD = 'COBYLA'#SLSQP' #'COBYLA'
+METHOD = 'COBYLA'
+#METHOD = 'SLSQP'
 TOL = None#1e-5
 
 
@@ -80,7 +81,7 @@ def nlinprog(obj, cons, Vars):
                          hess=None, hessp=None, bounds=bounds,
                          constraints=cons_f,
                          tol=TOL, callback=None,
-                         options={'disp': True, 'maxiter': 10000})
+                         options={'disp': False, 'maxiter': 1000})
 
 
 #     res_ = spopt.fmin_slsqp(obj_f, x0, ieqcons=cons_f2, bounds=(),
@@ -89,7 +90,7 @@ def nlinprog(obj, cons, Vars):
 
 #     embed()
 
-    print(res.message)
+    print(res.message, res.status, res.success)
     #varval_map = {var: val for var, val in zip(all_vars, res.x)}
     #print(varval_map)
     return spec.OPTRES(res.fun, res.x, res.status, res.success)

@@ -239,6 +239,7 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     #ret_val = optsoln2x([varval_map[v] for v in Vars], len(pwa_trace)) if res else None
     res = nlpfun(solver)(obj, cons, Vars)
     ret_val = optsoln2x(res.x, len(pwa_trace)) if res.success else None
+    print(res.success)
     #print(cons)
     print(ret_val)
     #embed()
@@ -268,6 +269,11 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     directions_ext = np.pad(directions, [(0, 0), (0, left_over_vars)], 'constant')
 
     var_array = np.array(Vars)
+
+    for direction in directions_ext:
+        print(np.dot(direction, var_array))
+    U.pause()
+
     lambdafied = tuple(
             sym.lambdify(Vars, np.dot(direction, var_array), str('numpy')) for direction in directions_ext)
     obj_f = tuple(lambda x, l=l: l(*x) for l in lambdafied)
@@ -304,6 +310,7 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
         err.warn('linprog fp failure: Malformed Interval! Please fix.')
         return None
 
+    print(ret_val)
     return ret_val
 
 
