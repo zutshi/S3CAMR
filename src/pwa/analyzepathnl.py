@@ -225,9 +225,6 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     #nvars = num_dims.x + num_dims.pi
 
     #A_ub, b_ub = truncate(A_ub, b_ub)
-    def return_zero(x):
-        return 0
-    obj = return_zero
 
     #err.warn_severe('faking output of optimizer')
     #res = True
@@ -237,11 +234,14 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
 
     #res, varval_map = nlpfun(solver)(obj, cons, Vars)
     #ret_val = optsoln2x([varval_map[v] for v in Vars], len(pwa_trace)) if res else None
+    obj = 0
     res = nlpfun(solver)(obj, cons, Vars)
     ret_val = optsoln2x(res.x, len(pwa_trace)) if res.success else None
     print(res.success)
     #print(cons)
     print(ret_val)
+    if res.success:
+        U.pause()
     #embed()
     return ret_val
 
@@ -272,18 +272,18 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
 
     for direction in directions_ext:
         print(np.dot(direction, var_array))
-    U.pause()
 
-    lambdafied = tuple(
-            sym.lambdify(Vars, np.dot(direction, var_array), str('numpy')) for direction in directions_ext)
-    obj_f = tuple(lambda x, l=l: l(*x) for l in lambdafied)
+    #lambdafied = tuple(
+    #        sym.lambdify(Vars, np.dot(direction, var_array), str('numpy')) for direction in directions_ext)
+    #obj_f = tuple(lambda x, l=l: l(*x) for l in lambdafied)
+    objs = tuple(np.dot(direction, var_array) for direction in directions_ext)
 
     x_arr = np.array(
             sym.symbols(
                 ['x{}'.format(i) for i in range(nvars)]
                 ))
 
-    res = solve_mult_opt(nlpfun(solver), obj_f, cons, Vars)
+    res = solve_mult_opt(nlpfun(solver), objs, cons, Vars)
 
     l = len(res)
     assert(l % 2 == 0)
@@ -311,6 +311,7 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
         return None
 
     print(ret_val)
+    U.pause()
     return ret_val
 
 

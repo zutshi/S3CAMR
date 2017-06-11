@@ -46,10 +46,10 @@ grid_eps = [.51, .51]
 num_samples = 100
 delta_t = 0.5
 
-# used for poly, deg=2
-grid_eps = [1, 1]
-num_samples = 50
-delta_t = 0.5
+# # used for poly, deg=2
+# grid_eps = [1, 1]
+# num_samples = 50
+# delta_t = 0.5
 
 
 # Gets a reproducible CE

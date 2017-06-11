@@ -22,6 +22,12 @@ TOL = None#1e-5
 
 
 def nlinprog(obj, cons, Vars):
+    return nlinprog_cons(obj, cons, Vars)
+    #return nlinprog_uncons(obj, cons, Vars)
+
+
+# treats obj and constraints separately
+def nlinprog_cons(obj, cons, Vars):
     """nlinprog
 
     Parameters
@@ -39,6 +45,9 @@ def nlinprog(obj, cons, Vars):
 
     # incase Vars is an unordered object, freeze the order
     all_vars = tuple(Vars)
+
+    obj_f = lambda x: sym.lambdify(Vars, obj)(*x)
+
     # constraints are encoded as g(x) >= 0, hence, reverse the sign
     #cons_f = tuple(sym.lambdify(all_vars, -c) for c in cons)
 
@@ -77,9 +86,67 @@ def nlinprog(obj, cons, Vars):
 # scipy.optimize.minimize(fun, x0, args=(), method=None, jac=None, hess=None, hessp=None,
 #                          bounds=None, constraints=(), tol=None, callback=None, options=None)
 
-    res = spopt.minimize(obj, x0, method=METHOD, jac=None,
+    res = spopt.minimize(obj_f, x0, method=METHOD, jac=None,
                          hess=None, hessp=None, bounds=bounds,
                          constraints=cons_f,
+                         tol=TOL, callback=None,
+                         options={'disp': False, 'maxiter': 1000})
+
+
+#     res_ = spopt.fmin_slsqp(obj_f, x0, ieqcons=cons_f2, bounds=(),
+#                             iter=1000, acc=1e-06, iprint=2, disp=True,
+#                             full_output=True)
+
+#     embed()
+
+    print(res.message, res.status, res.success)
+    #varval_map = {var: val for var, val in zip(all_vars, res.x)}
+    #print(varval_map)
+    return spec.OPTRES(res.fun, res.x, res.status, res.success)
+    #return res.success, varval_map
+    #return res.fun, res.x, res.status, res.success
+
+
+# Encodes everything as the objective
+def nlinprog_uncons(obj, cons, Vars):
+    """nlinprog
+
+    Parameters
+    ----------
+    obj :
+    cons :
+
+    Returns
+    -------
+
+    Notes
+    ------
+    """
+    cons = list(cons)
+
+    objective = obj
+    for c in cons:
+        objective += c.args[0]
+    embed()
+
+    print(objective)
+    objective_lambda = sym.lambdify(Vars, objective, str('numpy'))
+
+    def obj_f(x):
+        return objective_lambda(*x)
+
+    bounds = ()#[(-100, 100) for v in Vars]
+    x0 = np.zeros(len(Vars))
+
+# Refer:
+# https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.minimize.html#scipy.optimize.minimize
+# Signature:
+# scipy.optimize.minimize(fun, x0, args=(), method=None, jac=None, hess=None, hessp=None,
+#                          bounds=None, constraints=(), tol=None, callback=None, options=None)
+
+    res = spopt.minimize(obj_f, x0, method=METHOD, jac=None,
+                         hess=None, hessp=None, bounds=bounds,
+                         constraints=(),
                          tol=TOL, callback=None,
                          options={'disp': False, 'maxiter': 1000})
 

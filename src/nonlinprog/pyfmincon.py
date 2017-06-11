@@ -35,6 +35,7 @@ def nlinprog(obj, cons, Vars):
     """
     cons = list(cons)
 
+    obj_f = lambda x: sym.lambdify(Vars, obj)(*x)
 
     # The below constraint encoding assumes all cons
     # (constraint exprs) are of the form f(x) <= 0
@@ -57,7 +58,7 @@ def nlinprog(obj, cons, Vars):
 
     x0 = np.zeros(len(Vars))
 
-    retcode, res_x, res_f = fmincon(obj, x0, A=[], B=[], C=cons_f)
+    retcode, res_x, res_f = fmincon(obj_f, x0, A=[], B=[], C=cons_f)
     print('retcode:', retcode)
 
     return spec.OPTRES(res_f, res_x, 'OK', retcode == 0)

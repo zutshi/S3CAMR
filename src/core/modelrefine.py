@@ -509,7 +509,7 @@ def verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace):
     x_array, w_array = np.split(xw_array, [AA.num_dims.x], axis=1)
     pi_seq = w_array
     res = verify_bmc_trace(AA, sys, prop, sp, x_array, pi_seq)
-    #res = verify_pwa_trace(AA, sys, prop, sp, x_array, pi_seq, pwa_trace)
+    res = verify_pwa_trace(AA, sys, prop, sp, x_array, pi_seq, pwa_trace)
     return res
 
 
@@ -752,6 +752,7 @@ def model(tol, X, Y):
     try:
         rm = AFM.Model(X, Y)
     except AFM.UdetError:
+        raise AFM.UdetError
         return []
     e_pc = rm.max_error_pc(X, Y)
     if settings.debug:
@@ -1126,8 +1127,12 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
                     else:
                         err.warn('can happen rarely...')
                     try_again = False
+                else:
+                    try_again = True
         except AFM.UdetError:
-            pass
+            if ntries <= MAX_TRIES:
+                try_again = True
+            #pass
         if try_again:
             print('trying again')
         # double the number of samples and try again
