@@ -16,6 +16,7 @@ from . import sample as SaMpLe
 from utils import print
 #from utils import print
 import utils as U
+import err
 
 import settings
 if settings.MEMLEAK_TEST:
@@ -52,7 +53,9 @@ def init(
             intsec = PA.get_ival_cons_abs_state(as_) & init_cons
             return (intsec is not None) and not intsec.zero_measure
 
-        filt_init_abs_states = filter(fnzm, init_abs_states)
+        err.warn_severe('what is going on?')
+        #filt_init_abs_states = filter(fnzm, init_abs_states)
+        filt_init_abs_states = init_abs_states
 
         plant_initial_state_set.update(filt_init_abs_states)
 

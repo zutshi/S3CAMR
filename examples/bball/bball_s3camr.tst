@@ -96,16 +96,15 @@ T = 40.0
 # delta_t = 10.0 
 # num_samples = 50
 
-# # Used for emsoft submission: gives negative result
+# Used for emsoft submission: gives negative result
 # grid_eps = [0.4]*4
 # delta_t = 10.0 
 # num_samples = 10
 
-
-# Used for HyCU (matlabprot)
-grid_eps = [1]*4
+# Tried for poly=2
+grid_eps = [50, 5, 5, 5]
 delta_t = 10.0 
-num_samples = 5
+num_samples = 100
 
 
 MAX_ITER = 4

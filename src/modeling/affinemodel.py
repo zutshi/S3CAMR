@@ -39,7 +39,7 @@ def Model(*args, **kwargs):
 def is_undetermined(x):
     num_samples, ndim = x.shape
     if num_samples <= ndim:
-        err.warn('regression is underdetermined!')#: {}'.format(x))
+        err.warn('regression is underdetermined: {}'.format(x.shape))#: {}'.format(x))
         return True
     else:
         return False

@@ -36,10 +36,15 @@ T = 20.0
 # num_samples = 2
 
 
-grid_eps = [0.2]*4
-delta_t = 5.0
-num_samples = 10
+# EMSOFT'17
+# grid_eps = [0.2]*4
+# delta_t = 5.0
+# num_samples = 10
 
+# tried for poly=2
+grid_eps = [1.0]*4
+delta_t = 5.0
+num_samples = 20
 
 MAX_ITER = 4
 

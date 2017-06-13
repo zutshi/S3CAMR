@@ -10,13 +10,13 @@ initial_set = [[0-dl, 0-dl, 0-dl, 22-dl, 0-dl , 0-dl, -2.1854-dl, 0-dl],
                [0+dl, 0+dl, 0+dl, 22+dl, 0+dl , 0+dl, -2.1854+dl, 0+dl]]
 
 #3.3 might be reachable, 3.6 probably not
-error_set = [[29, 3.6, -inf, -inf, -inf, -inf, -inf, -inf],
+error_set = [[29, 3.3, -inf, -inf, -inf, -inf, -inf, -inf],
              [34, 4, inf, inf, 70, 8, inf, inf]]
 # error_set = [[-inf, -inf, -inf, -inf, 60, 7, -inf, -inf],
 #              [inf, inf, inf, inf, 70, 8, inf, inf]]
 
 grid_eps = [1]*8
-num_samples = 100
+num_samples = 1
 pi = [[-dl]*26,[dl]*26]
 pi_grid_eps = [1]*26
 # pi = [[

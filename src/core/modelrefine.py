@@ -752,7 +752,6 @@ def model(tol, X, Y):
     try:
         rm = AFM.Model(X, Y)
     except AFM.UdetError:
-        raise AFM.UdetError
         return []
     e_pc = rm.max_error_pc(X, Y)
     if settings.debug:
@@ -1127,12 +1126,8 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
                     else:
                         err.warn('can happen rarely...')
                     try_again = False
-                else:
-                    try_again = True
         except AFM.UdetError:
-            if ntries <= MAX_TRIES:
-                try_again = True
-            #pass
+            pass
         if try_again:
             print('trying again')
         # double the number of samples and try again
