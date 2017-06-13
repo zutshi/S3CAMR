@@ -36,7 +36,7 @@ from utils import print
 import err
 from constraints import IntervalCons, top2ic, zero2ic
 
-#from IPython import embed
+from IPython import embed
 
 from globalopts import opts as gopts
 

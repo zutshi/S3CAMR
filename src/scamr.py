@@ -44,7 +44,7 @@ from utils import print
 
 import settings
 
-#from IPython import embed
+from IPython import embed
 
 #from guppy import hpy
 #from pkgcore.config import load_config
