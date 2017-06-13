@@ -33,7 +33,7 @@ def factory(model_type):
         raise NotImplementedError
 
 
-def small_data_set(x):
+def is_undetermined(x):
     num_samples, ndim = x.shape
     if num_samples <= ndim:
         err.warn('regression is underdetermined!')#: {}'.format(x))
@@ -54,7 +54,7 @@ class RegressionModel(object):
     #__metaclass__ = abc.ABCMeta
 
     def __init__(self, x, y):
-        self.udet = small_data_set(x)
+        self.udet = is_undetermined(x)
         if self.udet:
             raise UdetError
         self.X, self.Y = x, y

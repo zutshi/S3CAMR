@@ -33,9 +33,9 @@ def bounded_real_set_def(var, lb, ub):
 def Axb_constraints(A, b, error):
     ''' Matrix conversion from A, b, error -> C, d
         s.t.
-        x' = Ax + b +- [error]
+        x' = Ax + b + [error_lb, error_ub]
         is converted to
-        x' >= Ax + b - error /\ x' <= Ax + b + error
+        x' >= Ax + b + error_lb /\ x' <= Ax + b + error_ub
     '''
 
     nlhs, nrhs = A.shape
@@ -44,11 +44,12 @@ def Axb_constraints(A, b, error):
     # new state assignments
     delta_h, delta_l = b + error.h, b + error.l
 
+# What follows...
 #     x_ = Ax + [dl, dh]
-#     x_ <= Ax + dh, x_ >= Ax + dl
-
-#     x_ - Ax - dh <= 0
-#     - x_ + Ax + dl <= 0
+#     hence, x_ <= Ax + dh, x_ >= Ax + dl
+#     and finally,
+#     x_ - Ax <= dh                    (1)
+#     -x_ + Ax <= -dl                  (2)
 
 
 #     [1          a00 a01 a02] [x0_] + [d]
@@ -61,11 +62,16 @@ def Axb_constraints(A, b, error):
     num_dim_x = nlhs
 
     I = np.eye(num_dim_x)
+    # C_ub is x_ - Ax, refer (1) and (2)
     C_ub = np.hstack((I, -A))
+    # C_lb is -x_ + Ax, refer (1) and (2)
     C_lb = np.hstack((-I, A))
     C = np.vstack((C_ub, C_lb))
+    # refer to (1) and (2)
     d = np.hstack((delta_h, -delta_l))
 
+    # C [ x'] <= d
+    #   [ x ]
     return C, d
 
 
