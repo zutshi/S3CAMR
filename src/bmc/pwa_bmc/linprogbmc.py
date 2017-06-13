@@ -27,7 +27,7 @@ logger = logging.getLogger(__name__)
 class BMC(BMCSpec):
     def __init__(self, sys, prop, vs, pwa_model, init_state, safety_prop,
                  init_partitions, prop_partitions, fname_constructor,
-                 module_name, model_type):
+                 module_name, model_type, *args):
 
         assert(isinstance(pwa_model, pwagraph.PWAGraph))
         assert(model_type == 'dft')

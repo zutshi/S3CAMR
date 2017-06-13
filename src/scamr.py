@@ -748,12 +748,14 @@ def main():
     LIST_OF_REFINEMENTS = ['init', 'trace', 'model-dft', 'model-dmt', 'model-dct']
     LIST_OF_GRAPH_LIBS = ['nxlm', 'nx', 'gt', 'g']
     LIST_OF_PLOT_LIBS = ['mp', 'pg']
-    LIST_OF_BMC = ['sal', 's3camsmt', 'pwa', 'pretty-printer']
+    LIST_OF_BMC = ['sal', 's3camsmt', 'pwa', 'pretty-printer', 'pysmtbmc']
     LIST_OF_LP = ['scipy', 'glpk', 'gurobi']
     LIST_OF_CLUSTERING = ['cell', 'box', 'hull']
+    LIST_OF_SMT_SOLVERS = ['z3','msat','satex']
 
     DEF_BMC_PREC = 4
     DEF_BMC = 'sal'
+    DEF_SMT_SOLVER = 'satex'
     DEF_LP = 'glpk'
     DEF_MAX_PATHS = 100
     DEF_GRAPH_LIB = 'nx'
@@ -847,6 +849,11 @@ def main():
                         choices=LIST_OF_BMC,
                         default=DEF_BMC,
                         help='Choose the bmc engine')
+
+    parser.add_argument('--smt-solver', type=str,
+                        choices=LIST_OF_SMT_SOLVERS,
+                        default=DEF_SMT_SOLVER,
+                        help='Choose the smt engine for pysmtbmc')
 
     parser.add_argument('--lp-engine', type=str,
                         choices=LIST_OF_LP,
@@ -952,6 +959,7 @@ def main():
     #opts.plots = args.plots
     opts.model_err = args.incl_error
     opts.bmc_engine = args.bmc_engine
+    opts.smt_engine = args.smt_solver
     opts.lp_engine = args.lp_engine
     # Default bmc prec
     opts.bmc_prec = args.bmc_prec

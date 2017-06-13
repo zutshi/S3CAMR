@@ -408,16 +408,17 @@ def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model
     vs = xs + ws
 
     bmc = BMC.factory(
-            gopts.bmc_engine,
-            sys,
-            prop,
-            vs,
-            pwa_model, init_cons, final_cons2,
-            init_partitions,
-            prop_partitions,
-            gopts.construct_path,
-            '{}_{}'.format(sys_name, model_type),
-            model_type)
+        gopts.bmc_engine,
+        sys,
+        prop,
+        vs,
+        pwa_model, init_cons, final_cons2,
+        init_partitions,
+        prop_partitions,
+        gopts.construct_path,
+        '{}_{}'.format(sys_name, model_type),
+        model_type,        
+        gopts.smt_engine)
 
     traces = bmc.trace_generator(depth)
     num_traces = 0
