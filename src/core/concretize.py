@@ -89,7 +89,8 @@ def trace_violates(sys_sim, sys, prop, x_array, pi_seq):
 
 
 def concretize_init_cons_subset(sys, prop, AA, sp, x_array, pi_seq, init_cons_subset):
-    x0_samples = init_cons_subset.sample_UR(100)
+    NUM_RANDOM_SIMS = 100
+    x0_samples = init_cons_subset.sample_UR(NUM_RANDOM_SIMS)
     sys_sim = simsys.get_system_simulator(sys)
     return traces_violate(sys_sim, sys, prop, x0_samples, pi_seq, x_array)
 
