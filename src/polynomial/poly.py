@@ -46,6 +46,7 @@ class Poly(object):
     def truncate_coeffs(self, prec):
         poly = self.poly
         d = poly.as_dict()
+        # TODO: string conversions are slow, use proper np.truncate functions
         for powers, coeff in d.iteritems():
             d[powers] = float('{n:0.{p}f}'.format(n=coeff, p=prec))
         #print(poly)

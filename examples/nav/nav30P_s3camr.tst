@@ -41,6 +41,16 @@ T = 20.0
 # delta_t = 5.0
 # num_samples = 10
 
+# Fast (4min) but no vio found for 20 runs 
+# grid_eps = [1.1]*4
+# delta_t = 5.0
+# num_samples = 10
+#
+#
+# grid_eps = [1.1]*4
+# delta_t = 5.0
+# num_samples = 50
+
 # tried for poly=2
 grid_eps = [1.0]*4
 delta_t = 5.0
