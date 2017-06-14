@@ -36,9 +36,20 @@ T = 20.0
 # num_samples = 2
 
 
+# EMSOFT 17
 grid_eps = [0.2]*4
 delta_t = 5.0
 num_samples = 10
+
+
+# Fast (4min) but no vio found for 20 runs
+#grid_eps = [1.1]*4
+#delta_t = 5.0
+#num_samples = 10
+
+grid_eps = [1.1]*4
+delta_t = 5.0
+num_samples = 50
 
 
 MAX_ITER = 4
