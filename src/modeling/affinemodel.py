@@ -16,7 +16,7 @@ import numpy as np
 import fileops as fops
 import constraints as cons
 import err
-from utils import print_function
+from utils import print
 import utils as U
 
 from polynomial.poly import power_array2Poly

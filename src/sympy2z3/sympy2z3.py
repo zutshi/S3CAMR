@@ -10,7 +10,7 @@ import sympy as sym
 import z3
 
 import utils as U
-from utils import print_function
+from utils import print
 
 
 def sympy2z3(sympy_exprs):

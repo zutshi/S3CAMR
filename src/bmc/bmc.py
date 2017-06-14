@@ -96,7 +96,7 @@ def factory(bmc_engine,
              sys_name,
              model_type,
              *args)
-    elif bmc_engine == 'pwa':
+    elif bmc_engine == 'dfs':
         from .pwa_bmc import linprogbmc
 
         return linprogbmc.BMC(

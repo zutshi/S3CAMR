@@ -53,7 +53,7 @@ def init(
             intsec = PA.get_ival_cons_abs_state(as_) & init_cons
             return (intsec is not None) and not intsec.zero_measure
 
-        err.warn_severe('what is going on?')
+        err.warn('what is going on?')
         #filt_init_abs_states = filter(fnzm, init_abs_states)
         filt_init_abs_states = init_abs_states
 

@@ -5,7 +5,7 @@ from __future__ import unicode_literals
 
 import sympy as sym
 
-from utils import print_function
+from utils import print
 
 
 def power_array2Poly(power_array, coeff_array):
