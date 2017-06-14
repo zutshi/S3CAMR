@@ -748,14 +748,15 @@ def main():
     LIST_OF_REFINEMENTS = ['init', 'trace', 'model-dft', 'model-dmt', 'model-dct']
     LIST_OF_GRAPH_LIBS = ['nxlm', 'nx', 'gt', 'g']
     LIST_OF_PLOT_LIBS = ['mp', 'pg']
-    LIST_OF_BMC = ['sal', 's3camsmt', 'pretty-printer', 'pwa']
+    LIST_OF_BMC = ['sal', 's3camsmt', 'pwa', 'pretty-printer', 'pysmtbmc']
     LIST_OF_OPT_ENGINE = ['scipy', 'glpk', 'gurobi', 'z3', 'ipopt', 'pyfmincon']
+    LIST_OF_SMT_SOLVERS = ['z3', 'msat', 'satex']
     LIST_OF_CLUSTERING = ['cell', 'box', 'hull']
     LIST_OF_MODELS = ['affine', 'poly']
-
     DEF_BMC_PREC = 4
     DEF_BMC = 'sal'
     DEF_OPT = 'glpk'
+    DEF_SMT_SOLVER = 'satex'
     DEF_MAX_PATHS = 100
     DEF_GRAPH_LIB = 'nx'
     DEF_VIO_LOG = 'vio.log'
@@ -854,6 +855,11 @@ def main():
                         choices=LIST_OF_OPT_ENGINE,
                         default=DEF_OPT,
                         help='Choose an optmization engine')
+
+    parser.add_argument('--smt-solver', type=str,
+                        choices=LIST_OF_SMT_SOLVERS,
+                        default=DEF_SMT_SOLVER,
+                        help='Choose the smt engine for pysmtbmc')
 
     # TODO: fix this hack
     parser.add_argument('--enable-regression-plots', action='store_true',
@@ -960,6 +966,7 @@ def main():
     opts.model_err = args.incl_error
     opts.bmc_engine = args.bmc_engine
     opts.opt_engine = args.opt_engine
+    opts.smt_engine = args.smt_solver
     # Default bmc prec
     opts.bmc_prec = args.bmc_prec
     opts.par = args.par

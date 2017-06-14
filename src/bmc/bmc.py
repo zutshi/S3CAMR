@@ -83,6 +83,19 @@ def factory(bmc_engine,
              model_type,
              gopts.bmc_prec,
              *args)
+    elif bmc_engine == 'pysmtbmc':
+        from .pysmt_bmc import pysmtbmc
+        return pysmtbmc.BMC(
+             vs,
+             pwa_model,
+             init_cons,
+             final_cons,
+             init_ps,
+             final_ps,
+             fname_constructor,
+             sys_name,
+             model_type,
+             *args)
     elif bmc_engine == 'pwa':
         from .pwa_bmc import linprogbmc
 
