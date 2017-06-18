@@ -25,6 +25,7 @@ CONS = collections.namedtuple('constraint', ('expr', 'lb', 'ub'))
 
 debug = False
 
+
 def jac(Vars, exprs):
     e_mat = sym.Matrix(exprs)
     j = e_mat.jacobian(Vars)
@@ -63,15 +64,15 @@ def list2array_wrap(f, x):
     return ret
 
 
-def debugf(f, x):
-    ret = f(*x)
+def eval_expr(f, x):
+    y = f(*x)
     if debug:
         print('eval_f')
-        print(ret)
-    return ret
+        print(y)
+    return y
 
 
-def nlinprog(obj, cons, Vars):
+def nlinprog(obj, cons, Vars, mode='cons'):
     """nlinprog
 
     Parameters
@@ -86,8 +87,67 @@ def nlinprog(obj, cons, Vars):
     ------
     """
     pyipopt.set_loglevel(0) # increasing verbosity -> 0, 1, 2
-
     cons = list(cons)
+    if mode == 'cons':
+        return cons_opt(obj, cons, Vars)
+    elif mode == 'uncons':
+        return uncons_opt(obj, cons, Vars)
+    else:
+        raise NotImplementedError
+
+
+def uncons_opt(obj, cons, Vars):
+    """nlinprog
+
+    Parameters
+    ----------
+    obj :
+    cons :
+
+    Returns
+    -------
+
+    Notes
+    ------
+    """
+
+    assert(obj == 0)
+    for c in cons:
+        assert(isinstance(c, sym.LessThan))
+        assert(c.rhs == 0)
+        obj += c.lhs**2
+
+    eval_f = ft.partial(eval_expr, sym.lambdify(Vars, obj))
+    eval_grad_f = ft.partial(eval_grad_obj, sym.lambdify(Vars, grad(Vars, obj)))
+    eval_hessian_f = ft.partial(eval_expr, sym.lambdify(Vars, sym.hessian(obj, Vars)))
+
+    x0 = np.zeros(len(Vars))
+
+    # Return codes in IpReturnCodes_inc.h
+    res_x, mL, mU, Lambda, res_obj, status = pyipopt.fmin_unconstrained(
+            eval_f,
+            x0,
+            fprime=eval_grad_f,
+            fhess=eval_hessian_f,
+            )
+
+    return spec.OPTRES(res_obj, res_x, 'OK', res_obj <= 0)
+
+
+def cons_opt(obj, cons, Vars):
+    """nlinprog
+
+    Parameters
+    ----------
+    obj :
+    cons :
+
+    Returns
+    -------
+
+    Notes
+    ------
+    """
     nvars = len(Vars)
 
     x_L = np.array((pyipopt.NLP_LOWER_BOUND_INF,)*nvars)
@@ -109,8 +169,9 @@ def nlinprog(obj, cons, Vars):
     jrow, jcol, jdata = np.asarray(js.row, dtype=int), np.asarray(js.col, dtype=int), js.data
     eval_jac_g = ft.partial(eval_jac_cons, (jrow, jcol, sym.lambdify(Vars, jdata.tolist())))
 
-    eval_f = ft.partial(debugf, sym.lambdify(Vars, obj))
+    eval_f = ft.partial(eval_expr, sym.lambdify(Vars, obj))
     eval_grad_f = ft.partial(eval_grad_obj, sym.lambdify(Vars, grad(Vars, obj)))
+    #eval_hessian_f = ft.partial(eval_expr, sym.lambdify(Vars, sym.hessian(obj, Vars)))
 
     nnzj = js.nnz
     nnzh = 0
@@ -120,12 +181,11 @@ def nlinprog(obj, cons, Vars):
             print('{} \in [{}, {}]'.format(gi, lb, ub))
 
     x0 = np.zeros(len(Vars))
-    x0[0] = 0.2
-    x0[1] = 0.2
+    x0[0], x0[1] = 0.4, -0.4
     nlp = pyipopt.create(nvars, x_L, x_U, ncon, g_L, g_U, nnzj, nnzh, eval_f, eval_grad_f, eval_g, eval_jac_g)
+    # Verbosity level \in [0, 12]
+    nlp.int_option('print_level', 0)
     res_x, zl, zu, constraint_multipliers, res_obj, status = nlp.solve(x0)
-    # import pdb; pdb.set_trace()
-    #embed()
     nlp.close()
 
     if debug:
@@ -148,6 +208,7 @@ def nlinprog(obj, cons, Vars):
         print("Objective value")
         print("f(x*) =", res_obj)
 
+    # Return codes in IpReturnCodes_inc.h
     print('status:', status)
     return spec.OPTRES(res_obj, res_x, 'OK', status in (0, 1))
 
