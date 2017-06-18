@@ -221,6 +221,8 @@ def optsoln2x(x, trace_len):
 def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     cons, Vars, vars_grouped_by_state = pwatrace2cons(pwa_trace, num_dims, prop)
     cons = list(cons)
+#     for c in cons:
+#         print(c)
 
     #nvars = num_dims.x + num_dims.pi
 
