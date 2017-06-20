@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 
 from IPython import embed
 
+import numpy as np
 import z3
 
 from sympy2z3.sympy2z3 import sympy2z3
@@ -36,6 +37,7 @@ def nlinprog(obj, cons, Vars):
         raise NotImplementedError
 
     solver = z3.Solver()
+    solver = z3.Solver()
     # Objective and constraints should be polynomials
     # assert(isinstance(obj, Poly))
     sym2Z3_varmap, z3_cons = sympy2z3(cons)
@@ -48,13 +50,16 @@ def nlinprog(obj, cons, Vars):
     res = solver.check()
     if res == z3.sat:
         model = solver.model()
-        varval_map = {sv: real2float(model[zv]) for sv, zv in sym2Z3_varmap.iteritems()}
+        #varval_map = {sv: real2float(model[zv]) for sv, zv in sym2Z3_varmap.iteritems()}
+        res_x = np.array([real2float(model[sym2Z3_varmap[v]]) for v in Vars])
     elif res == z3.unsat:
-        varval_map = None
+        #varval_map = None
+        res_x = None
     else:
         raise RuntimeError(solver.reason_unknown())
 
-    return (res == z3.sat), varval_map
+    #return (res == z3.sat), varval_map
+    return spec.OPTRES(0, res_x, 'OK', res == z3.sat)
 
 
 def real2float(r):

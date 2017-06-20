@@ -749,7 +749,7 @@ def main():
     LIST_OF_GRAPH_LIBS = ['nxlm', 'nx', 'gt', 'g']
     LIST_OF_PLOT_LIBS = ['mp', 'pg']
     LIST_OF_BMC = ['sal', 's3camsmt', 'dfs', 'pretty-printer', 'pysmtbmc']
-    LIST_OF_OPT_ENGINE = ['scipy', 'glpk', 'gurobi', 'z3', 'ipopt', 'pyfmincon']
+    LIST_OF_OPT_ENGINE = ['scipy', 'glpk', 'gurobi', 'z3', 'dreal', 'ipopt', 'pyfmincon']
     LIST_OF_SMT_SOLVERS = ['z3', 'msat', 'satex']
     LIST_OF_CLUSTERING = ['cell', 'box', 'hull']
     LIST_OF_MODELS = ['affine', 'poly']
