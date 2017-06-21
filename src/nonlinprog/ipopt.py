@@ -72,7 +72,7 @@ def eval_expr(f, x):
     return y
 
 
-def nlinprog(obj, cons, Vars, mode='cons'):
+def nlinprog(obj, cons, Vars, x0=None):
     """nlinprog
 
     Parameters
@@ -88,15 +88,15 @@ def nlinprog(obj, cons, Vars, mode='cons'):
     """
     pyipopt.set_loglevel(0) # increasing verbosity -> 0, 1, 2
     cons = list(cons)
-    if mode == 'cons':
-        return cons_opt(obj, cons, Vars)
-    elif mode == 'uncons':
-        return uncons_opt(obj, cons, Vars)
-    else:
-        raise NotImplementedError
+
+    if x0 is None:
+        x0 = np.zeros(len(Vars))
+
+    return cons_opt(obj, cons, Vars, x0)
 
 
-def uncons_opt(obj, cons, Vars):
+# Wrong
+def uncons_opt(obj, cons, Vars, x0):
     """nlinprog
 
     Parameters
@@ -110,6 +110,7 @@ def uncons_opt(obj, cons, Vars):
     Notes
     ------
     """
+    raise NotImplementedError
 
     assert(obj == 0)
     for c in cons:
@@ -120,8 +121,6 @@ def uncons_opt(obj, cons, Vars):
     eval_f = ft.partial(eval_expr, sym.lambdify(Vars, obj))
     eval_grad_f = ft.partial(eval_grad_obj, sym.lambdify(Vars, grad(Vars, obj)))
     eval_hessian_f = ft.partial(eval_expr, sym.lambdify(Vars, sym.hessian(obj, Vars)))
-
-    x0 = np.zeros(len(Vars))
 
     # Return codes in IpReturnCodes_inc.h
     res_x, mL, mU, Lambda, res_obj, status = pyipopt.fmin_unconstrained(
@@ -134,7 +133,7 @@ def uncons_opt(obj, cons, Vars):
     return spec.OPTRES(res_obj, res_x, 'OK', res_obj <= 0)
 
 
-def cons_opt(obj, cons, Vars):
+def cons_opt(obj, cons, Vars, x0):
     """nlinprog
 
     Parameters
@@ -180,11 +179,9 @@ def cons_opt(obj, cons, Vars):
         for gi, lb, ub in zip(g, g_L, g_U):
             print('{} \in [{}, {}]'.format(gi, lb, ub))
 
-    x0 = np.zeros(len(Vars))
-    x0[0], x0[1] = 0.4, -0.4
     nlp = pyipopt.create(nvars, x_L, x_U, ncon, g_L, g_U, nnzj, nnzh, eval_f, eval_grad_f, eval_g, eval_jac_g)
     # Verbosity level \in [0, 12]
-    nlp.int_option('print_level', 0)
+    nlp.int_option('print_level', 5)
     res_x, zl, zu, constraint_multipliers, res_obj, status = nlp.solve(x0)
     nlp.close()
 
