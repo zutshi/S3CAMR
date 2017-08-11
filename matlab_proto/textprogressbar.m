@@ -1,2 +1,0 @@
-function textprogressbar(c)
-end
