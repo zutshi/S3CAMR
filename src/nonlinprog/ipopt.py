@@ -24,6 +24,8 @@ from IPython import embed
 CONS = collections.namedtuple('constraint', ('expr', 'lb', 'ub'))
 
 debug = False
+constr_viol_tol = 1e-4# def: 0.0001
+print_level = 5
 
 
 def jac(Vars, exprs):
@@ -181,7 +183,8 @@ def cons_opt(obj, cons, Vars, x0):
 
     nlp = pyipopt.create(nvars, x_L, x_U, ncon, g_L, g_U, nnzj, nnzh, eval_f, eval_grad_f, eval_g, eval_jac_g)
     # Verbosity level \in [0, 12]
-    nlp.int_option('print_level', 5)
+    nlp.int_option('print_level', print_level)
+    nlp.num_option('constr_viol_tol', constr_viol_tol)
     res_x, zl, zu, constraint_multipliers, res_obj, status = nlp.solve(x0)
     nlp.close()
 

@@ -19,7 +19,7 @@ from globalopts import opts as gopts
 import nonlinprog.spec as spec
 
 DREAL = '/home/zutshi/software/dreal3/build/dReal'
-DELTA_SAT_PREC = '0.01'
+DELTA_SAT_PREC = '0.01'#'0.01'
 FNAME = 'tmp.smt2'
 
 
@@ -40,7 +40,8 @@ def nlinprog(obj, cons, Vars):
     # feasibility check
     if obj == 0:
         res = check_feasibility(obj, cons, Vars)
-        if res.success and res_is_valid(Vars, cons, res):
+        #if res.success and res_is_valid(Vars, cons, res):
+        if res.success and True:
             return res
         else:
             return spec.OPTRES(0, None, 'OK', False)
@@ -57,10 +58,10 @@ def nlinprog(obj, cons, Vars):
 def res_is_valid(Vars, cons, res):
     varval_map = {v: x for v, x in zip(Vars, res.x)}
     for c in cons:
-        if c.subs(varval_map) > 0:
+        #print(c, '==', c.lhs.subs(varval_map), '==', c.subs(varval_map))
+        if not c.subs(varval_map):
             return False
     return True
-
 
 
 def check_feasibility(obj, cons, Vars):
@@ -77,8 +78,8 @@ def check_feasibility(obj, cons, Vars):
     smt2_str = LOGIC + solver.to_smt2()
     fp.overwrite(FNAME, smt2_str)
     output = U.strict_call_get_op([DREAL, FNAME, '--model', '--precision', DELTA_SAT_PREC])
-    status, res_x = parse_dreal_res(var_str_to_idx, output)
-    return spec.OPTRES(0, res_x, 'OK', status)
+    res_x = parse_dreal_res(var_str_to_idx, output)
+    return spec.OPTRES(0, res_x, 'OK', res_x is not None)
 
 
 def parse_dreal_res(var_str_to_idx, output):
@@ -101,7 +102,7 @@ def parse_dreal_res(var_str_to_idx, output):
     output = output.strip()
 
     if output == UNSAT:
-        return False, None
+        return None
 
     else:
         op = output.splitlines()
@@ -116,7 +117,7 @@ def parse_dreal_res(var_str_to_idx, output):
         for a in op[1:-1]:
             v, lb, ub = parse_assignment(a)
             x[var_str_to_idx[v]] = (float(lb)+float(ub))/2
-        return True, x
+        return x
 
 
 def parse_assignment(a):
