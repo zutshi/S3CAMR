@@ -260,7 +260,7 @@ class PlantAbstraction:
             if rchd_abs_state is not None:
                 abs2rchd_abs_state_pi_list.append((rchd_abs_state, pi_cell))
 
-                logger.debug('abs_state obtained {} from concrete_state {}'.format(rchd_abs_state, rchd_concrete_state))
+                # ##!!##logger.debug('abs_state obtained {} from concrete_state {}'.format(rchd_abs_state, rchd_concrete_state))
 
         return abs2rchd_abs_state_pi_list
 
