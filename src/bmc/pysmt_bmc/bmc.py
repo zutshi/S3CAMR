@@ -37,6 +37,29 @@ class BMC:
         solver = Solver(name=self.solver_name, logic=QF_LRA)
         return solver
 
+    def find_bug_at_k(self, k, trace_enc=None):
+        assert(trace_enc is None)
+        solver = self._get_solver()
+        for i in range(k + 1): 
+            # encode the i-th BMC step
+            logging.debug("Encoding %d..." % i)
+
+            f_at_i = self.get_ts_enc_at_i(i)
+            solver.add_assertion(f_at_i)
+
+            if (trace_enc is not None):
+                tenc_at_i = self.get_trace_enc_at_i(i, trace_enc)
+                solver.add_assertion(tenc_at_i)
+
+        error_at_k = self.helper.get_formula_at_i(self.all_vars,
+                                                  self.error,
+                                                  k+1)
+        solver.add_assertion(error_at_k)
+
+        logging.info("Finding bugs UP TO step %d..." % k)
+        res = self.solve(solver, k)
+        return res 
+
     def find_bug_non_inc(self, k, trace_enc=None):
         solver = self._get_solver()
         self.encode_up_to_k(solver, self.all_vars, k, trace_enc)
