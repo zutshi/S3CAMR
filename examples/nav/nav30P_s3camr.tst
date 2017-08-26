@@ -60,7 +60,7 @@ T = 20.0
 # Trials
 grid_eps = [1]*4#[2, 2, 2, 2]#[1]*4
 delta_t = 5.0
-num_samples = 10
+num_samples = 50
 
 MAX_ITER = 4
 
