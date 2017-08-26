@@ -21,24 +21,30 @@ class BMC:
         self.error = error
         self.solver_name = solver_name
 
-    def find_bug(self, k, incremental=False):
+    def find_bug(self, k, depth_mode):
         """Explore the system up to k steps.
 
         Returns None if no bugs where found up to k or a
         counterexample otherwise.
         """
 
-        if (not incremental):
+        if depth_mode == 'non_inc':
             return self.find_bug_non_inc(k, None)
-        else:
+        elif depth_mode == 'inc':
             return self.find_bug_inc(k, None)
+        elif depth_mode == 'exact_depth':
+            return self.find_bug_at_k(k, None)
+        else:
+            raise NotImplementedError
 
     def _get_solver(self):
         solver = Solver(name=self.solver_name, logic=QF_LRA)
         return solver
 
     def find_bug_at_k(self, k, trace_enc=None):
-        assert(trace_enc is None)
+
+        error_condition = []
+
         solver = self._get_solver()
         for i in range(k + 1): 
             # encode the i-th BMC step
@@ -51,9 +57,10 @@ class BMC:
                 tenc_at_i = self.get_trace_enc_at_i(i, trace_enc)
                 solver.add_assertion(tenc_at_i)
 
-        error_at_k = self.helper.get_formula_at_i(self.all_vars,
-                                                  self.error,
-                                                  k+1)
+            error_at_k = self.helper.get_formula_at_i(self.all_vars, self.error, k)
+            #error_at_k_1 = self.helper.get_formula_at_i(self.all_vars, self.error, k-1)
+#         error_at_k_2 = self.helper.get_formula_at_i(self.all_vars, self.error, k-2)
+
         solver.add_assertion(error_at_k)
 
         logging.info("Finding bugs UP TO step %d..." % k)

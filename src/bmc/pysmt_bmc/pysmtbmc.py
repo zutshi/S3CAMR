@@ -35,10 +35,13 @@ class BMC(BMCSpec):
             return
 
     def check(self, depth):
+        #depth_mode = 'non_inc'
+        depth_mode = 'exact_depth'
+        #depth_mode = 'inc'
         ts = self.converter.get_ts()
 
         bmc = BMCImpl(ts.helper, ts, ts.final,self.smt_engine)
-        res_cex = bmc.find_bug(depth, False)
+        res_cex = bmc.find_bug(depth, depth_mode)
 
         if res_cex is None:
             print('BMC failed to find a CE')
