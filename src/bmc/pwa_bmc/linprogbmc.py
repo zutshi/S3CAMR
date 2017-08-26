@@ -54,7 +54,9 @@ class BMC(BMCSpec):
         # TODO: make the graph search depth bounded?
         err.warn('ignoring depth')
         path_gen = self.pwa_model.get_all_path_generator(self.sources, self.targets)
+        path_ctr = 0
         for path in path_gen:
+            path_ctr += 1
             ptrace = [self.pwa_model.node_p(qi) for qi in path]
             mtrace = [self.pwa_model.edge_m((qi, qj)) for qi, qj in U.pairwise(path)]
             pwa_trace = PWATRACE(partitions=ptrace, models=mtrace)
@@ -63,6 +65,7 @@ class BMC(BMCSpec):
                 concrete_trace = ConcreteTrace(x_array, pwa_trace)
                 print('Model Found')
                 yield concrete_trace, pwa_trace
+        print('Total paths checked: {}'.format(path_ctr))
         return
 
     def compute_next_trace(self):

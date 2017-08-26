@@ -52,9 +52,15 @@ T = 20.0
 # num_samples = 50
 
 # tried for poly=2
-grid_eps = [1.0]*4
+#grid_eps = [1.0]*4
+#delta_t = 5.0
+#num_samples = 20
+
+
+# Trials
+grid_eps = [1]*4#[2, 2, 2, 2]#[1]*4
 delta_t = 5.0
-num_samples = 20
+num_samples = 10
 
 MAX_ITER = 4
 

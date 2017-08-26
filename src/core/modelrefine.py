@@ -432,8 +432,10 @@ def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model
         if settings.debug:
             print(bmc_trace)
             print(pwa_trace)
-        verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace)
-        result = True
+        result = verify_traces(AA, sys, prop, sp, bmc_trace, pwa_trace)
+        if result:
+            break
+        #result = True
 
     if num_traces == 0:
         print("The system has been determined to be 'Safe'")
@@ -591,7 +593,11 @@ def build_pwa_model(sys, prop, qgraph, sp, model_type):
 
     # number of training samples
     #TODO : should be min and not max!
-    ntrain = min(gopts.regression_sim_samples * MORE_FACTOR, MAX_TRAIN)
+
+    #ntrain = min(gopts.regression_sim_samples * MORE_FACTOR, MAX_TRAIN)
+    K = 30
+    ntrain = K*(sys.num_dims.x+1)
+
     # number of test samples
     #ntest = min(ntrain * TEST_FACTOR, MAX_TEST)
 
@@ -753,7 +759,8 @@ def model(tol, X, Y):
     try:
         rm = AFM.Model(X, Y)
     except AFM.UdetError:
-        return []
+        raise AFM.UdetError
+        #return []
     e_pc = rm.max_error_pc(X, Y)
     if settings.debug:
         err.imp('error%: {}'.format(e_pc))
@@ -776,6 +783,8 @@ def mdl_1relational(prop, tol, step_sim, qgraph, q, X, Y):
     neighbors_including_self.add(q)
 
     for qi in neighbors_including_self:
+        print('modeling: Q({}) -> Q\'({})'.format(q, qi))
+        print(q.ival_constraints, qi.ival_constraints)
         if settings.debug:
             print('checking qi: ', qi)
         sat = qi.sat(Y)
@@ -941,141 +950,6 @@ def dummy_sub_model(q):
     return sub_model
 
 
-def q_affine_models_old(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
-    """Find affine models for a given Q
-
-    Parameters
-    ----------
-    cell : cell
-    step_sim : 1 time step (delta_t) simulator
-    tol : each abs state is split further into num_splits cells
-    in order to meet: modeling error < tol (module ntests samples)
-
-    Returns
-    -------
-    pwa.SubModel()
-
-    Notes
-    ------
-    """
-    # Is non relational modeling being done? No, by default
-    pwa_non_relational = False
-    sub_models = []
-
-    try_again = True
-    ntries = 1
-    MAX_TRIES = 2
-    while try_again:
-        last_node = not qgraph.edges(q)
-        X, Y = q.get_rels(prop, step_sim, ntrain)
-        assert(not X.size == 0 or Y.size == 0)
-        assert(not Y.size == 0 or X.size == 0)
-        if X.size == 0:
-            # make sure it is the last node: had no edges
-            assert(last_node)
-            # The cell is completely inside the property
-            # If not, it means that the volume of Cell - prop is very
-            # small and a sample wasnt found in there.
-            assert(prop.final_cons.contains(q.ival_constraints))
-            return [dummy_sub_model(q)]
-
-        try:
-            regression_models = mdl_old(AA, prop, tol, step_sim, qgraph, q, (X, Y), X, k=0, kmin=KMIN, kmax=KMAX)
-            # we are done!
-            if regression_models:
-                try_again = False
-            # else try again
-            else:
-                err.warn('no model found')
-                if ntries > MAX_TRIES:
-                    if last_node:
-                        err.warn('giving up')
-                        try_again = False
-                    else:
-                        err.warn('can happen rarely...')
-        except AFM.UdetError:
-            pass
-        print('trying again')
-        # double the number of samples and try again
-        ntrain *= 2
-        # repeat!
-        ntries += 1
-
-    # try again on failure, and settle with non relational models
-    if not regression_models:
-        err.warn('No model found for q: {}'.format(q))
-        regression_models = mdl_old(AA, prop, np.inf, step_sim, qgraph, q, (X, Y), X, k=0, kmin=0, kmax=1)
-        assert(regression_models)
-        # No model found, get a non-relational model as the worst case
-        pwa_non_relational = True
-
-#     # TODO: fix this messy handling...?
-#     if not regression_models:
-#         # no model was found...node must be a sink node, otherwise
-#         # such a condition is not possible!
-#         # It must be due to missing neighbors of th sink node.
-#         assert(qgraph.out_degree(q) == 0)
-#         # Now request for the model once more but given an infinite
-#         # tolerance so that we always get one. K=1 for sanity's sake,
-#         # as a depth > 1 should never be reached with tol = Inf.
-#         regression_models = mdl(np.inf, step_sim, qgraph, q, (X, Y), X, 1)
-#         # Due to the tolerance being Inf, we should get back a single
-#         # model
-#         assert(len(regression_models) == 1)
-
-    for rm, q_seq, e_pc, status in regression_models:
-        A, b = q.modelQ(rm)
-        e = q.errorQ(include_err, rm)
-        dmap = rel.DiscreteAffineMap((A, b), e)
-
-        C, d = q.ival_constraints.poly()
-        p = pwa.Partition(C, d, q)
-
-        future_partitions = []
-
-        pnexts = []
-
-        #if len(q_seq) == 1:
-        # if q_seq is empty, all its neighbours are reachable
-        if not q_seq:
-            # Relational modeling is currently forced as KMIN = 1
-            #assert(False)
-            assert(pwa_non_relational)
-            # No relational modeling was done. Use the relations from
-            # the graph. Add transitions to cell only seen in the
-            # subgraph.
-            # Force self loops just in case. The other option is to
-            # examin in the mdl() function if a self loop is possible
-            #err.warn('forcing self loops for every location!')
-            for qi in it.chain([q], qgraph.neighbors(q)):
-                C, d = qi.ival_constraints.poly()
-                #pnexts.append(pwa.Partition(C, d, qi))
-                pnexts = [pwa.Partition(C, d, qi)]
-
-                sub_model = rel.KPath(dmap, p, pnexts, future_partitions)
-                sub_model.max_error_pc = e_pc
-                sub_model.status = status
-                sub_models.append(sub_model)
-
-        # Relational modeling is available. Add the edge which was
-        # used to model this transition.
-        else:
-            # Add the immediate next reachable state
-            qnext = q_seq[0]
-            C, d = qnext.ival_constraints.poly()
-            pnexts.append(pwa.Partition(C, d, qnext))
-            # Add the states reachable in future
-            for qi in q_seq[1:]:
-                C, d = qi.ival_constraints.poly()
-                future_partitions.append(pwa.Partition(C, d, qi))
-
-            sub_model = rel.KPath(dmap, p, pnexts, future_partitions)
-            sub_model.max_error_pc = e_pc
-            sub_model.status = status
-            sub_models.append(sub_model)
-    return sub_models
-
-
 # models can be split
 def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
     """Find affine models for a given Q
@@ -1099,11 +973,21 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
     ntries = 1
     #MAX_TRIES = 2
     MAX_TRIES = 0
+
+    Xts, Yts = gopts.trajstore.get_traj(q.xcell.cell)
+    Xl, Yl = [Xts], [Yts]
+
     while try_again:
         last_node = not qgraph.edges(q)
-        X, Y = q.get_rels(prop, step_sim, ntrain)
-        assert(not X.size == 0 or Y.size == 0)
-        assert(not Y.size == 0 or X.size == 0)
+        Xi, Yi = q.get_rels(prop, step_sim, ntrain)
+        assert(not Xi.size == 0 or Yi.size == 0)
+        assert(not Yi.size == 0 or Xi.size == 0)
+
+        Xl.append(Xi)
+        Yl.append(Yi)
+
+        X, Y = np.concatenate(Xl), np.concatenate(Yl)
+
         if X.size == 0:
             # make sure it is the last node: had no edges
             assert(last_node)
@@ -1128,7 +1012,8 @@ def q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
                         err.warn('can happen rarely...')
                     try_again = False
         except AFM.UdetError:
-            pass
+            try_again = True
+            #pass
         if try_again:
             print('trying again')
         # double the number of samples and try again
@@ -1581,3 +1466,137 @@ def build_pwa_ct_model(AA, abs_states, sp, sys_sim):
 #         exit()
 
 #TESTCODE = False
+
+def q_affine_models_old(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q):
+    """Find affine models for a given Q
+
+    Parameters
+    ----------
+    cell : cell
+    step_sim : 1 time step (delta_t) simulator
+    tol : each abs state is split further into num_splits cells
+    in order to meet: modeling error < tol (module ntests samples)
+
+    Returns
+    -------
+    pwa.SubModel()
+
+    Notes
+    ------
+    """
+    # Is non relational modeling being done? No, by default
+    pwa_non_relational = False
+    sub_models = []
+
+    try_again = True
+    ntries = 1
+    MAX_TRIES = 2
+    while try_again:
+        last_node = not qgraph.edges(q)
+        X, Y = q.get_rels(prop, step_sim, ntrain)
+        assert(not X.size == 0 or Y.size == 0)
+        assert(not Y.size == 0 or X.size == 0)
+        if X.size == 0:
+            # make sure it is the last node: had no edges
+            assert(last_node)
+            # The cell is completely inside the property
+            # If not, it means that the volume of Cell - prop is very
+            # small and a sample wasnt found in there.
+            assert(prop.final_cons.contains(q.ival_constraints))
+            return [dummy_sub_model(q)]
+
+        try:
+            regression_models = mdl_old(AA, prop, tol, step_sim, qgraph, q, (X, Y), X, k=0, kmin=KMIN, kmax=KMAX)
+            # we are done!
+            if regression_models:
+                try_again = False
+            # else try again
+            else:
+                err.warn('no model found')
+                if ntries > MAX_TRIES:
+                    if last_node:
+                        err.warn('giving up')
+                        try_again = False
+                    else:
+                        err.warn('can happen rarely...')
+        except AFM.UdetError:
+            pass
+        print('trying again')
+        # double the number of samples and try again
+        ntrain *= 2
+        # repeat!
+        ntries += 1
+
+    # try again on failure, and settle with non relational models
+    if not regression_models:
+        err.warn('No model found for q: {}'.format(q))
+        regression_models = mdl_old(AA, prop, np.inf, step_sim, qgraph, q, (X, Y), X, k=0, kmin=0, kmax=1)
+        assert(regression_models)
+        # No model found, get a non-relational model as the worst case
+        pwa_non_relational = True
+
+#     # TODO: fix this messy handling...?
+#     if not regression_models:
+#         # no model was found...node must be a sink node, otherwise
+#         # such a condition is not possible!
+#         # It must be due to missing neighbors of th sink node.
+#         assert(qgraph.out_degree(q) == 0)
+#         # Now request for the model once more but given an infinite
+#         # tolerance so that we always get one. K=1 for sanity's sake,
+#         # as a depth > 1 should never be reached with tol = Inf.
+#         regression_models = mdl(np.inf, step_sim, qgraph, q, (X, Y), X, 1)
+#         # Due to the tolerance being Inf, we should get back a single
+#         # model
+#         assert(len(regression_models) == 1)
+
+    for rm, q_seq, e_pc, status in regression_models:
+        A, b = q.modelQ(rm)
+        e = q.errorQ(include_err, rm)
+        dmap = rel.DiscreteAffineMap((A, b), e)
+
+        C, d = q.ival_constraints.poly()
+        p = pwa.Partition(C, d, q)
+
+        future_partitions = []
+
+        pnexts = []
+
+        #if len(q_seq) == 1:
+        # if q_seq is empty, all its neighbours are reachable
+        if not q_seq:
+            # Relational modeling is currently forced as KMIN = 1
+            #assert(False)
+            assert(pwa_non_relational)
+            # No relational modeling was done. Use the relations from
+            # the graph. Add transitions to cell only seen in the
+            # subgraph.
+            # Force self loops just in case. The other option is to
+            # examin in the mdl() function if a self loop is possible
+            #err.warn('forcing self loops for every location!')
+            for qi in it.chain([q], qgraph.neighbors(q)):
+                C, d = qi.ival_constraints.poly()
+                #pnexts.append(pwa.Partition(C, d, qi))
+                pnexts = [pwa.Partition(C, d, qi)]
+
+                sub_model = rel.KPath(dmap, p, pnexts, future_partitions)
+                sub_model.max_error_pc = e_pc
+                sub_model.status = status
+                sub_models.append(sub_model)
+
+        # Relational modeling is available. Add the edge which was
+        # used to model this transition.
+        else:
+            # Add the immediate next reachable state
+            qnext = q_seq[0]
+            C, d = qnext.ival_constraints.poly()
+            pnexts.append(pwa.Partition(C, d, qnext))
+            # Add the states reachable in future
+            for qi in q_seq[1:]:
+                C, d = qi.ival_constraints.poly()
+                future_partitions.append(pwa.Partition(C, d, qi))
+
+            sub_model = rel.KPath(dmap, p, pnexts, future_partitions)
+            sub_model.max_error_pc = e_pc
+            sub_model.status = status
+            sub_models.append(sub_model)
+    return sub_models

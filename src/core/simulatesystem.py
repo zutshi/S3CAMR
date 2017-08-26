@@ -8,6 +8,7 @@ from __future__ import unicode_literals
 
 from . import state as st
 from . import traces
+from globalopts import opts as gopts
 
 import err
 import utils as U

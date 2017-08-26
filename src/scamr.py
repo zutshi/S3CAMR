@@ -32,6 +32,7 @@ from core import wmanager
 from plot import plotting
 from core import random_testing as RT
 from core import properties
+import trajstore.trajstore as trajstore
 
 
 import globalopts
@@ -512,7 +513,7 @@ def falsify_using_model(
 
     print('Refining...')
     if globalopts.opts.refine == 'model-dft':
-        MR.refine_dft_model_based(current_abs,
+        result = MR.refine_dft_model_based(current_abs,
                                   #error_paths,
                                   #error_graph,
                                   errors,
@@ -523,7 +524,7 @@ def falsify_using_model(
                                   sys,
                                   prop)
     elif globalopts.opts.refine == 'model-dmt':
-        MR.refine_dmt_model_based(current_abs,
+        result = MR.refine_dmt_model_based(current_abs,
                                   error_paths,
                                   pi_seq_list,
                                   system_params,
@@ -535,6 +536,8 @@ def falsify_using_model(
     else:
         assert(False)
 
+    if result:
+        print('concretized!')
     return
 
 
@@ -989,6 +992,9 @@ def main():
     matlab_engine = args.meng
     sys.init_sims(opts.plotting, opts.property_checker, psim_args=matlab_engine)
 
+    opts.trajstore = trajstore.TrajStore(sys.plant_config_dict['eps'], sys)
+    sys.plant_sim.simulate = trajstore.wrap_sim(sys.plant_sim.simulate, opts.trajstore)
+    
     sanity_check_input(sys, prop)
 
     globalopts.opts = opts

@@ -258,6 +258,15 @@ class Qx(Q):
 
         return np.vstack(Yl)
 
+    def get_rels_trajstore(self, prop, N):
+        X_, Y_ = gopts.trajstore.get_traj(self.xcell.cell)
+        idx = ~prop.final_cons.sat(X_)
+        X, Y = X_[idx, :], Y_[idx, :]
+        N = N-X.shape[0]
+
+        return N, X, Y
+
+
     def get_rels(self, prop, sim, N):
         """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
         """
@@ -292,6 +301,62 @@ class Qx(Q):
             return x_array, x_array
         else:
             return x_array, np.vstack(Yl)
+
+
+#     def get_rels(self, prop, sim, N):
+#         """TODO: EXPLICITLY ignores t, d, pvt, ci, pi
+#         """
+#         d, pvt = [np.array([])]*2
+#         pi = [np.array([])]
+#         t0 = 0
+#         Yl = []
+
+#         #plt.figure()
+
+#         #Using only source cell as its easier to integrate with
+#         #existing code
+#         X1_, Y1_ = gopts.trajstore.get_traj(self.xcell.cell)
+#         idx = ~prop.final_cons.sat(X1_)
+#         X1, Y1 = X1_[idx, :], Y1_[idx, :]
+#         print(N,X1.shape[0])
+#         N = N-X1.shape[0]
+
+#         if N > 0:
+#             X2_ = self.xcell.sample_UR(N)
+
+#             # remove any sample drawn from the property box
+#             X2 = X2_[~prop.final_cons.sat(X2_), :]
+#             if X2.size == 0:
+#                 print(prop.final_cons)
+#                 print(self.xcell.ival_constraints)
+#             #print(t0)
+#             #print(x_array)
+#             for x in X2:
+#                 (t_, x_, d_, pvt_) = sim(t0, x, d, pvt, pi)
+#                 Yl.append(x_)
+#             if settings.debug_plot:
+#                 # close intermediate plots which can not be switched off;
+#                 # as these are in the system model *.py
+#                 #plt.title('ignore')
+#                 #plt.show()
+#                 #plt.close()
+#                 pass
+
+#         if Yl:
+#             Y2 = np.vstack(Yl)
+#             X, Y = np.concatenate((X1, X2)), np.concatenate((Y1, Y2))
+#         else:
+#             X, Y = X1, Y1
+
+#         return X, Y
+
+
+#         # return empty arrays
+#         if XX.size == 0:
+#             return XX, XX
+#         else:
+#             XX, YY = np.concatenate((X, x_array)), np.concatenate((Y, np.vstack(Yl)))
+#             return XX, YY
 
     def sat(self, X):
         """returns a sat array, whose elements are false when unsat

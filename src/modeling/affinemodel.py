@@ -11,7 +11,7 @@ from sklearn import linear_model as skl_lm
 from sklearn.preprocessing import PolynomialFeatures
 import numpy as np
 
-#from IPython import embed
+from IPython import embed
 
 import fileops as fops
 import constraints as cons
@@ -113,7 +113,12 @@ class RegressionModel(object):
 
         # Usual relative error computation
         Y_ = self.predict(X)
-        return (abs((Y - Y_)/Y))*100
+        #epc = (abs((Y - Y_)/Y))*100
+        error = Y - Y_
+        #error_range = np.max(error, axis=0) - np.min(error, axis=0)
+        Y_range = np.max(Y, axis=0) - np.min(Y, axis=0)
+        epc = abs(error/Y_range)*100
+        return epc
 
     def max_error_pc(self, X, Y):
         """Maximum error %
@@ -131,7 +136,13 @@ class RegressionModel(object):
         ------
         Indicates model quality for debug purposes
         """
-        return np.max(self.error_pc(X, Y), axis=0)
+        #return np.max(self.error_pc(X, Y), axis=0)
+
+        Y_ = self.predict(X)
+        error = Y - Y_
+        error_range = np.max(error, axis=0) - np.min(error, axis=0)
+        Y_range = np.max(Y, axis=0) - np.min(Y, axis=0)
+        return abs(error_range/Y_range)*100
 
 #     def max_error_pc_old_wrong(self, X, Y):
 #         Y_ = self.predict(X)
