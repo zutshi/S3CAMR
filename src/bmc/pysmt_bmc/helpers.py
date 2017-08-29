@@ -101,7 +101,9 @@ class Helper:
         next_map = {}
         Helper.get_new_variables(vars, self.env.formula_manager, next_map, "", "_next")
 
-        next_formula = substitute(formula, next_map)
+        # Adi: directly calling walk bypasses checks, and hence is faster
+        #next_formula = substitute(formula, next_map)
+        next_formula = self.env.substituter.walk(formula, substitutions=next_map)
         return next_formula
 
 
