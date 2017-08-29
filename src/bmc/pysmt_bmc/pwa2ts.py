@@ -16,16 +16,37 @@ from core.modelrefine import ModelPartition
 
 import pysmt.operators as op
 from pysmt.typing import BOOL, REAL
-from pysmt.shortcuts import TRUE
-from pysmt.shortcuts import FALSE
-from pysmt.shortcuts import Not, And, Or, Implies, Iff, ExactlyOne, Equals
-from pysmt.shortcuts import GE, LE
-from pysmt.shortcuts import Plus, Times, Minus
-from pysmt.shortcuts import Symbol, Real
+# Adi: Faster to obtain from env than using shortcuts
+#from pysmt.shortcuts import TRUE
+#from pysmt.shortcuts import FALSE
+#from pysmt.shortcuts import Not, And, Or, Implies, Iff, ExactlyOne, Equals
+#from pysmt.shortcuts import GE, LE
+#from pysmt.shortcuts import Plus, Times, Minus
+#from pysmt.shortcuts import Symbol, Real
 from pysmt.shortcuts import get_env
 
 from fractions import Fraction
 from numpy import int8, int16, int32, int64, uint8, uint16, uint32, uint64, float16, float32, float64, ndarray, isinf
+
+
+# Adi: Faster than using shortcuts when using in a loop
+Symbol = get_env().formula_manager.Symbol
+Real = get_env().formula_manager.Real
+GE = get_env().formula_manager.GE
+LE = get_env().formula_manager.LE
+Plus = get_env().formula_manager.Plus
+Times = get_env().formula_manager.Times
+Minus = get_env().formula_manager.Minus
+Not = get_env().formula_manager.Not
+And = get_env().formula_manager.And
+Or = get_env().formula_manager.Or
+Implies = get_env().formula_manager.Implies
+Iff = get_env().formula_manager.Iff
+ExactlyOne = get_env().formula_manager.ExactlyOne
+Equals = get_env().formula_manager.Equals
+TRUE = get_env().formula_manager.TRUE
+FALSE = get_env().formula_manager.FALSE
+
 
 class ErrorInfinity(Exception):
     pass
