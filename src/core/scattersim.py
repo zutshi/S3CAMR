@@ -2,11 +2,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import absolute_import
 from __future__ import division
-from __future__ import print_function
 from __future__ import unicode_literals
 
 import logging
-import Queue
+import queue
 import numpy as np
 
 
@@ -126,7 +125,7 @@ def init(
 
 def discover(A, system_params, initial_state_set, budget=None):
     final_state_set = set()
-    Q = Queue.Queue(maxsize=0)
+    Q = queue.Queue(maxsize=0)
     examined_state_set = set()
 
     # initialize the Q with initial states
@@ -227,7 +226,7 @@ def discover(A, system_params, initial_state_set, budget=None):
 
 
 def discover_batch(A, budget=None):
-    Q = Queue.Queue(maxsize=0)
+    Q = queue.Queue(maxsize=0)
     examined_state_set = set()
 
     abs_state_list_to_examine = []

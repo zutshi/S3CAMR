@@ -1,7 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-from __future__ import print_function
 from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
@@ -170,8 +169,8 @@ class TopLevelAbs:
                 config_dict['refinement_factor'] = None
                 config_dict['num_samples'] = None
                 config_dict['delta_t'] = None
-            except KeyError, key:
-                raise err.Fatal('expected abstraction parameter undefined: {}'.format(key))
+            except KeyError as e:
+                raise err.Fatal('expected abstraction parameter undefined: {}'.format(e))
         else:
             for attr in config_dict:
                 setattr(self, attr, config_dict[attr])
