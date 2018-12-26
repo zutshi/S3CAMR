@@ -113,14 +113,13 @@ class DiscretePolyMap(object):
 
 
 class DiscreteAffineMap(object):
-    def __init__(self, (A, b), e):
+    def __init__(self, Ab, e):
         '''
         x' = Ax + b +- error
         '''
         #TODO: fix by removing b below....later, make everything
         #polynomial
-        self.A = A
-        self.b = b
+        self.A, self.b = Ab
         assert(isinstance(e, cons.IntervalCons))
         self.error = e
         return

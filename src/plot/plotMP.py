@@ -169,7 +169,7 @@ class Plotting(PlottingBase):
         try:
             x_axis = getattr(trace_obj, x_axis_str)
             y_axis = getattr(trace_obj, y_axis_str)
-        except AttributeError, e:
+        except AttributeError as e:
             print('unexpected plot command received: {}'.format(plot_cmd))
             print(e)
             return None

@@ -9,7 +9,7 @@ from scipy.integrate import ode
 import matplotlib.pyplot as plt
 
 import utils as U
-import copy_reg as cr
+import copyreg as cr
 import types
 
 PLOT = False

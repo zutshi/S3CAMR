@@ -78,7 +78,7 @@ class Expr2Str(object):
         Cleans up the expression whenever ci = 0 or +-1
         """
         b1 = (b, '1')
-        cx = it.chain(it.izip(coeffs, xs), [b1])
+        cx = it.chain(zip(coeffs, xs), [b1])
         ret = ' + '.join((filter(None, (Expr2Str.cx2str(c, x) for c, x in cx))))
         # make sure an empty string is not returned. This can happen if
         # the linexpr evaluates to a 0

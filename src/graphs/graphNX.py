@@ -301,24 +301,32 @@ class GraphNX(object):
 
                     # out-edges
 
+                    removed_edges = []
                     for (u, v, edge_attr) in G.edges_iter(node, data=True):
 
                         # print('lala1: {} -> {}'.format(u,v))
 
-                        G.remove_edge(u, v)
+                        # can't remove edges while iterating. Leads to a runtimeerror in python3
+                        # Temporary fix till networkx is ported to version >= nx2.
+                        #G.remove_edge(u, v)
+                        removed_edges.append((u, v))
                         edges_removed.append((u, v, edge_attr))
+                    G.remove_edges_from(removed_edges)
 
                     if G.is_directed():
 
                         # in-edges
 
+                        removed_edges = []
                         for (u, v, edge_attr) in G.in_edges_iter(node,
                                 data=True):
 
                             # print('lala2: {} -> {}'.format(u,v))
 
-                            G.remove_edge(u, v)
+                            removed_edges.append((u, v))
+                            #G.remove_edge(u, v)
                             edges_removed.append((u, v, edge_attr))
+                        G.remove_edges_from(removed_edges)
 
                 (spur_path_length, spur_path) = nx.single_source_dijkstra(G,
                         spur_node, target, weight=weight)

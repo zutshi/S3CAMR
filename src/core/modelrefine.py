@@ -191,7 +191,7 @@ def get_qgraph_xw(sp, AA, error_paths, pi_seqs):
         if AA.num_dims.pi:
             # Fix this crap: have wcell on edge?
             raise NotImplementedError
-            for (a1, a2), (pi1_ic, pi2_ic) in it.izip_longest(U.pairwise(path), U.pairwise(pi_seq)):
+            for (a1, a2), (pi1_ic, pi2_ic) in it.zip_longest(U.pairwise(path), U.pairwise(pi_seq)):
                 x1cell, x2cell = abs_state2cell(a1, AA), abs_state2cell(a2, AA)
                 w1cell = ic2cell(pi1_ic, sp.pi_ref.eps)
 

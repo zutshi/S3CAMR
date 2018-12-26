@@ -59,7 +59,8 @@ def sal_run_cmd(sal_path, depth, sal_file, prop_name, opts=SalOpts()):
 
 class BMC(BMCSpec):
     def __init__(self, vs, pwa_graph, init_cons, final_cons,
-                 init_ps, final_ps, fname_constructor, module_name, model_type):
+                 init_ps, final_ps, fname_constructor, module_name, model_type,
+                 smt_engine):
         """__init__
 
         Parameters
@@ -169,7 +170,7 @@ class BMC(BMCSpec):
             return InvarStatus.Unsafe
 
     def dump(self):
-        fops.write_data(self.sal_file, str(self.sal_trans_sys))
+        fops.write_data(self.sal_file, str(self.sal_trans_sys).encode())
         return
 
     def get_trace(self):

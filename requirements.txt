@@ -9,3 +9,4 @@ scipy
 six==1.10.0
 sklearn
 tqdm
+sympy
