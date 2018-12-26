@@ -1,6 +1,6 @@
 blessed
 matplotlib
-networkx
+networkx==1.11.0
 numpy
 pyparsing
 python-dateutil
