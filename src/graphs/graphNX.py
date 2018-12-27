@@ -110,7 +110,7 @@ class GraphNX(object):
         return self.G.edges()
 
     def nodes_iter(self):
-        return self.G.nodes_iter()
+        return self.G.nodes()
 
     # TODO: An edge b/w two states stores a unique value of ci and pi.
     # In other words, if x -> x', only the last discovered ci/pi is
@@ -127,7 +127,7 @@ class GraphNX(object):
 #             if self.G.has_edge(v1, v2):
 #                 err.warn('overwriting an edge')
 
-        self.G.add_edge(v1, v2, attrs)
+        self.G.add_edge(v1, v2, **attrs)
 
         self.ctr += 1
 
@@ -144,7 +144,7 @@ class GraphNX(object):
         self.G.add_edges_from(edge_list, attrs)
 
     def add_node(self, v, **attrs):
-        self.G.add_node(v, attrs)
+        self.G.add_node(v, **attrs)
 
     def has_edge(self, u, v):
         return self.G.has_edge(u, v)
@@ -251,14 +251,16 @@ class GraphNX(object):
         if source == target:
             return ([0], [[source]])
 
+        print(source)
+        print(target)
         (length, path) = nx.single_source_dijkstra(G, source, target,
                 weight=weight)
-        if target not in length:
-            raise nx.NetworkXNoPath('node %s not reachable from %s' % (source,
-                                    target))
+        #if target not in path:
+        #    raise nx.NetworkXNoPath('node %s not reachable from %s' % (source,
+        #                            target))
 
-        lengths = [length[target]]
-        paths = [path[target]]
+        lengths = [length]
+        paths = [path]
         c = count()
         B = []
 
@@ -292,7 +294,7 @@ class GraphNX(object):
                         u = c_path[j]
                         v = c_path[j + 1]
                         if G.has_edge(u, v):
-                            edge_attr = G.edge[u][v]
+                            edge_attr = G.edges[u, v]
                             G.remove_edge(u, v)
                             edges_removed.append((u, v, edge_attr))
 
@@ -302,7 +304,7 @@ class GraphNX(object):
                     # out-edges
 
                     removed_edges = []
-                    for (u, v, edge_attr) in G.edges_iter(node, data=True):
+                    for (u, v, edge_attr) in G.edges(node, data=True):
 
                         # print('lala1: {} -> {}'.format(u,v))
 
@@ -318,8 +320,7 @@ class GraphNX(object):
                         # in-edges
 
                         removed_edges = []
-                        for (u, v, edge_attr) in G.in_edges_iter(node,
-                                data=True):
+                        for (u, v, edge_attr) in G.in_edges(node, data=True):
 
                             # print('lala2: {} -> {}'.format(u,v))
 
@@ -328,17 +329,20 @@ class GraphNX(object):
                             edges_removed.append((u, v, edge_attr))
                         G.remove_edges_from(removed_edges)
 
-                (spur_path_length, spur_path) = nx.single_source_dijkstra(G,
-                        spur_node, target, weight=weight)
-                if target in spur_path and spur_path[target]:
-                    total_path = root_path[:-1] + spur_path[target]
+                try:
+                    (spur_path_length, spur_path) = nx.single_source_dijkstra(G, spur_node, target, weight=weight)
+                except nx.NetworkXNoPath as e:
+                    pass
+                else:
+                #if target in spur_path and spur_path[target]:
+                    total_path = root_path[:-1] + spur_path
                     total_path_length = self.get_path_length(G_original,
-                            root_path, weight) + spur_path_length[target]
+                            root_path, weight) + spur_path_length
                     heappush(B, (total_path_length, next(c), total_path))
 
                 for e in edges_removed:
                     (u, v, edge_attr) = e
-                    G.add_edge(u, v, edge_attr)
+                    G.add_edge(u, v, **edge_attr)
 
             if B:
                 (l, _, p) = heappop(B)
@@ -361,7 +365,7 @@ class GraphNX(object):
                 u = path[i]
                 v = path[i + 1]
 
-                length += G.edge[u][v].get(weight, 1)
+                length += G.edges[u, v].get(weight, 1)
 
         return length
 
@@ -575,7 +579,7 @@ class GraphNX(object):
         return self.G.out_degree(node)
 
     def iteredges(self):
-        return self.G.edges_iter()
+        return self.G.edges()
 
     def draw(self, pos_dict=None):
         nx.draw_networkx(self.G, pos=pos_dict, labels=pos_dict,

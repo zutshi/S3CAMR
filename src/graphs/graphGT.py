@@ -464,7 +464,7 @@ class GraphGT(object):
 
                 for e in edges_removed:
                     (u, v, edge_attr) = e
-                    G.add_edge(u, v, edge_attr)
+                    G.add_edge(u, v, **edge_attr)
 
             if B:
                 (l, _, p) = heappop(B)

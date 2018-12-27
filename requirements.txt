@@ -1,6 +1,6 @@
 blessed
 matplotlib
-networkx==1.11.0
+networkx
 numpy
 pyparsing
 python-dateutil
@@ -10,3 +10,4 @@ six==1.10.0
 sklearn
 tqdm
 sympy
+ipython
