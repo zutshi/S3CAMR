@@ -251,8 +251,6 @@ class GraphNX(object):
         if source == target:
             return ([0], [[source]])
 
-        print(source)
-        print(target)
         (length, path) = nx.single_source_dijkstra(G, source, target,
                 weight=weight)
         #if target not in path:
