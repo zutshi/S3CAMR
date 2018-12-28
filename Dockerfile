@@ -30,12 +30,8 @@ RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py &&\
 	 python3.7 get-pip.py
 
 #USER s3camr
-RUN ls -al
-RUN pwd
-RUN cd $HOME
-RUN ls -al
-RUN git clone https://github.com/zutshi/S3CAMR.git
 ENV HOME /home/S3CAMR
+#RUN git clone https://github.com/zutshi/S3CAMR.git
 
 WORKDIR $HOME
 
@@ -95,6 +91,6 @@ RUN cd $HOME/pyutils && git pull
 
 
 #USER root
-WORKDIR $HOME/src
+WORKDIR $HOME
 
 # python3.7 ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model-dft --seed 0 --max-model-error 10 --prop-check --bmc-engine sal --opt-engine scipy --incl-error -pmp --plots x0-x1
