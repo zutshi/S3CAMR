@@ -81,8 +81,8 @@ def pretty_print_pwa_model(pwa_model):
     s += ['pwa_model has the below nodes of type: {}'.format(type(list(nodes)[0]))]
     s += ['\n'.join(str(n) for n in nodes)]
 
-    q0 = nodes[0]
-    e0 = edges[0]
+    q0 = list(nodes)[0]
+    e0 = list(edges)[0]
     s += ['Each node has a location: {} of type: {}'
           'and each edge has an affine map: {} of type: {}'
           'associated with it'.format(pwa_model.node_p(q0),

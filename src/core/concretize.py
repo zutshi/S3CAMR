@@ -6,7 +6,7 @@ import sys as SYS
 import logging
 
 import numpy as np
-from blessed import Terminal
+from blessings import Terminal
 
 from . import simulatesystem as simsys
 from . import state

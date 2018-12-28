@@ -10,7 +10,7 @@ import functools as ft
 
 import numpy as np
 import tqdm
-from blessed import Terminal
+from blessings import Terminal
 
 import err
 import utils as U

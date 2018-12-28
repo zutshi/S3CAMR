@@ -15,7 +15,7 @@ import logging
 import networkx as nx
 from heapq import heappush, heappop
 from itertools import count
-from blessed import Terminal
+from blessings import Terminal
 
 from .graphNX import GraphNX
 

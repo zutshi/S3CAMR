@@ -1,4 +1,4 @@
-blessed
+blessings
 matplotlib
 networkx
 numpy

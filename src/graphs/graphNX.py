@@ -12,7 +12,7 @@ import networkx as nx
 from heapq import heappush, heappop
 from itertools import count
 from collections import defaultdict
-from blessed import Terminal
+from blessings import Terminal
 
 
 import utils as U

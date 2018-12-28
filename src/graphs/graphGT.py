@@ -12,7 +12,7 @@ import graph_tool.all as gt
 # can not import sub modules for some reasons!!
 # e.e. gt.topology gives an error
 #import graph_tool as gt
-from blessed import Terminal
+from blessings import Terminal
 
 import utils as U
 import err
