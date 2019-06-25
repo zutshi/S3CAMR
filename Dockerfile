@@ -23,7 +23,7 @@ RUN apt-get -y update && 	\
 	libxml2-dev		\
 	libxmlsec1-dev		\
 	libffi-dev		\
-        python3.7
+        python3.7-dev
         #graphviz                                            \
 
 RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py &&\
@@ -78,10 +78,18 @@ RUN wget https://github.com/Z3Prover/z3/archive/z3-4.8.4.tar.gz &&						\
 	make install &&												\
 	cp -R $HOME/external/z3-z3-4.8.4/build/python/z3 $HOME/external/z3-z3-4.8.4/installation/
 
+
+WORKDIR $HOME/external
+RUN git clone https://github.com/zutshi/pyglpk.git &&						\
+	cd pyglpk
+        pip install setuptools_scm
+        make
+
+
 ENV LD_LIBRARY_PATH $HOME'/external/z3-z3-4.8.4/installation/lib'
 ENV PYTHONPATH $HOME'/external/z3-z3-4.8.4/installation'
 
-ENV PYTHONPATH $PYTHONPATH:/home/S3CAMR/pyutils
+ENV PYTHONPATH $PYTHONPATH:/home/S3CAMR/pyutils:/home/S3CAMR/external/pyglpk
 
 
 # TODO: FORGOTTEN
