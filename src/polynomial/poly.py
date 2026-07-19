@@ -45,7 +45,10 @@ class Poly:
         for powers, coeff in d.items():
             d[powers] = float('{n:0.{p}f}'.format(n=coeff, p=prec))
         #print(poly)
-        self.poly = sym.Poly.from_dict(d, poly.free_symbols)
+        # sympy expects generators as positional args (ordered); poly.gens is
+        # the canonical ordered tuple. (free_symbols is an unordered set and
+        # newer sympy rejects passing it directly.)
+        self.poly = sym.Poly.from_dict(d, *poly.gens)
         #print(self.poly)
         return
 

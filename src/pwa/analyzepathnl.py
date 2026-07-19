@@ -237,8 +237,6 @@ def feasible(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     print(res.success)
     #print(cons)
     print(ret_val)
-    if res.success:
-        U.pause()
     #embed()
     return ret_val
 
@@ -308,7 +306,6 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
         return None
 
     print(ret_val)
-    U.pause()
     return ret_val
 
 

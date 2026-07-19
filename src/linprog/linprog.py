@@ -16,6 +16,10 @@ def factory(solver_str):
         #lp_fun = ft.partial(scipyopt.linprog, A_ub=A_ub, b_ub=b_ub)
         lp_fun = scipyopt.linprog
 
+    elif solver_str == 'highs':
+        import linprog.highsopt as highsopt
+        lp_fun = highsopt.linprog
+
     else:
         raise NotImplementedError(f'solver selected: {solver_str}')
 
