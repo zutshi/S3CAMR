@@ -1,0 +1,14 @@
+.git
+.venv
+venv
+**/__pycache__
+**/*.pyc
+**/*.pyo
+**/*.tstc
+**/*.tsto
+**/*.so
+**/*.pickled
+vault
+cache
+tmp
+*.log
