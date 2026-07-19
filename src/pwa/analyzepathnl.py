@@ -76,7 +76,7 @@ def dyn_constraints(models, vars_grouped_by_state):
 
     for m, (Vars, next_vars) in zip(models, U.pairwise(vars_grouped_by_state)):
         for p, el, eh, x, x_ in zip(m.poly, m.error.l, m.error.h, Vars, next_vars):
-            p.truncate_coeffs(gopts.bmc_prec)
+            p = p.truncate_coeffs(gopts.bmc_prec)  # new Poly; does not mutate shared model
             #assert(len(p.vars) == ndimx)
             old2new_var_map = {v: v_ for v, v_ in zip(p.vars, Vars)}
             tpoly = p.subs_vars(old2new_var_map)
@@ -280,6 +280,13 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
 
     res = solve_mult_opt(nlpfun(solver), objs, cons, Vars)
 
+    # solve_mult_opt returns None if any direction was infeasible: the
+    # over-approximation cannot be bounded, so give up on this trace (feasibility
+    # was already established elsewhere). Previously this raised RuntimeError,
+    # crashing the whole run.
+    if res is None:
+        return None
+
     l = len(res)
     assert(l % 2 == 0)
     min_res, max_res = res[:l//2], res[l//2:]
@@ -309,8 +316,9 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
     return ret_val
 
 
-# raise an exception as soon as the first lp fails...better than
-# solving all directions when the problem in infeasible
+# Bail as soon as the first solve fails (better than solving all directions when
+# the problem is infeasible). Returns None on failure so the caller can give up
+# on the trace gracefully, rather than raising and crashing the run.
 def solve_mult_opt(nlp_fun, directions_ext, cons, Vars):
     res = []
     for obj in directions_ext:
@@ -318,7 +326,7 @@ def solve_mult_opt(nlp_fun, directions_ext, cons, Vars):
         # restart? or some kind of caching?
         ret_val = nlp_fun(obj, cons, Vars)
         if not ret_val.success:
-            raise RuntimeError(f'lp solver failed: {ret_val.status}')
+            return None
         else:
             res.append(ret_val)
     return res

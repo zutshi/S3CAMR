@@ -56,6 +56,14 @@ def nlinprog_cons(obj, cons, Vars):
     # (constraint exprs) are of the form f(x) <= 0
     lambdafied = []
     for c in cons:
+        # A degenerate row (constant expr <= 0) simplifies in sympy to a
+        # BooleanTrue/BooleanFalse rather than a LessThan. Handle those instead
+        # of asserting: True is a vacuous constraint (drop it); False makes the
+        # whole system infeasible (report failure cleanly, don't crash).
+        if c is sym.true or c is True:
+            continue
+        if c is sym.false or c is False:
+            return spec.OPTRES(None, None, 'infeasible: unsatisfiable constraint', False)
         assert(isinstance(c, sym.LessThan))
         assert(c.args[1] == 0)
         lambdafied.append(sym.lambdify(all_vars, -c.args[0], 'numpy'))

@@ -39,18 +39,23 @@ class Poly:
     # TODO: fix this, should not be taking a truncate function. Move
     # the truncate() into a utils file or so
     def truncate_coeffs(self, prec):
+        """Return a NEW Poly with coefficients truncated to `prec` digits.
+
+        Non-mutating: the model Poly objects are shared across the PWA graph and
+        this is called repeatedly during feasibility/over-approximation, so
+        mutating self would be a shared-state side effect. (Truncation is
+        idempotent, so the previous in-place version was not a correctness bug,
+        but returning a copy is cleaner.)
+        """
         poly = self.poly
         d = poly.as_dict()
         # TODO: string conversions are slow, use proper np.truncate functions
         for powers, coeff in d.items():
             d[powers] = float('{n:0.{p}f}'.format(n=coeff, p=prec))
-        #print(poly)
         # sympy expects generators as positional args (ordered); poly.gens is
         # the canonical ordered tuple. (free_symbols is an unordered set and
         # newer sympy rejects passing it directly.)
-        self.poly = sym.Poly.from_dict(d, *poly.gens)
-        #print(self.poly)
-        return
+        return Poly(sym.Poly.from_dict(d, *poly.gens), self.vars)
 
     def subs_vars(self, old2new_var_map):
         return self.poly.subs(old2new_var_map)

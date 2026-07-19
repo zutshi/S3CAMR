@@ -352,6 +352,15 @@ def convert_pwarel2pwagraph(pwa_rel_model):
 
 def refine_dft_model_based(AA, errors, initial_state_set, final_state_set, sp, sys_sim, sys, prop):
 
+    # The polynomial model path does not support systems with inputs (pi > 0):
+    # Qxw.modelQ relies on rm.A, which Poly does not provide, and get_qgraph_xw
+    # has no pi>0 branch for poly. Fail early and clearly instead of crashing
+    # deep inside with an opaque NotImplementedError.
+    if gopts.model_type == 'poly' and AA.num_dims.pi:
+        raise err.Fatal(
+            'model-type poly does not support systems with inputs (pi > 0); '
+            'use model-type affine for such systems.')
+
     # initialize Qxw class
     if AA.num_dims.pi:
         Qxw.init(sp.pi_ref.i_cons)
