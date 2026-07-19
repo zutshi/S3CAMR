@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import graphGT
 import graphNX
 
@@ -12,7 +8,7 @@ import graphNX
 #time python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model_dft -g g --seed 1 >nx_log 2>gt_log
 
 
-class Graph(object):
+class Graph:
 
     def __init__(self, G=None, Type=None):
         self.Ggt = graphGT.GraphGT()

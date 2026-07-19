@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import numpy as np
 import scipy.linalg as linalg
 import sympy as sym
@@ -151,7 +147,7 @@ def part_constraints(partition_trace):
 
 
 def dyn_constraints(model_trace):
-    """constraints due to dynamics of the pwa model
+    r"""constraints due to dynamics of the pwa model
 
     Parameters
     ----------
@@ -350,7 +346,7 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
 
     x_arr = np.array(
             sym.symbols(
-                ['x{}'.format(i) for i in range(nvars)]
+                [f'x{i}' for i in range(nvars)]
                 ))
 
     A_ub, b_ub = truncate(A_ub, b_ub)
@@ -366,7 +362,7 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
 
     for di, rmin, rmax in zip(directions, min_res, max_res):
         if (rmin.success and rmax.success):
-            print('{} \in [{}, {}]'.format(np.dot(di, x_arr), rmin.fun, -rmax.fun))
+            print(f'{np.dot(di, x_arr)} \in [{rmin.fun}, {-rmax.fun}]')
             ranges.append([rmin.fun, -rmax.fun])
         else:
             if settings.debug:

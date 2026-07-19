@@ -1,10 +1,5 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 #import itertools as it
 import abc
-import six
 
 import numpy as np
 
@@ -23,8 +18,7 @@ if settings.debug and settings.plot:
     import matplotlib.pyplot as plt
 
 
-@six.add_metaclass(abc.ABCMeta)
-class Q(object):
+class Q(metaclass=abc.ABCMeta):
     #__metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod

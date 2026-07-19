@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import numpy as np
 import itertools as it
 
@@ -122,7 +118,7 @@ def parent_of(cell):
     return tuple(i//2 for i in cell) # same as above
 
 
-class Cell(object):
+class Cell:
 
     def __init__(self, cell, eps):
         """__init__

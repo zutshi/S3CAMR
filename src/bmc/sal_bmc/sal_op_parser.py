@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 '''parses yices output'''
 
 import pyparsing as pp
@@ -55,7 +51,7 @@ floats.setParseAction(Float)
 value = rational | signed_integer | ident
 
 
-class Assignment(object):
+class Assignment:
     def __init__(self, s):
         self.s = ' '.join(s)
         self.lhs = s[0]
@@ -68,7 +64,7 @@ class Assignment(object):
         return self.s
 
 
-class Step(object):
+class Step:
     def __init__(self, s):
         self.s = s
         self.num = s[0]

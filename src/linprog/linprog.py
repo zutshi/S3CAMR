@@ -1,8 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
-
 def factory(solver_str):
     if solver_str == 'glpk':
         import linprog.pyglpklp as pyglpklp
@@ -22,6 +17,6 @@ def factory(solver_str):
         lp_fun = scipyopt.linprog
 
     else:
-        raise NotImplementedError('solver selected: {}'.format(solver_str))
+        raise NotImplementedError(f'solver selected: {solver_str}')
 
     return lp_fun

@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from . import modelspec
 
 
@@ -11,7 +7,7 @@ PWARelational = modelspec.ModelGeneric
 class KPath(modelspec.PartitionedDiscreteAffineModel):
     """Generelization of Relational Modeling"""
     def __init__(self, m, p, pnexts, p_future):
-        """
+        r"""
         The k-length path modeled as:
             p -> pnext -> ... p2 -> pk ==> x' = m(x)
         where p, pnext, p_future enforces the order: [p, pnext, p2..., pk]
@@ -36,11 +32,11 @@ class KPath(modelspec.PartitionedDiscreteAffineModel):
         return
 
     def __repr__(self):
-        s = '({},{},{},{})'.format(self.p, self.pnexts, self.p_future, self.m)
+        s = f'({self.p},{self.pnexts},{self.p_future},{self.m})'
         return s
 
     def __str__(self):
-        s = 'SubModel ->(\n{},\n{},\n{},\n{})'.format(self.p, self.pnexts, self.p_future, self.m)
+        s = f'SubModel ->(\n{self.p},\n{self.pnexts},\n{self.p_future},\n{self.m})'
         return s
 
 
@@ -60,11 +56,11 @@ class Relation(modelspec.PartitionedDiscreteAffineModel):
         return
 
     def __repr__(self):
-        s = '({},{},{})'.format(self.p1, self.p2, self.m)
+        s = f'({self.p1},{self.p2},{self.m})'
         return s
 
     def __str__(self):
-        s = 'SubModel ->(\n{},\n{},\n{})'.format(self.p1, self.p2, self.m)
+        s = f'SubModel ->(\n{self.p1},\n{self.p2},\n{self.m})'
         return s
 
 

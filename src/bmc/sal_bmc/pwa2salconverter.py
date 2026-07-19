@@ -14,15 +14,15 @@ PWA_TRANS = collections.namedtuple('TransitionID', ('p pnext m l lnext'))
 
 
 def var_eq(var, val):
-    return "{} = {}".format(var, val)
+    return f"{var} = {val}"
 
 
 def next_var_eq(var, val):
-    return "{}' = {}".format(var, val)
+    return f"{var}' = {val}"
 
 
 def next_real_true(var):
-    return "{}' IN {{ r : REAL | TRUE }}".format(var)
+    return f"{var}' IN {{ r : REAL | TRUE }}"
 
 
 def bounded_real_set_def(var, lb, ub):
@@ -31,7 +31,7 @@ def bounded_real_set_def(var, lb, ub):
 
 
 def Axb_constraints(A, b, error):
-    ''' Matrix conversion from A, b, error -> C, d
+    r''' Matrix conversion from A, b, error -> C, d
         s.t.
         x' = Ax + b + [error_lb, error_ub]
         is converted to
@@ -179,7 +179,7 @@ def reset_cell_true():
     return cell_assignments
 
 
-class Pwa2Sal(object):
+class Pwa2Sal:
 
     def __init__(self, module_name, init_cons, final_cons, pwa_graph, vs, init_ps, final_ps):
         self.module_name = module_name
@@ -250,7 +250,7 @@ class Pwa2Sal(object):
         g = slt_dft.Guard(guard((C, d), vs, l, lnext))
         #r = slt_dft.Reset(reset(m.A, m.b, m.error, vs))
         r = slt_dft.Reset(it.chain(reset_states_true(vs), reset_cell_true()))
-        t = slt_dft.Transition('T_{}'.format(idx), g, r)
+        t = slt_dft.Transition(f'T_{idx}', g, r)
         return t
 
     def trans_sys(self):
@@ -274,7 +274,7 @@ class Pwa2Sal(object):
         return PWATRACE(partitions, models)
 
 
-class PWATRACE(object):
+class PWATRACE:
     def __init__(self, partitions, models):
         self.partitions = partitions
         self.models = models

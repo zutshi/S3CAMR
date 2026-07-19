@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ###############################################################################
 # File name: matpy.py
 # Author: Aditya
@@ -12,9 +11,6 @@
 # simulate_system_external.m
 ###############################################################################
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 import array
 import numpy as np
@@ -24,7 +20,7 @@ import external_interface as exifc
 
 
 # Reachabillity Property structure translated to matlab
-class MatProp(object):
+class MatProp:
     def __init__(self, T, init_cons, final_cons, ci, num_segments, delta_t):
         self.T = T
         self.init_cons = init_cons

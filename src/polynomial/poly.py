@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import sympy as sym
 
 from utils import print
@@ -22,7 +18,7 @@ def power_array2Poly(power_array, coeff_array):
     assert(ca.ndim == 1)
 
     nvars = power_array.shape[1]
-    vars_str = ','.join(('x{}'.format(i) for i in range(nvars)))
+    vars_str = ','.join(f'x{i}' for i in range(nvars))
     sym_vars = sym.var(vars_str)
 
     pt = [tuple(i) for i in pa.tolist()]
@@ -31,7 +27,7 @@ def power_array2Poly(power_array, coeff_array):
     return Poly(sym_poly, sym_vars)
 
 
-class Poly(object):
+class Poly:
     def __init__(self, sym_poly, sym_vars):
         assert(isinstance(sym_poly, sym.Poly))
         self.poly = sym_poly

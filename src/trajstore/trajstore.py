@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 #external deps
 from IPython import embed
 import numpy as np
@@ -20,7 +15,7 @@ from globalopts import opts as gopts
 from core import cellmanager as CM
 
 
-class Data(object):
+class Data:
     def __init__(self):
         self.X = []
         self.X_ = []
@@ -37,7 +32,7 @@ def wrap_sim(sim_fn, ts):
 
 
 
-class TrajStore(object):
+class TrajStore:
     def __init__(self, eps, sys):
         self.num_dims = sys.num_dims
         # doesn't handle inputs for now

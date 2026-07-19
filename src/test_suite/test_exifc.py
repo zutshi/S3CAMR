@@ -7,9 +7,6 @@
 # Test system loading and simulation using external_interface.py
 ###############################################################################
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 import external_interface as exifc
 import traces
@@ -49,7 +46,7 @@ def main():
             trace = one_shot_sim(x0[i], 0.0, prop.T, w0)
             trace_list.append(trace)
         toc = time.time()
-        print('time taken for simulations: {}s'.format(toc-tic))
+        print(f'time taken for simulations: {toc-tic}s')
         traces.plot_trace_list(trace_list, plt)
 
 if __name__ == '__main__':

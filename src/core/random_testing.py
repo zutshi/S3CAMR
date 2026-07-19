@@ -1,8 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
-
 import logging
 
 import functools as ft
@@ -105,7 +100,7 @@ def mp_imap(self, sim, concrete_states):
 
 import time
 def worker(prop, sim, writer, concrete_states):
-    print('burden: {}'.format(len(concrete_states)))
+    print(f'burden: {len(concrete_states)}')
     ti = time.time()
     num_violations = 0
     with writer:
@@ -115,7 +110,7 @@ def worker(prop, sim, writer, concrete_states):
             if check_prop_violation(prop, trace):
                 num_violations += 1
     tf = time.time()
-    print('time taken = {}'.format(tf-ti))
+    print(f'time taken = {tf-ti}')
     return num_violations
 
 
@@ -188,19 +183,19 @@ def jb_parallel(self, sim, concrete_states):
                 num_violations += 1
 
 
-class simulate_par(object):
+class simulate_par:
     def __init__(self, sys, prop):
 
         self.par_option = 'mp_custom'
 
         self.sys = sys
         self.prop = prop
-        fname = '{}.simdump'.format(sys.sys_name)
+        fname = f'{sys.sys_name}.simdump'
         self.fname = globalopts.opts.construct_path(fname)
 
         #self.nworkers = mp.cpu_count()
         self.nworkers = int(input('Enter number of workers'))
-        print('Num workers: {}'.format(self.nworkers))
+        print(f'Num workers: {self.nworkers}')
         return
 
     def trace_gen(self):
@@ -209,13 +204,11 @@ class simulate_par(object):
             # combine all files
             readers = (PickleStreamReader(self.fname+str(i)) for i in range(self.nworkers))
             for reader in readers:
-                for trace in reader.read():
-                    yield trace
+                yield from reader.read()
 
         else:
             reader = PickleStreamReader(self.fname)
-            for trace in reader.read():
-                yield trace
+            yield from reader.read()
 
     def __call__(self):
         par_option = self.par_option
@@ -254,9 +247,9 @@ def simulate_single(sys, prop):
         trace_list.append(trace)
         if check_prop_violation(prop, trace):
             num_violations += 1
-            print('violation counter: {}'.format(num_violations))
+            print(f'violation counter: {num_violations}')
 
-    print('number of violations: {}'.format(num_violations))
+    print(f'number of violations: {num_violations}')
     return trace_list
 
 
@@ -340,7 +333,7 @@ def random_test(
 
         # ##!!##logger.debug('num_samples = 0')
 
-        print('simulating {} samples'.format(num_samples))
+        print(f'simulating {num_samples} samples')
 
     trace_list = [traces.Trace(A.num_dims, A.N+1) for i in range(num_samples)]
 

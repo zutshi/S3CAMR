@@ -1,10 +1,5 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import logging
 import abc
-import six
 
 from sklearn import linear_model as skl_lm
 from sklearn.preprocessing import PolynomialFeatures
@@ -38,7 +33,7 @@ def Model(*args, **kwargs):
 def is_undetermined(x):
     num_samples, ndim = x.shape
     if num_samples <= ndim:
-        err.warn('regression is underdetermined: {}'.format(x.shape))#: {}'.format(x))
+        err.warn(f'regression is underdetermined: {x.shape}')#: {}'.format(x))
         return True
     else:
         return False
@@ -51,8 +46,7 @@ class UdetError(Exception):
     pass
 
 
-@six.add_metaclass(abc.ABCMeta)
-class RegressionModel(object):
+class RegressionModel(metaclass=abc.ABCMeta):
     #__metaclass__ = abc.ABCMeta
 
     def __init__(self, x, y):
@@ -290,7 +284,7 @@ class RegressionModel(object):
 #         plt.show()
 
 
-class FlowStarModel(object):
+class FlowStarModel:
     """FlowStarModel
     Implements only purely continuous models for now.
     Can add support for H.A. later."""

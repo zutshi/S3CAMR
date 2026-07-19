@@ -1,9 +1,4 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import logging
-import six
 import abc
 
 import numpy as np
@@ -28,8 +23,7 @@ def factory():
         raise NotImplementedError('unknown clustering method requested')
 
 
-@six.add_metaclass(abc.ABCMeta)
-class ClusterModel(object):
+class ClusterModel(metaclass=abc.ABCMeta):
     #__metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod

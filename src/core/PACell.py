@@ -1,8 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 import logging
 import itertools as it
@@ -339,7 +335,7 @@ def PlantAbstractState(cell_id, n, d, pvt):
     return store[new_ps]
 
 
-class PlantAbstractState_(object):
+class PlantAbstractState_:
     if settings.MEMLEAK_TEST:
         #instance_store = []
         instance_ctr = 0
@@ -383,4 +379,4 @@ class PlantAbstractState_(object):
         return hash(tuple(it.chain(self.cell_id, (self.n,))))
 
     def __repr__(self):
-        return 'cell={}, n={}, d={}'.format(self.cell_id, self.n, self.d)
+        return f'cell={self.cell_id}, n={self.n}, d={self.d}'

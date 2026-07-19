@@ -1,14 +1,8 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import abc
-import six
 
 
 # SPEC: Any plotting lib must implement these functions
-@six.add_metaclass(abc.ABCMeta)
-class PlottingBase():
+class PlottingBase(metaclass=abc.ABCMeta):
     #__metaclass__ = abc.ABCMeta
 
     ######################################

@@ -3,8 +3,8 @@
 # graph-tool) are intentionally NOT listed here; install them separately only
 # if you use the corresponding --opt-engine / --bmc-engine / --graph-lib.
 #
-# Versions pinned as of 2026-07 (latest stable, conservative). numpy 2.x and
-# scipy 1.18 require Python >= 3.12.
+# Versions pinned as of 2026-07 (latest stable, conservative). numpy 2.x
+# requires Python >= 3.12.
 numpy==2.5.1
 # scipy 1.17.0 regressed ode('dopri5').set_solout() (TypeError in the solout
 # callback), which the example plants rely on; 1.16.2 is the newest working line.
@@ -15,7 +15,6 @@ scikit-learn==1.9.0
 sympy==1.14.0
 pyparsing==3.3.2
 python-dateutil==2.9.0.post0
-six==1.17.0
 tqdm==4.68.4
 ipython==9.15.0
 blessed==1.47.0

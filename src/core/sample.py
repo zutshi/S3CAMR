@@ -1,8 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 
 import functools as ft
@@ -45,7 +41,7 @@ def sample_init_UR(sys, prop, num_samples):
 
 
 
-class Sampler(object):
+class Sampler:
 
     def __init__(self, num_dims):
         self.num_dims = num_dims
@@ -73,7 +69,7 @@ class Sampler(object):
 class IntervalSampler(Sampler):
 
     def __init__(self):
-        super(IntervalSampler, self).__init__(None)
+        super().__init__(None)
 
     def sample_multiple(
             self,
@@ -194,7 +190,7 @@ def test_case2sample(test_case):
 
 # TODO: rename this to concrete state!
 
-class Samples(object):
+class Samples:
 
     def __init__(self,
                  s_array=None,
@@ -265,12 +261,11 @@ class Samples(object):
             self.pi_array = np.concatenate((self.pi_array, sample.pi_array))
 
     def iterable(self):
-        for s, x, ci, pi, t in zip(self.s_array,
+        yield from zip(self.s_array,
                                    self.x_array,
                                    self.ci_array,
                                    self.pi_array,
-                                   self.t_array):
-                yield (s, x, ci, pi, t)
+                                   self.t_array)
         return
 
     def __repr__(self):

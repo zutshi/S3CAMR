@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import logging
 
 from bmc.bmc_spec import BMCSpec, InvarStatus, TraceSimple
@@ -64,7 +60,7 @@ class BMC(BMCSpec):
                 concrete_trace = ConcreteTrace(x_array, pwa_trace)
                 print('Model Found')
                 yield concrete_trace, pwa_trace
-        print('Total paths checked: {}'.format(path_ctr))
+        print(f'Total paths checked: {path_ctr}')
         return
 
     def compute_next_trace(self):
@@ -137,7 +133,7 @@ class BMC(BMCSpec):
             #ret_val = azp.overapprox_x0(self.num_dims, self.prop, pwa_trace)
             #if ret_val is not None:
             if x_array is not None:
-                print('Model Found: {}'.format(d))
+                print(f'Model Found: {d}')
                 U.pause()
                 qgraph = self.refine_CE(pwa_trace)
                 if qgraph is None:
@@ -145,7 +141,7 @@ class BMC(BMCSpec):
                     continue
                 else:
                     yield qgraph
-        print('total paths checked:{}'.format(ctr))
+        print(f'total paths checked:{ctr}')
         return
 
     def refine_edge(self, qi, qj):

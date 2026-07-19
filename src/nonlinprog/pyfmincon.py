@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import numpy as np
 import sympy as sym
 import functools as ft
@@ -96,8 +92,8 @@ def call_fmincon(Vars, obj, cons, x0):
         #print(e.args[0] <= 0, ':', f(*x))
         return y
 
-    obj_f = ft.partial(eval_expr, sym.lambdify(Vars, obj, str('numpy')))
-    cons_f = tuple(ft.partial(eval_expr, sym.lambdify(Vars, c.args[0], str('numpy'))) for c in cons)
+    obj_f = ft.partial(eval_expr, sym.lambdify(Vars, obj, 'numpy'))
+    cons_f = tuple(ft.partial(eval_expr, sym.lambdify(Vars, c.args[0], 'numpy')) for c in cons)
     return fmincon(obj_f, x0, A=[], B=[], C=cons_f)
 
 
@@ -116,22 +112,22 @@ def example():
 
     ti = time.time()
     init()
-    print('init time: {}'.format(time.time() - ti))
+    print(f'init time: {time.time() - ti}')
 
     ti = time.time()
     x, fval = fmincon(banana, [1.99, 1.55], A=[1.99, 1.55], B=[1.5], C=[nonlincon])
-    print('1st solve time: {}'.format(time.time() - ti))
+    print(f'1st solve time: {time.time() - ti}')
 
     ti = time.time()
     x, fval = fmincon(banana, [1.99, 1.55], A=[1.99, 1.55], B=[1.5], C=[nonlincon])
-    print('2nd solve time: {}'.format(time.time() - ti))
+    print(f'2nd solve time: {time.time() - ti}')
     ti = time.time()
     x, fval = fmincon(banana, [1.99, 1.55], A=[1.99, 1.55], B=[1.5], C=[nonlincon])
-    print('3rd solve time: {}'.format(time.time() - ti))
+    print(f'3rd solve time: {time.time() - ti}')
     ti = time.time()
     x, fval = fmincon(banana, [1.99, 1.55], A=[1.99, 1.55], B=[1.5], C=[nonlincon])
-    print('4th solve time: {}'.format(time.time() - ti))
+    print(f'4th solve time: {time.time() - ti}')
 
     ti = time.time()
     deinit()
-    print('de-init time: {}'.format(time.time() - ti))
+    print(f'de-init time: {time.time() - ti}')

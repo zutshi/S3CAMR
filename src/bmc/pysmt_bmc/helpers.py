@@ -37,7 +37,7 @@ class Helper:
         (so, do NOT expect a fresh variable here)
         """
         assert var.is_symbol()
-        base = "%s%s%s" % (prefix, var.symbol_name(), suffix)
+        base = "{}{}{}".format(prefix, var.symbol_name(), suffix)
         try:
             new_symbol = mgr.get_symbol(base)
         except UndefinedSymbolError as e:

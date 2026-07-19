@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 '''
 Creates a SAL transition system: DFT
 Each transition of the pwa system is encoded as a transition of SAL
@@ -37,7 +33,7 @@ PROP_NAME = 'safety'
 
 
 # Make classes out of every header, prop, init, etc
-class SALTransSys(object):
+class SALTransSys:
 
     def __init__(self, module_name, vs,
                  init_cons, final_cons,
@@ -147,8 +143,8 @@ class SALTransSys(object):
 
     @property
     def trans(self):
-        ts = '[]\n'.join(('{}'.format(i) for i in self.transitions))
-        s = '{}'.format(ts)
+        ts = '[]\n'.join(f'{i}' for i in self.transitions)
+        s = f'{ts}'
 
         atran = tw.dedent('''
            % Always on transition: to overcome the in-complete pwa model
@@ -171,9 +167,9 @@ class SALTransSys(object):
                                 *self.final_cons.linexpr_str(self.vs_)))
 
         final_cells = (self.partid2Cid[p.ID] for p in self.final_ps)
-        cell_cons = ' OR '.join("cell' = {}".format(c) for c in final_cells)
+        cell_cons = ' OR '.join(f"cell' = {c}" for c in final_cells)
 
-        prop_str = state_cons + ' AND ' + '({})'.format(cell_cons)
+        prop_str = state_cons + ' AND ' + f'({cell_cons})'
 
         s = tw.dedent('''
         MONITOR: MODULE =
@@ -193,7 +189,7 @@ class SALTransSys(object):
         return s
 
 
-class Transition(object):
+class Transition:
 
     def __init__(self, name, g, r):
         self.g = g
@@ -201,11 +197,11 @@ class Transition(object):
         self.name = name
 
     def __str__(self):
-        s = '{}:\n{} -->\n{}\n'.format(self.name, self.g, self.r)
+        s = f'{self.name}:\n{self.g} -->\n{self.r}\n'
         return s
 
 
-class Guard(object):
+class Guard:
     def __init__(self, conjuncts):
         self.conjuncts = conjuncts
 
@@ -213,7 +209,7 @@ class Guard(object):
         return ' AND '.join(self.conjuncts)
 
 
-class Reset(object):
+class Reset:
     def __init__(self, assignments):
         self.assignments = assignments
 

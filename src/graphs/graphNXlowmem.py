@@ -2,9 +2,6 @@
 # Mantains an internal dict and follows an igraph/graph-tool
 # methodology to create a graph of integers
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 #global nx
 
@@ -36,7 +33,7 @@ MPLIB_GRAPH_PATH = '{}_graph.png'
 term = Terminal()
 
 
-class GraphNXLM(object):
+class GraphNXLM:
     def __init__(self):
 
         self.G = GraphNX()

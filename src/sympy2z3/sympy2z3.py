@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import collections.abc
 import operator
 from functools import reduce
@@ -51,7 +47,7 @@ def sympy2z3(sympy_exprs):
     return sym2Z3_varmap, z3_exprs
 
 
-class Sympy2z3(object):
+class Sympy2z3:
 
     """
     A node visitor base class that walks the abstract syntax tree and calls a

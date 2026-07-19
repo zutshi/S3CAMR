@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import err
 
 from .plotting_abstract import PlottingBase
@@ -24,7 +20,7 @@ def factory(lib_name, plots, *args):
     elif lib_name is None:
         plotting = PlottingDisabled()
     else:
-        raise err.Fatal('unknown plotting library requested: {}'.format(lib_name))
+        raise err.Fatal(f'unknown plotting library requested: {lib_name}')
     
     if lib_name is not None:
         assert(isinstance(plotting, PlottingBase))
@@ -32,7 +28,7 @@ def factory(lib_name, plots, *args):
 
 
 #class PlottingDisabled(PlottingBase):
-class PlottingDisabled(object):
+class PlottingDisabled:
     def __getattribute__(*args):
         return lambda *args, **kwargs: None
 #     def figure(self):

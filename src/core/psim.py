@@ -1,8 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 
 import logging
@@ -86,7 +82,7 @@ def simulator_factory(
         #(module_name, file_ext) = python_file_path.split('.')
         (module_name, file_ext) = fp.split_filename_ext(python_file_path)
         if file_ext != 'py':
-            raise err.Fatal('Python file extension py expected, found: {}'.format(file_ext))
+            raise err.Fatal(f'Python file extension py expected, found: {file_ext}')
         module_path = fp.construct_path(python_file_path, benchmark_os_path)
         if fp.validate_file_names([module_path]):
             return NativeSim(module_name, module_path,
@@ -96,7 +92,7 @@ def simulator_factory(
     elif sim_type == 'test':
         return TestSim(test_params)
     else:
-        raise err.Fatal('unknown sim type : {}'.format(sim_type))
+        raise err.Fatal(f'unknown sim type : {sim_type}')
 
     # Make the accessed data as None, so presence of spurious data can be detected in a
     # sanity check
@@ -105,7 +101,7 @@ def simulator_factory(
 #     config_dict['plant_path'] = None
 
 
-class Simulator(object):
+class Simulator:
 
     def __init__(self):
         self.parallel = False
@@ -166,7 +162,7 @@ class NativeSim(Simulator):
             plant_pvt_init_data,
             parallel,
             ):
-        super(NativeSim, self).__init__()
+        super().__init__()
 
         sim_module = _load_source(module_name, module_path)
         self.sim_obj = sim_module.SIM(plt, plant_pvt_init_data)
@@ -423,7 +419,7 @@ class MEngPy(Simulator):
 #####################################################################
 
 
-class MatlabCommunicator(object):
+class MatlabCommunicator:
 
     def __init__(self):
         pass
@@ -493,7 +489,7 @@ class MatlabSim(Simulator):
             benchmark_os_path,
             parallel,
             ):
-        super(MatlabSim, self).__init__()
+        super().__init__()
 
         self.parallel = parallel
 
@@ -733,9 +729,9 @@ class PyMatlab(MatlabCommunicator):
     @staticmethod
     def get_fun_call_str(ret_val_str, fun_name, arg_str):
         if ret_val_str:
-            return '[{}] = {}({});'.format(ret_val_str, fun_name, arg_str)
+            return f'[{ret_val_str}] = {fun_name}({arg_str});'
         else:
-            return '{}({});'.format(fun_name, arg_str)
+            return f'{fun_name}({arg_str});'
 
     def __init__(self):
         logger.info('instantiating matlab')
@@ -806,7 +802,7 @@ class PyMatlab(MatlabCommunicator):
 class TestSim(Simulator):
 
     def __init__(self, graph):
-        super(TestSim, self).__init__()
+        super().__init__()
         self.G = graph
         self.Abs = None
 

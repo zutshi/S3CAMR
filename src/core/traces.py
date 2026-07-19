@@ -1,8 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 import numpy as np
 from scipy import io
@@ -24,7 +20,7 @@ from streampickle import PickleStreamReader
 plot_figure_for_paper = False
 
 
-class Trace(object):
+class Trace:
 
     def __init__(self, num_dims, num_points):
         self.idx = 0
@@ -125,5 +121,4 @@ def get_simdump_gen(dirpath):
 
     for f in files:
         reader = PickleStreamReader(f)
-        for trace in reader.read():
-            yield trace
+        yield from reader.read()

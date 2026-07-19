@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from collections import defaultdict
 import time
 from heapq import heappush, heappop
@@ -26,7 +22,7 @@ class GraphGTError(Exception):
     pass
 
 
-class GraphGT(object):
+class GraphGT:
 
     def __init__(self, G=None, Type=None):
 
@@ -152,7 +148,7 @@ class GraphGT(object):
             U.eprint('Printing graph...')
             for e in G.G.edges():
                 s, t = e
-                U.eprint('{}, {}'.format(G.v_attr[s], G.v_attr[t]))
+                U.eprint(f'{G.v_attr[s]}, {G.v_attr[t]}')
             U.eprint('Printing graph...done')
 
         path_it = G.all_shortest_paths(dummy_super_source_node,
@@ -172,7 +168,7 @@ class GraphGT(object):
         # It is there just as a debug print
         paths = list(U.bounded_iter(path_it, max_paths))
         num_paths = len(paths)
-        err.warn('counting paths...found: {}'.format(num_paths))
+        err.warn(f'counting paths...found: {num_paths}')
 
         def path_gen():
             for path in paths:
@@ -391,7 +387,7 @@ class GraphGT(object):
         (vlist, elist) = gt.topology.shortest_path(G.G, source, target)
 
         if not vlist:
-            raise GraphGTError('node %s not reachable from %s' % (source, target))
+            raise GraphGTError('node {} not reachable from {}'.format(source, target))
 
         lengths = [length[target]]
         paths = [path[target]]
@@ -411,7 +407,7 @@ class GraphGT(object):
         print('')
         print(term.move_up + term.move_up)
         ######################################
-        print('getting K:{} paths...'.format(k), end='')
+        print(f'getting K:{k} paths...', end='')
         for i in range(1, k):
             with term.location():
                 print(i)
@@ -567,6 +563,6 @@ class GraphGT(object):
     def __repr__(self):
         raise NotImplementedError
         s = ''
-        s += '''==== Nodes ==== {} '''.format(self.G.nodes())
-        s += '''==== Edges ==== {} '''.format(self.G.edges())
+        s += f'''==== Nodes ==== {self.G.nodes()} '''
+        s += f'''==== Edges ==== {self.G.edges()} '''
         return s

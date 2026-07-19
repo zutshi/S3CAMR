@@ -52,7 +52,7 @@ class ErrorInfinity(Exception):
     pass
 
 
-class PWA2TS(object):
+class PWA2TS:
     """ Translates a PWA in a symbolic TS
 
     Usage
@@ -318,7 +318,7 @@ class PWA2TS(object):
         return c_and
 
     def _get_relation_enc(self, edge_rel):
-        """ Encode x' = Ax + b +- error
+        r""" Encode x' = Ax + b +- error
         as 
         Ax + b - error <= x' /\ x' <= Ax + b + error
 

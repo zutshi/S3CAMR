@@ -1,8 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
-import six
 import abc
 import logging
 
@@ -17,8 +12,7 @@ class ModelError(Exception):
     pass
 
 
-@six.add_metaclass(abc.ABCMeta)
-class ModelSpec(object):
+class ModelSpec(metaclass=abc.ABCMeta):
     #__metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
@@ -51,8 +45,7 @@ class ModelSpec(object):
         return
 
 
-@six.add_metaclass(abc.ABCMeta)
-class SubModelSpec():
+class SubModelSpec(metaclass=abc.ABCMeta):
     #__metaclass__ = abc.ABCMeta
 
     @abc.abstractmethod
@@ -64,7 +57,7 @@ class SubModelSpec():
         return
 
 
-class Partition(object):
+class Partition:
     def __init__(self, C, d, part_id):
         '''
         Cx <= d
@@ -83,15 +76,15 @@ class Partition(object):
         return self.ID == p.ID if isinstance(p, self.__class__) else False
 
     def __repr__(self):
-        s = '({},{})'.format(self.C, self.d)
+        s = f'({self.C},{self.d})'
         return s
 
     def __str__(self):
-        s = 'Pi ->(\n{},\n{})'.format(self.C, self.d)
+        s = f'Pi ->(\n{self.C},\n{self.d})'
         return s
 
 
-class DiscretePolyMap(object):
+class DiscretePolyMap:
     def __init__(self, poly, e):
         '''
         x' = P(x) +- error
@@ -103,7 +96,7 @@ class DiscretePolyMap(object):
         return
 
     def __repr__(self):
-        s = '({},{})'.format(self.poly, self.error)
+        s = f'({self.poly},{self.error})'
         return s
 
     def __str__(self):
@@ -112,7 +105,7 @@ class DiscretePolyMap(object):
         return s
 
 
-class DiscreteAffineMap(object):
+class DiscreteAffineMap:
     def __init__(self, Ab, e):
         '''
         x' = Ax + b +- error
@@ -125,7 +118,7 @@ class DiscreteAffineMap(object):
         return
 
     def __repr__(self):
-        s = '({},{},{})'.format(self.A, self.b, self.error)
+        s = f'({self.A},{self.b},{self.error})'
         return s
 
     def __str__(self):
@@ -158,11 +151,11 @@ class PartitionedDiscreteAffineModel(SubModelSpec):
 #         return self.ID == p.ID if isinstance(p, self.__class__) else False
 
     def __repr__(self):
-        s = '({},{})'.format(self.p, self.m)
+        s = f'({self.p},{self.m})'
         return s
 
     def __str__(self):
-        s = 'SubModel ->(\n{},\n{})'.format(self.p, self.m)
+        s = f'SubModel ->(\n{self.p},\n{self.m})'
         return s
 
 
@@ -203,8 +196,9 @@ class ModelGeneric(ModelSpec):
 
     # Make the class iterable
     def __iter__(self):
-        #return self.sub_models.values()
-        return six.itervalues(self.sub_models)
+        # __iter__ must return an iterator; dict.values() is a view, so wrap it.
+        # (was six.itervalues(self.sub_models); pyupgrade rewrote it to a view.)
+        return iter(self.sub_models.values())
 
     def __repr__(self):
         return repr(self.sub_models)

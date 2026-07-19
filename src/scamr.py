@@ -1,8 +1,4 @@
 #!/usr/bin/env python
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 
 #import matplotlib
@@ -77,7 +73,7 @@ def setup_logger():
     FORMAT2 = '%(levelname) -10s %(asctime)s %(module)s:\
                %(lineno)s %(funcName)s() %(message)s'
 
-    logging.basicConfig(filename='{}_secam.log'.format(TIME_STR), filemode='w', format=FORMAT2,
+    logging.basicConfig(filename=f'{TIME_STR}_secam.log', filemode='w', format=FORMAT2,
                         level=logging.DEBUG)
     logger = logging.getLogger(__name__)
     return logger
@@ -125,7 +121,7 @@ def sanity_check_input(sys, prop):
 def setup_dir(sys, dirname):
     # If no output folder is specified, generate one
     if dirname is None:
-        dirname = './vault/{}_{}'.format(sys.sys_name, TIME_STR)
+        dirname = f'./vault/{sys.sys_name}_{TIME_STR}'
     if fp.file_exists(dirname):
         raise err.Fatal('output dir exists! Please provide a new dir name to prevent override.')
 
@@ -201,7 +197,7 @@ def create_abstraction(sys, prop):
             import CSymLoader as CSL
             controller_sym_path_obj = CSL.load_sym_obj((globalopts.opts.cntrl_rep, globalopts.opts.trace_struct), controller_path_dir_path)
         else:
-            raise err.Fatal('unknown symbolic analyzer requested:{}'.format(globalopts.opts.symbolic_analyzer))
+            raise err.Fatal(f'unknown symbolic analyzer requested:{globalopts.opts.symbolic_analyzer}')
 
     else:
         raise NotImplementedError
@@ -666,7 +662,7 @@ def refine_init(
         if ci_ref is not None:
             ci_ref.refine()
         i += 1
-    print('Failed: MAX iterations {} exceeded'.format(MAX_ITER), file=SYS.stderr)
+    print(f'Failed: MAX iterations {MAX_ITER} exceeded', file=SYS.stderr)
     # raise an exception maybe?
 
 
@@ -723,11 +719,11 @@ def run_secam(sys, prop):
         start_time = time.time()
         falsify(sys, prop, current_abs, sampler)
     else:
-        raise err.Fatal('bad MODE supplied: {}'.format(MODE))
+        raise err.Fatal(f'bad MODE supplied: {MODE}')
 
     stop_time = time.time()
     print('*'*20)
-    print('time spent(s) = {}'.format(stop_time - start_time), file=SYS.stderr)
+    print(f'time spent(s) = {stop_time - start_time}', file=SYS.stderr)
     return
 
 

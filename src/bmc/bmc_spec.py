@@ -4,22 +4,17 @@ It defines the results (e.g. traces, status).
 
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 import abc
 
 import numpy as np
-import six
 
 
 class InvarStatus:
     Safe, Unsafe, Unknown = range(3)
 
 
-@six.add_metaclass(abc.ABCMeta)
-class BMCSpec():
+class BMCSpec(metaclass=abc.ABCMeta):
     """BMCSpec
     Defines the spec for a BMC engine"""
     #__metaclass__ = abc.ABCMeta
@@ -49,8 +44,7 @@ class BMCSpec():
         raise NotImplementedError
 
 
-@six.add_metaclass(abc.ABCMeta)
-class TraceSimple(object):
+class TraceSimple(metaclass=abc.ABCMeta):
     """Simple Trace: provides minimal functionality"""
 
     @abc.abstractmethod

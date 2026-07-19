@@ -1,8 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 
 import logging
@@ -12,7 +8,7 @@ logger = logging.getLogger(__name__)
 
 # TODO: all states flying around....split it into controller and plant state array!
 
-class StateArray(object):
+class StateArray:
 
     # t: time
     # x: continous plant state [change to x]
@@ -101,15 +97,15 @@ class StateArray(object):
 
     def __repr__(self):
         s = ''
-        s += '''t_array: {} '''.format(self.t)
-        s += '''plant_state_array {} '''.format(self.cont_states)
-        s += '''discrete_state_array {} '''.format(self.discrete_states)
-        s += '''pvt_state_array {} '''.format(self.pvt_states)
-        s += '''plant_extraneous_inputs_array {} '''.format(self.plant_extraneous_inputs)
+        s += f'''t_array: {self.t} '''
+        s += f'''plant_state_array {self.cont_states} '''
+        s += f'''discrete_state_array {self.discrete_states} '''
+        s += f'''pvt_state_array {self.pvt_states} '''
+        s += f'''plant_extraneous_inputs_array {self.plant_extraneous_inputs} '''
         return s
 
 
-class State(object):
+class State:
 
     def __init__(
             self,

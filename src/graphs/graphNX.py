@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 #global nx
 
 import ast
@@ -32,7 +28,7 @@ MPLIB_GRAPH_PATH = '{}_graph.png'
 term = Terminal()
 
 
-class GraphNX(object):
+class GraphNX:
 
     @staticmethod
     def compare(G1, G2):
@@ -54,14 +50,14 @@ class GraphNX(object):
         G1_in_G2 = G1_in_G2_nodes and G1_in_G2_edges
         G2_in_G1 = G2_in_G1_nodes and G2_in_G1_edges
 
-        print('G1_in_G2_nodes: {}, G1_in_G2_edges: {}'.format(G1_in_G2_nodes, G1_in_G2_edges))
-        print('G2_in_G1_nodes: {}, G2_in_G1_edges: {}'.format(G2_in_G1_nodes, G2_in_G1_edges))
+        print(f'G1_in_G2_nodes: {G1_in_G2_nodes}, G1_in_G2_edges: {G1_in_G2_edges}')
+        print(f'G2_in_G1_nodes: {G2_in_G1_nodes}, G2_in_G1_edges: {G2_in_G1_edges}')
 
         print('G1_nodes_set - G2_nodes_set: {}').format(G1_nodes_set - G2_nodes_set)
 
         G1_and_G2_are_equal = G1_in_G2 and G2_in_G1
 
-        print('G1_in_G2: {}, G2_in_G1: {}\n'.format(G1_in_G2, G2_in_G1))
+        print(f'G1_in_G2: {G1_in_G2}, G2_in_G1: {G2_in_G1}\n')
 
         return G1_and_G2_are_equal
 
@@ -278,7 +274,7 @@ class GraphNX(object):
         print('')
         print(term.move_up + term.move_up)
         ######################################
-        print('getting K:{} paths...'.format(k), end='')
+        print(f'getting K:{k} paths...', end='')
         for i in range(1, k):
             with term.location():
                 print(i)
@@ -386,7 +382,7 @@ class GraphNX(object):
         p0 = wp0.nodeList
         path_list.append(p0)
 
-        print('getting K:{} paths...'.format(k))
+        print(f'getting K:{k} paths...')
         for i in range(k):
             wpi = YKSP.getNextShortestPath()
             if wpi is None:
@@ -618,6 +614,6 @@ class GraphNX(object):
 
     def __repr__(self):
         s = ''
-        s += '''==== Nodes ====\n {} \n'''.format(self.G.nodes())
-        s += '''==== Edges ====\n {} \n'''.format(self.G.edges())
+        s += f'''==== Nodes ====\n {self.G.nodes()} \n'''
+        s += f'''==== Edges ====\n {self.G.edges()} \n'''
         return s

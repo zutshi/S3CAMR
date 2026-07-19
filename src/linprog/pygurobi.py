@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import gurobipy as GB
 #from IPython import embed
 import linprog.spec as spec
@@ -51,7 +47,7 @@ def linprog(obj, A_ub, b_ub):
     for ri, bi in zip(A_ub, b_ub):
         # XXX: This API usage was found on web, does not have its
         # usage documented.
-        expr = GB.LinExpr(((cij, vj) for (cij, vj) in zip(ri, Vars) if cij != 0.0))
+        expr = GB.LinExpr((cij, vj) for (cij, vj) in zip(ri, Vars) if cij != 0.0)
         model.addConstr(expr, GB.GRB.LESS_EQUAL, bi)
 
     # Add objective
@@ -60,7 +56,7 @@ def linprog(obj, A_ub, b_ub):
 #         if ci != 0:
 #             expr += ci * vi
 
-    expr = GB.LinExpr(((ci, vi) for (ci, vi) in zip(obj, Vars) if ci != 0.0))
+    expr = GB.LinExpr((ci, vi) for (ci, vi) in zip(obj, Vars) if ci != 0.0)
     model.setObjective(expr, GB.GRB.MINIMIZE)
 
     # Why and when exactly shoud this be called?

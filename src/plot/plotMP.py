@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import collections
 
 import matplotlib
@@ -84,7 +80,7 @@ class Plotting(PlottingBase):
 
     def gen_x_vs_y(self, nd):
         if self.x_vs_y is None:
-            x_vs_y = [('t', 'x{}'.format(i)) for i in range(nd)]
+            x_vs_y = [('t', f'x{i}') for i in range(nd)]
         else:
             x_vs_y = self.x_vs_y
         return x_vs_y
@@ -98,7 +94,7 @@ class Plotting(PlottingBase):
             a_idx = int(a[1:]) if a[1:] else 0
             o_idx = int(o[1:]) if o[1:] else 0
 
-            title = '{} - {}'.format(a, o)
+            title = f'{a} - {o}'
 
             yield a_str, o_str, a_idx, o_idx, title
 
@@ -164,14 +160,14 @@ class Plotting(PlottingBase):
 
     def parse_plot_cmd(self, plot_cmd, trace_obj):
         if len(plot_cmd) != 4:
-            print('plot command NOT of length 4: {}'.format(plot_cmd))
+            print(f'plot command NOT of length 4: {plot_cmd}')
             return None
         x_axis_str, x_idx, y_axis_str, y_idx = plot_cmd
         try:
             x_axis = getattr(trace_obj, x_axis_str)
             y_axis = getattr(trace_obj, y_axis_str)
         except AttributeError as e:
-            print('unexpected plot command received: {}'.format(plot_cmd))
+            print(f'unexpected plot command received: {plot_cmd}')
             print(e)
             return None
         x_idx = int(x_idx)
@@ -180,13 +176,13 @@ class Plotting(PlottingBase):
             if x_axis_str != 't':
                 x = x_axis[x_idx, :]
         except:
-            print('unexpected indices for the first var: {}'.format(plot_cmd))
+            print(f'unexpected indices for the first var: {plot_cmd}')
             return None
         try:
             if y_axis_str != 't':
                 y = y_axis[y_idx, :]
         except:
-            print('unexpected indices for the second var: {}'.format(plot_cmd))
+            print(f'unexpected indices for the second var: {plot_cmd}')
             return None
 
         return x, y
@@ -252,7 +248,7 @@ class Plotting(PlottingBase):
             for i in range(NUM_PLOTS):
                 plt.figure()
                 ax = plt.gca()
-                plt.title('x{}'.format(i))
+                plt.title(f'x{i}')
                 for trace in trace_list:
                     x_array = trace.x_array
                     t_array = trace.t_array
@@ -263,7 +259,7 @@ class Plotting(PlottingBase):
                     line, = ax.plot(t_array, x_array[:, i])
                     line_list.append(line)
                     ctr_total += 1
-                print('plotted {} sims'.format(ctr_total))
+                print(f'plotted {ctr_total} sims')
                 ph.figure_for_paper(ax, line_list)
         else:
     #         for i in range(NUM_PLOTS):
@@ -400,21 +396,21 @@ class Plotting(PlottingBase):
             #    x_array = trace.x_array
             #    t_array = trace.t_array
             #    ax.plot(t_array, x_array[:, i])
-            plt.title('x-y'.format(i))
+            plt.title(f'x-y')
             for trace in trace_list:
                 x_array = trace.x_array
                 #ax.plot(x_array[:, 0], x_array[:, 1], x_array[:, 2])
                 ax.plot(x_array[:, 0], x_array[:, 1])
             plt.figure()
             ax = plt.gca()
-            plt.title('y-z'.format(i))
+            plt.title(f'y-z')
             for trace in trace_list:
                 x_array = trace.x_array
                 #ax.plot(x_array[:, 0], x_array[:, 1], x_array[:, 2])
                 ax.plot(x_array[:, 1], x_array[:, 2])
             plt.figure()
             ax = plt.gca()
-            plt.title('x-z'.format(i))
+            plt.title(f'x-z')
             for trace in trace_list:
                 x_array = trace.x_array
                 #ax.plot(x_array[:, 0], x_array[:, 1], x_array[:, 2])

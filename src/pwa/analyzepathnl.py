@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import numpy as np
 import scipy.linalg as linalg
 import sympy as sym
@@ -53,7 +49,7 @@ def part_constraints(partition_trace):
 
 
 def dyn_constraints(models, vars_grouped_by_state):
-    """constraints due to dynamics of the pwa model
+    r"""constraints due to dynamics of the pwa model
 
     Parameters
     ----------
@@ -186,7 +182,7 @@ def pwatrace2cons(pwa_trace, num_dims, prop):
     ndimx = m.error.l.size
 
     nvars = (len(pwa_trace.models)+1) * ndimx
-    all_vars = sym.var(','.join(('x{}'.format(i) for i in range(nvars))))
+    all_vars = sym.var(','.join(f'x{i}' for i in range(nvars)))
     vars_grouped_by_state = zip(*[all_vars[i::ndimx] for i in range(ndimx)])
 
     C, d = part_constraints(pwa_trace.partitions)
@@ -281,7 +277,7 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
 
     x_arr = np.array(
             sym.symbols(
-                ['x{}'.format(i) for i in range(nvars)]
+                [f'x{i}' for i in range(nvars)]
                 ))
 
     res = solve_mult_opt(nlpfun(solver), objs, cons, Vars)
@@ -294,7 +290,7 @@ def overapprox_x0(num_dims, prop, pwa_trace, solver=gopts.opt_engine):
 
     for di, rmin, rmax in zip(directions, min_res, max_res):
         if (rmin.success and rmax.success):
-            print('{} \in [{}, {}]'.format(np.dot(di, x_arr), rmin.fun, -rmax.fun))
+            print(f'{np.dot(di, x_arr)} \in [{rmin.fun}, {-rmax.fun}]')
             ranges.append([rmin.fun, -rmax.fun])
         else:
             if settings.debug:
@@ -325,7 +321,7 @@ def solve_mult_opt(nlp_fun, directions_ext, cons, Vars):
         # restart? or some kind of caching?
         ret_val = nlp_fun(obj, cons, Vars)
         if not ret_val.success:
-            raise RuntimeError('lp solver failed: {}'.format(ret_val.status))
+            raise RuntimeError(f'lp solver failed: {ret_val.status}')
         else:
             res.append(ret_val)
     return res

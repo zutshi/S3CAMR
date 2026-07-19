@@ -1,8 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
-
 def factory(solver_str):
     if solver_str == 'z3':
         from nonlinprog.z3opt import nlinprog
@@ -20,6 +15,6 @@ def factory(solver_str):
         from nonlinprog.pyfmincon import nlinprog
 
     else:
-        raise NotImplementedError('solver selected: {}'.format(solver_str))
+        raise NotImplementedError(f'solver selected: {solver_str}')
 
     return nlinprog

@@ -1,9 +1,5 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 
 # X: Plant states
@@ -123,12 +119,12 @@ class TopLevelAbs:
         print('=' * 50)
 
         logger.debug('new abstraction created')
-        logger.debug('eps:{}'.format(self.eps))
-        logger.debug('num_samples:{}'.format(self.num_samples))
-        logger.debug('refine:{}'.format(self.refinement_factor))
-        logger.debug('deltaT:{}'.format(self.delta_t))
-        logger.debug('TH:{}'.format(self.T))
-        logger.debug('num traces:{}'.format(self.N))
+        logger.debug(f'eps:{self.eps}')
+        logger.debug(f'num_samples:{self.num_samples}')
+        logger.debug(f'refine:{self.refinement_factor}')
+        logger.debug(f'deltaT:{self.delta_t}')
+        logger.debug(f'TH:{self.T}')
+        logger.debug(f'num traces:{self.N}')
         logger.debug('=' * 50)
 
         # ##!!##logger.debug('==========abstraction parameters==========')
@@ -170,7 +166,7 @@ class TopLevelAbs:
                 config_dict['num_samples'] = None
                 config_dict['delta_t'] = None
             except KeyError as e:
-                raise err.Fatal('expected abstraction parameter undefined: {}'.format(e))
+                raise err.Fatal(f'expected abstraction parameter undefined: {e}')
         else:
             for attr in config_dict:
                 setattr(self, attr, config_dict[attr])
@@ -382,7 +378,7 @@ def AbstractState(ps):
     return abs_store[new_as]
 
 
-class AbstractState_(object):
+class AbstractState_:
     if settings.MEMLEAK_TEST:
         instance_ctr = 0
 

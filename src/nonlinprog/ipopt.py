@@ -1,8 +1,5 @@
 # Refer example: /home/zutshi/software/pyipopt/examples/hs071.py
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 import numpy as np
 import scipy as sp
@@ -179,7 +176,7 @@ def cons_opt(obj, cons, Vars, x0):
 
     if debug:
         for gi, lb, ub in zip(g, g_L, g_U):
-            print('{} \in [{}, {}]'.format(gi, lb, ub))
+            print(f'{gi} \in [{lb}, {ub}]')
 
     nlp = pyipopt.create(nvars, x_L, x_U, ncon, g_L, g_U, nnzj, nnzh, eval_f, eval_grad_f, eval_g, eval_jac_g)
     # Verbosity level \in [0, 12]

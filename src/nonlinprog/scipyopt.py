@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import numpy as np
 import scipy.optimize as spopt
 import sympy as sym
@@ -62,7 +58,7 @@ def nlinprog_cons(obj, cons, Vars):
     for c in cons:
         assert(isinstance(c, sym.LessThan))
         assert(c.args[1] == 0)
-        lambdafied.append(sym.lambdify(all_vars, -c.args[0], str('numpy')))
+        lambdafied.append(sym.lambdify(all_vars, -c.args[0], 'numpy'))
 
     # more concise but can not put in asserts
     #lambdafied = tuple(sym.lambdify(all_vars, -c.args[0]) for c in cons)
@@ -129,7 +125,7 @@ def nlinprog_uncons(obj, cons, Vars):
     embed()
 
     print(objective)
-    objective_lambda = sym.lambdify(Vars, objective, str('numpy'))
+    objective_lambda = sym.lambdify(Vars, objective, 'numpy')
 
     def obj_f(x):
         return objective_lambda(*x)

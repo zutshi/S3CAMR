@@ -9,9 +9,6 @@
 # and populates respective structures and returns them.
 ###############################################################################
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 
 import numpy as np
@@ -45,13 +42,13 @@ def _load_source(module_name, file_path):
 class MissingSystemDefError(Exception):
     def __init__(self, args):
         missing_attr = args[0].replace(''''module' object has no attribute ''', '')
-        error_msg = 'Missing definition in the .tst file: {}'.format(missing_attr)
+        error_msg = f'Missing definition in the .tst file: {missing_attr}'
         self.args = (error_msg,)
         return
 
 
 # For efficiency, Consider named tuples instead? or something else?
-class System(object):
+class System:
     def __init__(self, sys_name, controller_path, num_dims,
                  plant_config_dict, delta_t, controller_path_dir_path,
                  controller_object_str, path, plant_pvt_init_data,
@@ -93,7 +90,7 @@ class System(object):
         self.controller_sim = None
 
 
-class Property(object):
+class Property:
     def __init__(self, T, init_cons_list, init_cons, final_cons, ci, pi,
                  initial_discrete_state, initial_controller_state, MAX_ITER,
                  num_segments, ROI):
@@ -120,7 +117,7 @@ class Property(object):
 
 # No longer being used
 # Instead, all options are now passed using the commandline
-class Options(object):
+class Options:
     def __init__(self, plot, MODE, num_sim_samples, METHOD, symbolic_analyzer):
         self.plot = plot
         self.MODE = MODE
@@ -146,8 +143,8 @@ def parse(file_path, plant_pvt_init_data):
 
     try:
         sut = _load_source('test_des', test_des_file)
-    except IOError as e:
-        print('File not found: {}'.format(test_des_file))
+    except OSError as e:
+        print(f'File not found: {test_des_file}')
         raise e
 
     sut.plant_pvt_init_data = plant_pvt_init_data

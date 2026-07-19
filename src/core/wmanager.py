@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 from collections import defaultdict
 import itertools
 
@@ -10,7 +6,7 @@ from utils import print
 from . import cellmanager as CM
 
 
-class WMap(object):
+class WMap:
     # abs is either plant or controller abs
     def __init__(self, i_cons, eps):
         self.eps = eps
@@ -49,10 +45,10 @@ class WMap(object):
 
         parent_i_cells = self.s2p[parent_cell]
         if parent_i_cells:
-            i_cells = set(ccell
+            i_cells = {ccell
                           for pcell in parent_i_cells
                           for ccell in CM.children_of(pcell)
-                          )
+                          }
         else:
             i_cells = self.get_all_i_cells()
         #print(i_cells)
@@ -72,7 +68,7 @@ class WMap(object):
 #########################################################
 
 
-class WMap_old(object):
+class WMap_old:
     def __init__(self, plant_abs, pi_cons):
         self.pa = plant_abs
         # should never be changed after initialized!
@@ -125,7 +121,7 @@ class WMap_old(object):
 #         if self.s2p.get(parent_hash):
 #             print('parent_pi_cells NON EMPTY!')
         #pi_cells = set(self.get_children(cell) for cell in parent_pi_cells)
-        pi_cells = set(ccell for pcell in parent_pi_cells for ccell in self.get_children(pcell))
+        pi_cells = {ccell for pcell in parent_pi_cells for ccell in self.get_children(pcell)}
         #pi_cells = set(ccell for ccell in self.get_children(pcell) for pcell in parent_pi_cells)
         return pi_cells
 

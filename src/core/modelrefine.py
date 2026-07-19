@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import itertools as it
 
 #from collections import defaultdict
@@ -98,7 +94,7 @@ def simulate(AA, sp, pwa_model, max_path_len, S0):
     #X0 = sp.init_cons
     #x0_samples = sample.sample_ival_constraints(X0, n=1000)
 
-    print('path length: {}'.format(max_path_len))
+    print(f'path length: {max_path_len}')
     traces = [i for i in simulate_pwa(pwa_model, x0_samples, N=max_path_len)]
     return traces
 
@@ -107,7 +103,7 @@ def sim_n_plot(sp, AA, prop, error_paths, depth, pwa_model):
     # intial abs state set
     S0 = {path[0] for path in error_paths}
     s = (state for path in error_paths for state in path)
-    print('simulating using depth = {} ...'.format(depth))
+    print(f'simulating using depth = {depth} ...')
     pwa_traces = simulate(AA, sp, pwa_model, depth, S0)
     print('done')
     gopts.plotting.figure()
@@ -419,7 +415,7 @@ def check4CE(pwa_model, depth, init_partitions, prop_partitions, sys_name, model
         init_partitions,
         prop_partitions,
         gopts.construct_path,
-        '{}_{}'.format(sys_name, model_type),
+        f'{sys_name}_{model_type}',
         model_type,        
         gopts.smt_engine)
 
@@ -616,7 +612,7 @@ def build_pwa_model(sys, prop, qgraph, sp, model_type):
     # for ever vertex (abs_state) in the graph
     for q in qgraph:
         if settings.debug:
-            print('modeling: {}'.format(q))
+            print(f'modeling: {q}')
         sentinel = 0
         for sub_model in q_affine_models(prop, ntrain, step_sim, tol, include_err, qgraph, q):
             sentinel = 1
@@ -739,7 +735,7 @@ def build_pwa_dt_model(AA, abs_states, sp, sys_sim):
     """
 
     dt_steps = [0.01, 0.1, AA.plant_abs.delta_t]
-    err.warn('using time steps: {}'.format(dt_steps))
+    err.warn(f'using time steps: {dt_steps}')
     step_sims = [simsys.get_step_simulator(sp.controller_sim, sp.plant_sim, dt)
                  for dt in dt_steps]
 
@@ -762,7 +758,7 @@ def model(tol, X, Y):
         #return []
     e_pc = rm.max_error_pc(X, Y)
     if settings.debug:
-        err.imp('error%: {}'.format(e_pc))
+        err.imp(f'error%: {e_pc}')
     error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
     error_exceeds_tol = len(error_dims) > 0
     refine = error_exceeds_tol
@@ -782,7 +778,7 @@ def mdl_1relational(prop, tol, step_sim, qgraph, q, X, Y):
     neighbors_including_self.add(q)
 
     for qi in neighbors_including_self:
-        print('modeling: Q({}) -> Q\'({})'.format(q, qi))
+        print(f'modeling: Q({q}) -> Q\'({qi})')
         print(q.ival_constraints, qi.ival_constraints)
         if settings.debug:
             print('checking qi: ', qi)
@@ -831,13 +827,13 @@ def mdl_old(AA, prop, tol, step_sim, qgraph, q, XY, Y_, k, kmin, kmax):
         rm = AFM.Model(X, Y)
         e_pc = rm.max_error_pc(X, Y)
         if settings.debug:
-            err.imp('error%: {}'.format(e_pc))
+            err.imp(f'error%: {e_pc}')
         error_dims = np.arange(len(e_pc))[np.where(e_pc >= tol)]
         error_exceeds_tol = len(error_dims) > 0
         refine = error_exceeds_tol
         #err.warn('e%:{}, |e%|:{}'.format(e_pc, np.linalg.norm(e_pc, 2)))
         if settings.debug_plot:
-            rm.plot(X, Y, tol, 'q:{}, err:{}'.format(q, e_pc))
+            rm.plot(X, Y, tol, f'q:{q}, err:{e_pc}')
         gopts.plotting.show()
     else:
         refine = True
@@ -1528,7 +1524,7 @@ def q_affine_models_old(AA, prop, ntrain, step_sim, tol, include_err, qgraph, q)
 
     # try again on failure, and settle with non relational models
     if not regression_models:
-        err.warn('No model found for q: {}'.format(q))
+        err.warn(f'No model found for q: {q}')
         regression_models = mdl_old(AA, prop, np.inf, step_sim, qgraph, q, (X, Y), X, k=0, kmin=0, kmax=1)
         assert(regression_models)
         # No model found, get a non-relational model as the worst case

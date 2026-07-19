@@ -12,9 +12,6 @@
 # multiple times from t = [t0, tf]
 ###############################################################################
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 import loadsystem
 import simulatesystem as simsys
@@ -36,7 +33,7 @@ logger = logging.getLogger(__name__)
 
 
 #TODO: no need for a full fledged class, can be something more efficient?
-class SimState(object):
+class SimState:
     def __init__(self, s=None, d=None, pvt=None):
         self.s = s
         self.d = d

@@ -1,13 +1,9 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import itertools as it
 #import utils as U
 #import err
 
 
-class Expr2Str(object):
+class Expr2Str:
     PREC = None
 
     @staticmethod
@@ -56,7 +52,7 @@ class Expr2Str(object):
         elif cstr == '-1':
             cxstr = '-' + x
         else:
-            cxstr = '{}*{}'.format(cstr, x)
+            cxstr = f'{cstr}*{x}'
         return cxstr
 
     @staticmethod
@@ -79,7 +75,7 @@ class Expr2Str(object):
         """
         b1 = (b, '1')
         cx = it.chain(zip(coeffs, xs), [b1])
-        ret = ' + '.join((filter(None, (Expr2Str.cx2str(c, x) for c, x in cx))))
+        ret = ' + '.join(filter(None, (Expr2Str.cx2str(c, x) for c, x in cx)))
         # make sure an empty string is not returned. This can happen if
         # the linexpr evaluates to a 0
         if not ret:

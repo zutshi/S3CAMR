@@ -1,8 +1,5 @@
 # TODO: Freeze the arg list if they are deemed the same for every bmc
 # engine
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 
 from globalopts import opts as gopts
@@ -130,7 +127,7 @@ def factory(bmc_engine,
              model_type,
              *args)
     else:
-        raise NotImplementedError('Req. bmc engine: {}'.format(bmc_engine))
+        raise NotImplementedError(f'Req. bmc engine: {bmc_engine}')
 
 
 # TODO: fix and remove the hack

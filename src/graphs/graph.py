@@ -1,8 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 
 import err
@@ -41,7 +37,7 @@ def class_factory(graph_lib):
         from .graph_generic import Graph
         return Graph
     else:
-        raise err.Fatal('unknown graph library requested: {}'.format(graph_lib))
+        raise err.Fatal(f'unknown graph library requested: {graph_lib}')
 
 
 def factory(graph_lib):
@@ -134,7 +130,7 @@ def csg1():
 # import heapq
 # from ModifiedDijkstra import ModifiedDijkstra
 
-class YenKShortestPaths(object):
+class YenKShortestPaths:
 
     """
      This is a straight forward implementation of Yen's K shortest loopless
@@ -351,7 +347,7 @@ class YenKShortestPaths(object):
         self.deletedNodes = []
 
 
-class WeightedPath(object):
+class WeightedPath:
 
     """Used internally by the Yen k-shortest path algorithm.
     Also return to user as a result.
@@ -400,7 +396,7 @@ class WeightedPath(object):
                 self.cost, self.capacity)
 
 
-class ModifiedDijkstra(object):
+class ModifiedDijkstra:
 
     """
     The Modified Dijkstra algorithm from "Survivable Networks" by Ramesh Bhandari.

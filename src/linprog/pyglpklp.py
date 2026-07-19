@@ -1,7 +1,3 @@
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
-
 import glpk
 
 import linprog.spec as spec
@@ -43,13 +39,13 @@ def linprog(obj, A_ub, b_ub, exact=False):
     lp.rows.add(len(b_ub))
 
     for idx, r in enumerate(lp.rows):
-        r.name = 'r{}'.format(idx)
+        r.name = f'r{idx}'
         r.bounds = None, b_ub[idx]
 
     lp.cols.add(A_ub.shape[1])
 
     for idx, c in enumerate(lp.cols):
-        c.name = 'x{}'.format(idx)
+        c.name = f'x{idx}'
         c.bounds = None, None
 
     lp.obj[:] = obj.tolist()

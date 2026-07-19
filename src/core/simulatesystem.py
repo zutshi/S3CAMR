@@ -1,9 +1,5 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import unicode_literals
 
 from . import state as st
 from . import traces
@@ -96,7 +92,7 @@ def get_concrete_state_obj(t0, x0, d0, pvt0, pi):
             pi=pi,
             )
     else:
-        raise err.Fatal('dimension must be 1 or 2...: {}!'.format(x0.ndim))
+        raise err.Fatal(f'dimension must be 1 or 2...: {x0.ndim}!')
     return concrete_states
 
 
