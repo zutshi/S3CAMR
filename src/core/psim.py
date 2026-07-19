@@ -51,7 +51,8 @@ def simulator_factory(
         plant_pvt_init_data,
         parallel=False,
         test_params=None,
-        sim_args=None
+        sim_args=None,
+        sim_engine='python'
         ):
 
     # ##!!##logger.debug('requested simulator creation')
@@ -85,6 +86,10 @@ def simulator_factory(
             raise err.Fatal(f'Python file extension py expected, found: {file_ext}')
         module_path = fp.construct_path(python_file_path, benchmark_os_path)
         if fp.validate_file_names([module_path]):
+            if sim_engine == 'rust':
+                logger.info('creating Rust simulator (s3cam_rs)')
+                return RustSim(module_name, module_path,
+                        property_checker, plt, plant_pvt_init_data, parallel)
             return NativeSim(module_name, module_path,
                     property_checker, plt, plant_pvt_init_data, parallel)
         else:
@@ -245,6 +250,39 @@ class NativeSim(Simulator):
 
     def simulate_entire_trajectories(self, sim_states, T):
         raise NotImplementedError
+
+
+class RustSim(Simulator):
+    """Rust-backed simulator (compiled `s3cam_rs` module via PyO3/maturin).
+
+    Same in/out contract as NativeSim: .simulate(sim_states, T) consumes and
+    returns a StateArray. Selected via `--sim-engine rust`. Maps the plant by
+    module name to a native Rust dynamics model, falling back to calling the
+    Python `dyn` (PyDynamics) for unregistered plants.
+
+    STUB: the body is filled by the Rust milestones (see bench/RUST_PLAN.md).
+    Until s3cam_rs is built and wired, this raises a clear error rather than
+    silently falling back, so `--sim-engine rust` is unambiguous.
+    """
+
+    def __init__(self, module_name, module_path, property_checker, plt,
+                 plant_pvt_init_data, parallel):
+        super(RustSim, self).__init__()
+        self.module_name = module_name
+        self.module_path = module_path
+        self._property_checker = property_checker
+        try:
+            import s3cam_rs  # noqa: F401  (built via `maturin develop`)
+        except ImportError as e:
+            raise err.Fatal(
+                "sim-engine=rust requested but the compiled `s3cam_rs` module "
+                "is not built. Run `maturin develop` in the rust crate. "
+                f"(import error: {e})")
+        self._rs = s3cam_rs
+
+    def simulate(self, sim_states, T):
+        raise NotImplementedError(
+            "RustSim.simulate is not yet implemented (see bench/RUST_PLAN.md, M1/M2)")
 
 
 class SimulinkSim(Simulator):

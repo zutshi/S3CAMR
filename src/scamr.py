@@ -859,6 +859,11 @@ def main():
                         default=DEF_SMT_SOLVER,
                         help='Choose the smt engine for pysmtbmc')
 
+    parser.add_argument('--sim-engine', type=str,
+                        choices=['python', 'rust'],
+                        default='python',
+                        help='Simulation backend: python (default) or rust (s3cam_rs)')
+
     # TODO: fix this hack
     parser.add_argument('--enable-regression-plots', action='store_true',
                         help='Disables showing/rendering of regression plots')
@@ -970,6 +975,7 @@ def main():
     opts.par = args.par
     opts.clustering = args.clustering
     opts.model_type = args.model_type
+    opts.sim_engine = args.sim_engine
 
     sys, prop = loadsystem.parse(filepath, args.pvt_init_data)
     if args.prop_check:
@@ -985,7 +991,8 @@ def main():
 
     # TAG:MSH
     matlab_engine = args.meng
-    sys.init_sims(opts.plotting, opts.property_checker, psim_args=matlab_engine)
+    sys.init_sims(opts.plotting, opts.property_checker, psim_args=matlab_engine,
+                  sim_engine=opts.sim_engine)
 
     opts.trajstore = trajstore.TrajStore(sys.plant_config_dict['eps'], sys)
     sys.plant_sim.simulate = trajstore.wrap_sim(sys.plant_sim.simulate, opts.trajstore)

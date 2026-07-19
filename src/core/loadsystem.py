@@ -78,7 +78,7 @@ class System:
 
         return
 
-    def init_sims(self, plt_lib, property_checker, psim_args):
+    def init_sims(self, plt_lib, property_checker, psim_args, sim_engine='python'):
         self.plant_sim = psim.simulator_factory(
             self.plant_config_dict,
             self.path,
@@ -86,7 +86,8 @@ class System:
             plt=plt_lib,
             plant_pvt_init_data=self.plant_pvt_init_data,
             parallel=False,
-            sim_args=psim_args)# TAG:MSH
+            sim_args=psim_args,
+            sim_engine=sim_engine)# TAG:MSH
         self.controller_sim = None
 
 
