@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Defines several constant time dynamical systems for
 testing/benchmarking
@@ -11,7 +9,7 @@ import numpy as np
 from scipy.integrate import ode
 
 
-class SIM(object):
+class SIM:
 
     def __init__(self, plt, pvt_init_data):
         """__init__

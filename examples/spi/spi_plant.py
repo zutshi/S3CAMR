@@ -1,4 +1,3 @@
-
 # Must satisfy the signature
 # [t,X,D,P] = sim_function(T,X0,D0,P0,I0);
 
@@ -10,7 +9,7 @@ import matplotlib.pyplot as PLT
 PLOT = True
 
 
-class SIM(object):
+class SIM:
     def __init__(self, plt, pvt_init_data):
         #print I
         # atol = 1e-10

@@ -20,6 +20,6 @@ while s:
         ss = s.strip().replace('1.0*x3 \\in ', '')
         ic = C.IntervalCons(*map(lambda x: (float(x),), ss[1:-1].split(',')))
         if x & ic is not None:
-            print ic
+            print(ic)
     s = fr.readline()
 

@@ -1,6 +1,4 @@
-
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 # This example is from HyCU [Matlab's S3CAM implementation]
 # Which was in turn taken from
@@ -17,7 +15,7 @@ from assimulo.solvers.sundials import CVode
 from assimulo.solvers import LSODAR
 
 
-class SIM(object):
+class SIM:
 
     def __init__(self, _, pvt_init_data):
         self.model = create_model()

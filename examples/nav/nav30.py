@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 # Must satisfy the signature
 # [t,X,D,P] = sim_function(T,X0,D0,P0,I0);
 
@@ -89,7 +88,7 @@ class Pos():
         self.y = y
 
     def __str__(self):
-        return '({}, {})'.format(self.x, self.y)
+        return f'({self.x}, {self.y})'
 
 
 #@memodict
@@ -105,7 +104,7 @@ class Bounds():
         self.b = NAV_SQ_DIM - i - 1 if mode_b <= NUM_MODES-1 else -np.inf
 
     def __str__(self):
-        return 'x=[{}, {}], y=[{}, {}]'.format(self.l, self.r, self.b, self.a)
+        return f'x=[{self.l}, {self.r}], y=[{self.b}, {self.a}]'
 
 
 #@memodict
@@ -255,7 +254,7 @@ def x2mode(X):
     return mode
 
 
-class SIM(object):
+class SIM:
 
     def __init__(self, _, pvt_init_data):
         self.model = create_model()

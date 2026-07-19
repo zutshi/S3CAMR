@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 PWA System: Time triggered switched linear system w/o inputs
 
@@ -17,7 +15,7 @@ import utils as U
 PLOT = False
 
 
-class SIM(object):
+class SIM:
 
     def __init__(self, plt, pvt_init_data):
         """__init__

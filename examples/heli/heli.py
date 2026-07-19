@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 # Must satisfy the signature
 # [t,X,D,P] = sim_function(T,X0,D0,P0,I0);
 
@@ -11,7 +10,7 @@ import pylab as plt
 PLOT = False
 
 
-class SIM(object):
+class SIM:
 
     def __init__(self, plt, pvt_init_data):
         # atol = 1e-10
@@ -350,7 +349,7 @@ def solout_fun(property_checker, plot_data):
         # print t, Y
         if property_checker.check(t, Y):
             #violating_state[0] = (np.copy(t), np.copy(Y))
-            print 'violation found:'#, violating_state[0]
+            print('violation found:')#, violating_state[0]
             # return -1 to stop integration
             return -1
         else:

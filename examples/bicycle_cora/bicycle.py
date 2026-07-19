@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 
 #Bicycle Model with
 # - normal force equilibrium for pitching-moments
@@ -34,7 +33,7 @@ cr.pickle(types.MethodType, _pickle_method)
 
 # As it is created only once, all methods should be static
 # methods.
-class SIM(object):
+class SIM:
 
     def __init__(self, plt, pvt_init_data):
         self.U_matrix = sio.loadmat('../examples/bicycle_cora/u.mat')['v']

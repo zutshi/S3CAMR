@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 # Must satisfy the signature
 # [t,X,D,P] = sim_function(T,X0,D0,P0,I0);
 
@@ -8,7 +7,7 @@ import PyDSTool as dst
 #import matplotlib.pyplot as plt
 
 
-class SIM(object):
+class SIM:
 
     def __init__(self, _, pvt_init_data):
         self.model = create_model()

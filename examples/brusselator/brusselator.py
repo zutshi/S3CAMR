@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 # Must satisfy the signature
 # [t,X,D,P] = sim_function(T,X0,D0,P0,I0);
 
@@ -11,7 +10,7 @@ import pylab as plt
 PLOT = False
 
 
-class SIM(object):
+class SIM:
 
     def __init__(self, plt, pvt_init_data):
         # atol = 1e-10

@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 """
 Defines several constant time dynamical systems for
 testing/benchmarking
@@ -13,7 +11,7 @@ import numpy as np
 from scipy.integrate import ode
 
 
-class SIM(object):
+class SIM:
 
     def __init__(self, plt, pvt_init_data):
         """__init__
@@ -170,14 +168,14 @@ def dyn_50():
     def dyn(t, X, u):
         X = X.copy()
         cell0, cell1 = np.ceil(X[0]/grid_eps), np.ceil(X[1]/grid_eps)
-        print cell0, cell1
+        print(cell0, cell1)
         R.seed(cell0)
         X[0] = R.random()
         R.seed(cell1)
         X[1] = R.random()
         X_ = rngx[:, 0] + (rngx[:, 1] - rngx[:, 0])*X
         if abs(X_[0]) > 10:
-            print X
+            print(X)
         #print X_
         return X_
 

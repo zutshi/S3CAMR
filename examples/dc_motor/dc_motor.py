@@ -12,7 +12,7 @@ PLOT = False
 #       (2) all arrays should be matrices!
 
 
-class SIM(object):
+class SIM:
     def __init__(self, plt, pvt_init_data):
         # atol = 1e-10
         rtol = 1e-5

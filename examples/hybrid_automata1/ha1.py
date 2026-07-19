@@ -1,5 +1,4 @@
 #!/usr/bin/python
-# -*- coding: utf-8 -*-
 # Must satisfy the signature
 # [t,X,D,P] = sim_function(T,X0,D0,P0,I0);
 
@@ -33,7 +32,7 @@ TEMP_LB = 50
 
 # As it is created only once, all methods should be static
 # methods.
-class SIM(object):
+class SIM:
 
     def __init__(self, _, pvt_init_data):
         return None
@@ -113,6 +112,6 @@ def dyn(x, u, w):
     elif u == 0:
         x = 0.50*(20.0+w - x)    # 20
     else:
-        print 'error: u =', u
+        print('error: u =', u)
         raise NotImplementedError
     return x
