@@ -10,7 +10,7 @@ import functools as ft
 
 import numpy as np
 import tqdm
-from blessings import Terminal
+from blessed import Terminal
 
 import err
 import utils as U
@@ -160,7 +160,7 @@ def mp_shared_mem(self, num_samples):
     pool = mp.Pool(self.nworkers)
     fd = open('delme.dump', 'w')
     ff = ft.partial(f, self.sys, self.prop, fd)
-    for trace in pool.imap_unordered(ff, xrange(num_samples), chunksize=CHNK):
+    for trace in pool.imap_unordered(ff, range(num_samples), chunksize=CHNK):
         pass
     fd.close()
     pool.close()
@@ -199,7 +199,7 @@ class simulate_par(object):
         self.fname = globalopts.opts.construct_path(fname)
 
         #self.nworkers = mp.cpu_count()
-        self.nworkers = int(raw_input('Enter number of workers'))
+        self.nworkers = int(input('Enter number of workers'))
         print('Num workers: {}'.format(self.nworkers))
         return
 

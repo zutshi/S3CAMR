@@ -96,7 +96,7 @@ class BMC(BMCSpec):
             inserted = 0
             assignment_list = [step_number]
             trace_list = [None for v in self.converter.vs]
-            for var,value in cex_at_i.iteritems():
+            for var,value in cex_at_i.items():
                 # get the index of the variable
                 index = self.converter.get_index(var)
 

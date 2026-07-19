@@ -15,7 +15,7 @@ import logging
 import networkx as nx
 from heapq import heappush, heappop
 from itertools import count
-from blessings import Terminal
+from blessed import Terminal
 
 from .graphNX import GraphNX
 
@@ -76,7 +76,7 @@ class GraphNXLM(object):
         return [(self.ID2n[n1ID], self.ID2n[n2ID]) for (n1ID, n2ID) in self.G.all_edges()]
 
     def nodes_iter(self):
-        return (self.ID2n[nID] for nID in self.G.nodes_iter())
+        return (self.ID2n[nID] for nID in self.G.nodes())
 
     def new_node(self, n):
         nID = self.genID()
@@ -170,7 +170,7 @@ class GraphNXLM(object):
         return self.G.out_degree(nID)
 
     def iteredges(self):
-        return ((self.ID2n[n1ID], self.ID2n[n2ID]) for (n1ID,n2ID) in self.G.edges_iter())
+        return ((self.ID2n[n1ID], self.ID2n[n2ID]) for (n1ID,n2ID) in self.G.edges())
 
     def draw(self, *args):
         return self.G.draw(*args)

@@ -14,7 +14,7 @@ from globalopts import opts as gopts
 import utils as U
 import err
 
-from blessings import Terminal
+from blessed import Terminal
 term = Terminal()
 
 logger = logging.getLogger(__name__)

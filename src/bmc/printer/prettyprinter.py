@@ -2,11 +2,11 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-import blessings
+import blessed
 
 import fileops as fops
 
-TERM = blessings.Terminal()
+TERM = blessed.Terminal()
 
 
 def pretty_print(sys, prop, vs, pwa_model, init_cons, final_cons,

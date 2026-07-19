@@ -389,10 +389,11 @@ class WeightedPath(object):
 ####                self.capacity = None
 ######################################################################################
 
-    def __cmp__(self, other):
-        if other == None:
-            return -1
-        return cmp(self.cost, other.cost)
+    def __lt__(self, other):
+        # py3 heapq orders items with `<` (__cmp__ is ignored); order by cost.
+        if other is None:
+            return True
+        return self.cost < other.cost
 
     def __str__(self):
         return 'nodeList: {}, cost: {}, capacity: {}'.format(self.nodeList,

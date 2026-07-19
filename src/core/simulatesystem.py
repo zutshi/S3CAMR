@@ -45,12 +45,12 @@ def simulate_system(sys, T, concrete_state):
     tf = t + T
 
     T = tf - t0
-    num_segments = int(np.ceil(T / sys.delta_t))
+    num_segments = int(np.ceil(T / sys.delta_t).item())
     # num_points = num_segments + 1
     trace = traces.Trace(sys.num_dims, num_segments + 1)
     t = t0
 
-    for i in xrange(num_segments):
+    for i in range(num_segments):
         pi = pi_array[i]
         (t_, x_, d_, pvt_) = step_sim(sys.plant_sim, sys.delta_t, t, x, d, pvt, pi)
         trace.append(t=t, x=x, d=d, pi=pi)
@@ -66,8 +66,11 @@ def simulate_system(sys, T, concrete_state):
 # reasons...
 def simulate(system_sim, T, concrete_state):
     (t, x, d, pvt, pi_array) = get_individual_states(concrete_state)
-    t0 = t
-    tf = t + T
+    # concrete_state.t is stored as a (1,)-array; the trace stores time as a
+    # scalar per step, so coerce here (numpy no longer assigns a size-1 array
+    # into a scalar slot).
+    t0 = np.asarray(t).item()
+    tf = t0 + T
     trace = system_sim(x, d, pvt, t0, tf, pi_array)
     return trace
 
@@ -122,7 +125,7 @@ def get_system_simulator(sys):
         T = tf - t0
         # use the ceiling function from utils to detect and fix
         # floating point issues
-        num_segments = int(U.ceil(T / sys.delta_t, np.ceil))
+        num_segments = int(np.asarray(U.ceil(T / sys.delta_t, np.ceil)).item())
         # num_points = num_segments + 1
         trace = traces.Trace(sys.num_dims, num_segments + 1)
         t = t0
@@ -152,5 +155,6 @@ def get_step_simulator(csim, psim, delta_t):
         concrete_states_, _ = psim.simulate(concrete_states, delta_t)
 
         (t, x, d, pvt, _) = get_individual_states(concrete_states_)
-        return (t[0], x[0], d[0], pvt[0])
+        # t is stored as an (n, 1) array; return a scalar time per step.
+        return (np.asarray(t[0]).item(), x[0], d[0], pvt[0])
     return simulate_basic

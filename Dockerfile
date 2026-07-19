@@ -1,108 +1,70 @@
-FROM ubuntu:bionic
+# S3CAMR base image (Python 3.12 on Ubuntu 24.04 LTS).
+#
+# This image builds and verifies the BASE execution path only: the random
+# simulation engine (`scamr.py -s ... --prop-check`), which needs no external
+# solvers. The optional falsification engines (SAL, Yices, GLPK, Z3, pysmt,
+# gurobi, ipopt) are intentionally NOT installed here yet -- see the section
+# at the bottom for how to add them later.
 
-#RUN useradd -m s3camr
-WORKDIR /home
+FROM ubuntu:24.04
 
-RUN apt-get -y update && 	\
-        DEBIAN_FRONTEND=noninteractive apt-get install -y   \
-	git-core		\
-	vim			\
-	make			\
-	build-essential		\
-	libssl-dev		\
-	zlib1g-dev		\
-	libbz2-dev		\
-	libreadline-dev		\
-	libsqlite3-dev		\
-	wget			\
-	curl			\
-	llvm			\
-	libncurses5-dev		\
-	xz-utils		\
-	tk-dev			\
-	libxml2-dev		\
-	libxmlsec1-dev		\
-	libffi-dev		\
-        python3.7-dev
-        #graphviz                                            \
+ENV DEBIAN_FRONTEND=noninteractive
 
-RUN curl https://bootstrap.pypa.io/get-pip.py -o get-pip.py &&\
-	 python3.7 get-pip.py
+# System Python 3.12 (Ubuntu 24.04 default) + build tools for any sdist deps.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        python3 \
+        python3-dev \
+        python3-venv \
+        python3-pip \
+        build-essential \
+        git \
+        ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
 
-#USER s3camr
-RUN ls -al
-RUN pwd
-RUN cd $HOME
-RUN ls -al
-RUN git clone https://github.com/zutshi/S3CAMR.git
-ENV HOME /home/S3CAMR
+# Use an isolated virtualenv (Ubuntu 24.04 marks the system env as externally
+# managed per PEP 668, so we must not pip-install into it).
+ENV VIRTUAL_ENV=/opt/venv
+RUN python3 -m venv "$VIRTUAL_ENV"
+ENV PATH="$VIRTUAL_ENV/bin:$PATH"
+RUN pip install --no-cache-dir --upgrade pip
 
-WORKDIR $HOME
+WORKDIR /opt/S3CAMR
 
-RUN git checkout python3 &&					\
-	git clone https://github.com/zutshi/pyutils.git	&&	\
-	mkdir external
+# Install base Python dependencies first for better layer caching.
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
 
-#USER root
-RUN pip3 install -r requirements.txt
+# pyutils provides the `utils`, `err`, `fileops`, `constraints`, `streampickle`
+# helper modules imported as top-level packages. Cloned from the py3-compat
+# branch (Python 3 fixes).
+RUN git clone --depth 1 --branch py3-compat \
+        https://github.com/zutshi/pyutils.git /opt/pyutils
 
-#USER s3camr
+# Copy the (locally modernized) S3CAMR source tree.
+COPY . /opt/S3CAMR
 
-WORKDIR $HOME/external
+# `utils`, `err`, ... (pyutils) and the source packages live on PYTHONPATH.
+ENV PYTHONPATH="/opt/pyutils:/opt/S3CAMR/src"
+# Matplotlib has no display in the container; use a headless backend.
+ENV MPLBACKEND=Agg
 
-RUN wget http://sal.csl.sri.com/opendownload/sal-3.3-bin-x86_64-unknown-linux-gnu-no-yices.tar.gz &&		\
-	tar -xf sal-3.3-bin-x86_64-unknown-linux-gnu-no-yices.tar.gz &&						\
-	wget http://yices.csl.sri.com/releases/2.6.1/yices-2.6.1-x86_64-pc-linux-gnu-static-gmp.tar.gz &&	\
-        tar xf ./yices-2.6.1-x86_64-pc-linux-gnu-static-gmp.tar.gz &&                                           \
-	cd sal-3.3 &&												\
-	./install.sh &&												\
-	echo '(sal/set-yices2-command! "/home/S3CAMR/external/yices-2.6.1/bin/yices")' >> ~/.salrc
+WORKDIR /opt/S3CAMR/src
 
-ENV SAL_PATH '/home/S3CAMR/external/sal-3.3'
+# Smoke-test the base path at build time: 10 random simulations of the
+# Van der Pol example. Fails the build if the base engine is broken.
+RUN python -O ./scamr.py -f ../examples/vdp/vanDerPol.tst -s 10 --seed 0 --prop-check
 
-RUN wget https://ftp.gnu.org/gnu/glpk/glpk-4.65.tar.gz &&							\
-	tar -xf ./glpk-4.65.tar.gz && \
-        cd $HOME/external/glpk-4.65 && \
-        mkdir $HOME/external/glpk-4.65/installation &&\
-        ./configure --with-gmp && \
-        make CFLAGS=-O2 -j8 && \
-        make install
+# Default: print the CLI help.
+CMD ["python", "-O", "./scamr.py", "--help"]
 
-RUN wget https://github.com/Z3Prover/z3/archive/z3-4.8.4.tar.gz &&						\
-	tar xf ./z3-4.8.4.tar.gz &&										\
-	cd $HOME/external/z3-z3-4.8.4 &&									\
-	mkdir $HOME/external/z3-z3-4.8.4/installation &&							\
-	python3.7 scripts/mk_make.py &&			\
-	cd build &&												\
-	make &&													\
-	make install &&												\
-	cp -R $HOME/external/z3-z3-4.8.4/build/python/z3 $HOME/external/z3-z3-4.8.4/installation/
-
-
-WORKDIR $HOME/external
-RUN git clone https://github.com/zutshi/pyglpk.git &&						\
-	cd pyglpk
-        pip install setuptools_scm
-        make
-
-
-ENV LD_LIBRARY_PATH $HOME'/external/z3-z3-4.8.4/installation/lib'
-ENV PYTHONPATH $HOME'/external/z3-z3-4.8.4/installation'
-
-ENV PYTHONPATH $PYTHONPATH:/home/S3CAMR/pyutils:/home/S3CAMR/external/pyglpk
-
-
-# TODO: FORGOTTEN
-#USER root
-#RUN apt install sudo
-RUN pip3 install ipython
-#RUN echo 'root:dock' | chpasswd
-#USER s3camr
-RUN cd $HOME && git pull
-RUN cd $HOME/pyutils && git pull
-
-
-#USER root
-WORKDIR $HOME/src
-
-# python3.7 ./scamr.py -f ../examples/vdp/vanDerPol.tst -cn --refine model-dft --seed 0 --max-model-error 10 --prop-check --bmc-engine sal --opt-engine scipy --incl-error -pmp --plots x0-x1
+# ---------------------------------------------------------------------------
+# OPTIONAL ENGINES (deferred -- add when needed):
+#
+#   Z3          pip install z3-solver           (--opt-engine z3 / bmc pysmtbmc)
+#   pysmt       pip install pysmt               (--bmc-engine pysmtbmc)
+#   GLPK        apt-get install libglpk-dev glpk-utils   (--opt-engine glpk;
+#               the pyglpk C binding must also build against GLPK 5.0)
+#   SAL 3.3     https://sal.csl.sri.com/opendownload/sal-3.3-bin-x86_64-unknown-linux-gnu-no-yices.tar.gz
+#   Yices 2.7.0 https://github.com/SRI-CSL/yices2/releases/download/yices-2.7.0/yices-2.7.0-x86_64-pc-linux-gnu-static-gmp.tar.gz
+#   gurobi      pip install gurobipy            (requires a valid license)
+# ---------------------------------------------------------------------------

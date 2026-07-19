@@ -1,4 +1,6 @@
 tmp
+.venv
+venv
 *.dot
 *.eps
 *.png

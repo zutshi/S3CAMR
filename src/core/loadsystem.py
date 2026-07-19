@@ -16,7 +16,8 @@ from __future__ import unicode_literals
 
 import numpy as np
 import sys as SYS
-import imp
+import importlib.util
+from importlib.machinery import SourceFileLoader
 
 from .numdims import NumDims
 from . import psim
@@ -25,6 +26,20 @@ import utils as U
 from utils import print
 import fileops as fp
 import constraints as cns
+
+
+def _load_source(module_name, file_path):
+    """Load a module from a file path (replacement for the removed imp.load_source).
+
+    Uses an explicit SourceFileLoader so that non-.py extensions (e.g. .tst
+    test files) are still loaded as Python source, matching imp.load_source.
+    """
+    loader = SourceFileLoader(module_name, file_path)
+    spec = importlib.util.spec_from_file_location(module_name, file_path, loader=loader)
+    module = importlib.util.module_from_spec(spec)
+    SYS.modules[module_name] = module
+    loader.exec_module(module)
+    return module
 
 
 class MissingSystemDefError(Exception):
@@ -130,7 +145,7 @@ def parse(file_path, plant_pvt_init_data):
     SYS.path.append(test_dir)
 
     try:
-        sut = imp.load_source('test_des', test_des_file)
+        sut = _load_source('test_des', test_des_file)
     except IOError as e:
         print('File not found: {}'.format(test_des_file))
         raise e

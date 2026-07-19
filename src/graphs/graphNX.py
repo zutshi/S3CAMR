@@ -12,7 +12,7 @@ import networkx as nx
 from heapq import heappush, heappop
 from itertools import count
 from collections import defaultdict
-from blessings import Terminal
+from blessed import Terminal
 
 
 import utils as U
@@ -94,7 +94,7 @@ class GraphNX(object):
         return self.G.nodes()
 
     def node_attrs(self, node):
-        return self.G.node[node]
+        return self.G.nodes[node]
 
     def edge_attrs(self, edge):
         return self.G.get_edge_data(*edge)

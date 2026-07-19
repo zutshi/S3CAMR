@@ -157,7 +157,7 @@ def truncate(*args):
 
     # Round off to the same amount as the bmc query
     def arr2str(n): return '{n:0.{p}f}'.format(n=n, p=prec)
-    trunc_array = np.vectorize(lambda x: np.float(arr2str(x)))
+    trunc_array = np.vectorize(lambda x: float(arr2str(x)))
 
     return (trunc_array(X) for X in args)
 

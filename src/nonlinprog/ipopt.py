@@ -38,7 +38,8 @@ def grad(Vars, expr):
     return tuple(sym.diff(expr, v) for v in Vars)
 
 
-def eval_jac_cons((jac_row, jac_col, jac_f), x, flag, user_data=None):
+def eval_jac_cons(jac, x, flag, user_data=None):
+    (jac_row, jac_col, jac_f) = jac
     if flag:
         ret = jac_row, jac_col
     else:
@@ -190,7 +191,7 @@ def cons_opt(obj, cons, Vars, x0):
     if debug:
 
         def print_variable(variable_name, value):
-            for i in xrange(len(value)):
+            for i in range(len(value)):
                 print(variable_name + "["+str(i)+"] =", value[i])
 
         print()
@@ -276,4 +277,4 @@ def group_cons_by_ub_lb(cons):
 
 
 def expr_from_dict(d):
-    return reduce(op.add, (expr*coeff for expr, coeff in d.iteritems()))
+    return ft.reduce(op.add, (expr*coeff for expr, coeff in d.items()))

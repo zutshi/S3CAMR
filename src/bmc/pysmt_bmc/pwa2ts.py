@@ -399,13 +399,13 @@ class PWA2TS(object):
         # return loc_enc
 
     def get_loc(self, model):
-        for locval, newbvar in self.locval2bool.iteritems():
+        for locval, newbvar in self.locval2bool.items():
             if model[newbvar]:
                 return self.val2loc[locval]
         return None
 
     def get_edge(self, model):
-        for edgeval, newbvar in self.edgeval2bool.iteritems():
+        for edgeval, newbvar in self.edgeval2bool.items():
             if model[newbvar]:
                 return self.val2edge[edgeval]
         return None

@@ -2,8 +2,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import unicode_literals
 
-import collections
+import collections.abc
 import operator
+from functools import reduce
 
 import sympy as sym
 import z3
@@ -27,7 +28,7 @@ def sympy2z3(sympy_exprs):
     Notes
     ------
     """
-    assert(isinstance(sympy_exprs, collections.Iterable))
+    assert(isinstance(sympy_exprs, collections.abc.Iterable))
 
     z3_exprs = []
     sym2Z3_varmap = {}

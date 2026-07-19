@@ -46,7 +46,7 @@ class Poly(object):
         poly = self.poly
         d = poly.as_dict()
         # TODO: string conversions are slow, use proper np.truncate functions
-        for powers, coeff in d.iteritems():
+        for powers, coeff in d.items():
             d[powers] = float('{n:0.{p}f}'.format(n=coeff, p=prec))
         #print(poly)
         self.poly = sym.Poly.from_dict(d, poly.free_symbols)

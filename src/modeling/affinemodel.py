@@ -311,7 +311,10 @@ class OLS(RegressionModel):
     def __init__(self, x, y, fit_intercept=True):
         super(self.__class__, self).__init__(x, y)
         # Copy must be on...arrays are getting reused!
-        self.model = skl_lm.LinearRegression(copy_X=True, fit_intercept=fit_intercept, n_jobs=1, normalize=True)
+        # `normalize` was removed from LinearRegression in scikit-learn 1.0;
+        # it only affected internal conditioning (coef_/intercept_ are still
+        # reported in the original units), so it can simply be dropped.
+        self.model = skl_lm.LinearRegression(copy_X=True, fit_intercept=fit_intercept, n_jobs=1)
         self.model.fit(x, y)
         self.fit_error_ = self.error(x, y)
 
@@ -340,7 +343,7 @@ class TLS(RegressionModel):
 
         # for each coloumn of y
         for yi in y.T:
-            model = skl_lm.TheilSenRegressor(copy_X=True, fit_intercept=True, n_jobs=1)
+            model = skl_lm.TheilSenRegressor(fit_intercept=True, n_jobs=1)
             #model = skl_lm.HuberRegressor(fit_intercept=True)
             model.fit(x, yi)
             models.append(model)
@@ -428,7 +431,7 @@ class KLinReg():
 
 
         for yi in y.T:
-            model = skl_lm.TheilSenRegressor(copy_X=True, fit_intercept=True, n_jobs=1)
+            model = skl_lm.TheilSenRegressor(fit_intercept=True, n_jobs=1)
             #model = skl_lm.HuberRegressor(fit_intercept=True)
             model.fit(x, yi)
             models.append(model)

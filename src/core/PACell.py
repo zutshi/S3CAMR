@@ -185,7 +185,9 @@ class PlantAbstraction:
     def get_abs_state_from_concrete_state(self, concrete_state):
         X = concrete_state.x
         t = concrete_state.t
-        n = int(np.round(t / self.delta_t))
+        # concrete_state.t is stored as a (1,)-array; coerce to a scalar
+        # (numpy no longer converts a size-1 array to a Python int).
+        n = int(np.round(np.asarray(t / self.delta_t).item()))
         d = concrete_state.d
         pvt = concrete_state.pvt
         #pi = concrete_state.pi

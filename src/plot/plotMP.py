@@ -72,7 +72,8 @@ class Plotting(PlottingBase):
         if block is None:
             block = self.block
 
-        plt.show(block)
+        # modern matplotlib takes `block` as a keyword-only argument
+        plt.show(block=block)
 
     def title(self, *args, **kwargs):
         self.ax().set_title(*args, **kwargs)

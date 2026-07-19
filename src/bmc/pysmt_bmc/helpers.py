@@ -84,7 +84,7 @@ class Helper:
                                      app_map,
                                      prefix,
                                      "_%d" % (i+1))
-            for k,v in app_map.iteritems():
+            for k,v in app_map.items():
                 next_var = Helper.get_next_var(k, self.env.formula_manager)
                 time_i_map[next_var] = v
             app_map = None

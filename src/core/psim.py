@@ -8,14 +8,27 @@ from __future__ import unicode_literals
 import logging
 import numpy as np
 import random
-
-# TODO: This is not clearly understood, and is deprecated!!
-
-import imp
+import sys
+import importlib.util
+from importlib.machinery import SourceFileLoader
 
 import utils
 import err
 import fileops as fp
+
+
+def _load_source(module_name, file_path):
+    """Load a module from a file path (replacement for the removed imp.load_source).
+
+    Uses an explicit SourceFileLoader so that non-.py extensions are still
+    loaded as Python source, matching imp.load_source.
+    """
+    loader = SourceFileLoader(module_name, file_path)
+    spec = importlib.util.spec_from_file_location(module_name, file_path, loader=loader)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    loader.exec_module(module)
+    return module
 
 # only for testing
 # import importlib
@@ -155,7 +168,7 @@ class NativeSim(Simulator):
             ):
         super(NativeSim, self).__init__()
 
-        sim_module = imp.load_source(module_name, module_path)
+        sim_module = _load_source(module_name, module_path)
         self.sim_obj = sim_module.SIM(plt, plant_pvt_init_data)
         self.sim = self.sim_obj.sim
         self.property_checker = property_checker
@@ -204,8 +217,12 @@ class NativeSim(Simulator):
 
         property_violated_flag = False
         for state in sim_states.iterable():
+            # state.t is stored as a (1,)-array inside StateArray; the plant
+            # simulators expect a scalar time (modern scipy rejects size-1
+            # arrays where a scalar is required).
+            t0 = np.asarray(state.t).item()
             (t, X, D, pvt), pvf = self.sim(
-                (state.t, state.t + T),
+                (t0, t0 + T),
                 state.x,
                 state.d,
                 state.pvt,
