@@ -40,3 +40,4 @@ set_src.sh
 vault
 cache
 emsoft_results
+bench/
