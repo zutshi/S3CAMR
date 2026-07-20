@@ -1,0 +1,21 @@
+[package]
+name = "s3cam_rs"
+version = "0.1.0"
+edition = "2021"
+description = "Rust simulation backend for S3CAMR (PyO3 extension)"
+license = "MIT"
+
+[lib]
+name = "s3cam_rs"
+crate-type = ["cdylib"]
+
+[dependencies]
+pyo3 = { version = "0.23", features = ["extension-module"] }
+numpy = "0.23"
+ode_solvers = "0.6"
+rayon = "1"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

@@ -256,13 +256,13 @@ class RustSim(Simulator):
     """Rust-backed simulator (compiled `s3cam_rs` module via PyO3/maturin).
 
     Same in/out contract as NativeSim: .simulate(sim_states, T) consumes and
-    returns a StateArray. Selected via `--sim-engine rust`. Maps the plant by
-    module name to a native Rust dynamics model, falling back to calling the
-    Python `dyn` (PyDynamics) for unregistered plants.
+    returns a (StateArray, property_violated_flag) pair. Selected via
+    `--sim-engine rust`. Maps the plant by module name to a native Rust
+    dynamics model (fast path, GIL-released + rayon-parallel over samples),
+    falling back to calling the Python `dyn` per-eval (PyDynamics) for
+    unregistered plants — preserving the black-box-Python contract.
 
-    STUB: the body is filled by the Rust milestones (see bench/RUST_PLAN.md).
-    Until s3cam_rs is built and wired, this raises a clear error rather than
-    silently falling back, so `--sim-engine rust` is unambiguous.
+    See bench/RUST_PLAN.md (milestones M1/M2).
     """
 
     def __init__(self, module_name, module_path, property_checker, plt,
@@ -280,9 +280,103 @@ class RustSim(Simulator):
                 f"(import error: {e})")
         self._rs = s3cam_rs
 
+        # Native fast path if the plant is ported; else black-box fallback that
+        # calls the Python `dyn` (option C in the plan).
+        self._native = module_name in set(s3cam_rs.native_plants())
+        if self._native:
+            self._dyn = None
+            self._dyn_takes_u = None
+        else:
+            import inspect
+            sim_module = _load_source(module_name, module_path)
+            self._dyn = sim_module.dyn
+            # vdp/lorenz `dyn(t, X, u)` take u; brusselator `dyn(t, X)` doesn't.
+            nparams = len(inspect.signature(self._dyn).parameters)
+            self._dyn_takes_u = nparams >= 3
+            logger.info(
+                "RustSim: plant '%s' not natively ported -> PyDynamics fallback "
+                "(dyn takes_u=%s)", module_name, self._dyn_takes_u)
+
+    @property
+    def property_checker(self):
+        return self._property_checker
+
+    @property_checker.setter
+    def property_checker(self, property_checker):
+        self._property_checker = property_checker
+
+    def simulate_with_property_checker(self, sim_states, T, property_checker):
+        """Override the already-set prop checker for one call (matches
+        NativeSim.simulate_with_property_checker)."""
+        saved_pc = self._property_checker
+        self._property_checker = property_checker
+        try:
+            return self.simulate(sim_states, T)
+        finally:
+            self._property_checker = saved_pc
+
+    def _unsafe_bounds(self, num_dim):
+        """Extract the unsafe-set box (lo, hi) from the property checker.
+
+        A PropertyCheckerNeverDetects (no `--prop-check`) has no final_cons; we
+        disable early-stop by returning lo=+inf, hi=-inf so `x in box` is never
+        true (matches `PropertyCheckerNeverDetects.check` returning False).
+        """
+        pc = self._property_checker
+        fc = getattr(pc, 'final_cons', None)
+        if fc is None:
+            lo = np.full(num_dim, np.inf, dtype=np.float64)
+            hi = np.full(num_dim, -np.inf, dtype=np.float64)
+        else:
+            lo = np.ascontiguousarray(fc.l, dtype=np.float64)
+            hi = np.ascontiguousarray(fc.h, dtype=np.float64)
+        return lo, hi
+
     def simulate(self, sim_states, T):
-        raise NotImplementedError(
-            "RustSim.simulate is not yet implemented (see bench/RUST_PLAN.md, M1/M2)")
+        x = np.ascontiguousarray(sim_states.cont_states, dtype=np.float64)
+        n, num_dim = x.shape
+
+        # Per-sample plant inputs (pi). The native benchmark dynamics ignore u;
+        # for these plants pi is empty (and sometimes oddly shaped, e.g.
+        # (1,1,0)). Robustly coerce to a contiguous (n, n_u) float array.
+        pi = sim_states.plant_extraneous_inputs
+        u = np.zeros((n, 0), dtype=np.float64)
+        if pi is not None:
+            pia = np.ascontiguousarray(pi, dtype=np.float64)
+            if pia.size != 0 and pia.size % n == 0:
+                u = pia.reshape(n, -1)
+
+        lo, hi = self._unsafe_bounds(num_dim)
+
+        if self._native:
+            x_next, violated = self._rs.simulate_batch_native(
+                x, float(T), self.module_name, lo, hi, u)
+        else:
+            x_next, violated = self._rs.simulate_batch_py(
+                x, float(T), self._dyn, int(num_dim), bool(self._dyn_takes_u),
+                lo, hi, u,
+                1e-6,   # rtol
+                1e-12,  # atol
+                0.0,    # max_step (0 => unbounded)
+                )
+
+        property_violated_flag = bool(np.any(violated))
+
+        # Reached time per sample = t0 + T (== Python plant's ret_t = Tf).
+        t0 = np.asarray(sim_states.t, dtype=np.float64).reshape(n, 1)
+        t_array = t0 + T
+
+        # Plants return dummy (zero) discrete / pvt states of the input shape.
+        D_array = np.zeros_like(sim_states.discrete_states)
+        P_array = np.zeros_like(sim_states.pvt_states)
+
+        return st.StateArray(
+            t=t_array,
+            x=np.ascontiguousarray(x_next, dtype=np.float64),
+            d=D_array,
+            pvt=P_array,
+            pi=sim_states.plant_extraneous_inputs,
+            ), property_violated_flag
 
 
 class SimulinkSim(Simulator):

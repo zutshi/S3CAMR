@@ -1,0 +1,17 @@
+[build-system]
+requires = ["maturin>=1.0,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "s3cam_rs"
+version = "0.1.0"
+description = "Rust simulation backend for S3CAMR (simulation inner loop)"
+requires-python = ">=3.9"
+classifiers = [
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+]
+
+[tool.maturin]
+# Build the cdylib into a top-level `s3cam_rs` module.
+module-name = "s3cam_rs"

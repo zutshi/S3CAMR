@@ -43,3 +43,4 @@ emsoft_results
 bench/
 
 .claude/worktrees/
+rust/target/
