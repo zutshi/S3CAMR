@@ -44,3 +44,4 @@ bench/
 
 .claude/worktrees/
 rust/target/
+dev/
